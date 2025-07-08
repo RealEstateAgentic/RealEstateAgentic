@@ -5,6 +5,7 @@
 
 import { useState } from 'react'
 import { FileUpload } from '../components/file-upload'
+import { MarkdownRenderer } from '../components/markdown-renderer'
 
 export function RepairEstimatorScreen() {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
@@ -25,9 +26,17 @@ export function RepairEstimatorScreen() {
         <FileUpload 
           title="Drag and drop your property files here"
           subtitle="or"
-          acceptedTypes="image/*,.pdf,.doc,.docx"
+          acceptedTypes="image/*,.pdf,.doc,.docx,.md"
           onFilesChange={handleFilesChange}
         />
+
+        {/* Markdown Preview Section */}
+        <div className="mt-12">
+          <MarkdownRenderer 
+            className="w-full"
+            showPreview={true}
+          />
+        </div>
       </div>
     </div>
   )

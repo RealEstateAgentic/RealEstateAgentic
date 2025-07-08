@@ -8,24 +8,14 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
-  User,
-  UserCredential,
   updateProfile,
   sendPasswordResetEmail,
-  sendEmailVerification
+  sendEmailVerification,
+  type User,
+  type UserCredential,
 } from 'firebase/auth'
 import { auth } from './config'
-
-/**
- * User authentication interface
- */
-export interface AuthUser {
-  uid: string
-  email: string | null
-  displayName: string | null
-  emailVerified: boolean
-  createdAt: string
-}
+import type { AuthUser } from '../../shared/types'
 
 /**
  * Register a new user with email and password
@@ -41,21 +31,21 @@ export const registerUser = async (
       email,
       password
     )
-    
+
     // Update profile with display name if provided
     if (displayName) {
       await updateProfile(userCredential.user, { displayName })
     }
-    
+
     // Send email verification
     await sendEmailVerification(userCredential.user)
-    
+
     return {
       uid: userCredential.user.uid,
       email: userCredential.user.email,
       displayName: userCredential.user.displayName,
       emailVerified: userCredential.user.emailVerified,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     }
   } catch (error) {
     throw new Error(`Registration failed: ${error}`)
@@ -75,13 +65,14 @@ export const signInUser = async (
       email,
       password
     )
-    
+
     return {
       uid: userCredential.user.uid,
       email: userCredential.user.email,
       displayName: userCredential.user.displayName,
       emailVerified: userCredential.user.emailVerified,
-      createdAt: userCredential.user.metadata.creationTime || new Date().toISOString()
+      createdAt:
+        userCredential.user.metadata.creationTime || new Date().toISOString(),
     }
   } catch (error) {
     throw new Error(`Sign in failed: ${error}`)
@@ -113,15 +104,15 @@ export const resetPassword = async (email: string): Promise<void> => {
 /**
  * Update user profile
  */
-export const updateUserProfile = async (
-  updates: { displayName?: string }
-): Promise<void> => {
+export const updateUserProfile = async (updates: {
+  displayName?: string
+}): Promise<void> => {
   try {
     const user = auth.currentUser
     if (!user) {
       throw new Error('No authenticated user')
     }
-    
+
     await updateProfile(user, updates)
   } catch (error) {
     throw new Error(`Profile update failed: ${error}`)
@@ -138,15 +129,17 @@ export const getCurrentUser = (): User | null => {
 /**
  * Listen to authentication state changes
  */
-export const onAuthStateChange = (callback: (user: AuthUser | null) => void) => {
-  return onAuthStateChanged(auth, (user) => {
+export const onAuthStateChange = (
+  callback: (user: AuthUser | null) => void
+) => {
+  return onAuthStateChanged(auth, user => {
     if (user) {
       callback({
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
         emailVerified: user.emailVerified,
-        createdAt: user.metadata.creationTime || new Date().toISOString()
+        createdAt: user.metadata.creationTime || new Date().toISOString(),
       })
     } else {
       callback(null)
@@ -159,4 +152,4 @@ export const onAuthStateChange = (callback: (user: AuthUser | null) => void) => 
  */
 export const isAuthenticated = (): boolean => {
   return auth.currentUser !== null
-} 
+}

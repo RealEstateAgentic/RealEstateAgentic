@@ -13,27 +13,16 @@ import {
   getMetadata,
   UploadTask,
   StorageReference,
-  FullMetadata
+  FullMetadata,
 } from 'firebase/storage'
 import { storage } from './config'
 import { getCurrentUser } from './auth'
+import type { FileUploadResult } from '../../shared/types'
 
 /**
  * Upload progress callback type
  */
 export type UploadProgressCallback = (progress: number) => void
-
-/**
- * File upload result
- */
-export interface FileUploadResult {
-  url: string
-  path: string
-  fileName: string
-  size: number
-  contentType: string
-  uploadedAt: Date
-}
 
 /**
  * Storage paths for different file types
@@ -42,7 +31,7 @@ const STORAGE_PATHS = {
   PROPERTY_PHOTOS: 'property-photos',
   PROPERTY_DOCUMENTS: 'property-documents',
   USER_AVATARS: 'user-avatars',
-  REPAIR_PHOTOS: 'repair-photos'
+  REPAIR_PHOTOS: 'repair-photos',
 } as const
 
 /**
@@ -71,7 +60,9 @@ const generateFileName = (originalName: string): string => {
  */
 const validateFileType = (file: File, allowedTypes: string[]): void => {
   if (!allowedTypes.includes(file.type)) {
-    throw new Error(`Invalid file type. Allowed types: ${allowedTypes.join(', ')}`)
+    throw new Error(
+      `Invalid file type. Allowed types: ${allowedTypes.join(', ')}`
+    )
   }
 }
 
@@ -97,45 +88,46 @@ export const uploadPropertyPhoto = async (
 ): Promise<FileUploadResult> => {
   try {
     const userId = getCurrentUserId()
-    
+
     // Validate file
     validateFileType(file, ['image/jpeg', 'image/png', 'image/webp'])
     validateFileSize(file, 10) // 10MB limit
-    
+
     // Generate file path
     const fileName = generateFileName(file.name)
     const filePath = `${STORAGE_PATHS.PROPERTY_PHOTOS}/${userId}/${propertyId}/${fileName}`
     const storageRef = ref(storage, filePath)
-    
+
     // Upload file
     let downloadURL: string
-    
+
     if (onProgress) {
       // Use resumable upload with progress tracking
       const uploadTask = uploadBytesResumable(storageRef, file)
-      
+
       return new Promise((resolve, reject) => {
         uploadTask.on(
           'state_changed',
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          snapshot => {
+            const progress =
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100
             onProgress(progress)
           },
-          (error) => {
+          error => {
             reject(new Error(`Upload failed: ${error.message}`))
           },
           async () => {
             try {
               const url = await getDownloadURL(uploadTask.snapshot.ref)
               const metadata = await getMetadata(uploadTask.snapshot.ref)
-              
+
               resolve({
                 url,
                 path: filePath,
                 fileName,
                 size: metadata.size,
                 contentType: metadata.contentType || '',
-                uploadedAt: new Date(metadata.timeCreated)
+                uploadedAt: new Date(metadata.timeCreated),
               })
             } catch (error) {
               reject(new Error(`Failed to get download URL: ${error}`))
@@ -148,14 +140,14 @@ export const uploadPropertyPhoto = async (
       const snapshot = await uploadBytes(storageRef, file)
       downloadURL = await getDownloadURL(snapshot.ref)
       const metadata = await getMetadata(snapshot.ref)
-      
+
       return {
         url: downloadURL,
         path: filePath,
         fileName,
         size: metadata.size,
         contentType: metadata.contentType || '',
-        uploadedAt: new Date(metadata.timeCreated)
+        uploadedAt: new Date(metadata.timeCreated),
       }
     }
   } catch (error) {
@@ -173,15 +165,21 @@ export const uploadPropertyPhotos = async (
 ): Promise<FileUploadResult[]> => {
   try {
     const results: FileUploadResult[] = []
-    
+
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
-      const progressCallback = onProgress ? (progress: number) => onProgress(i, progress) : undefined
-      
-      const result = await uploadPropertyPhoto(propertyId, file, progressCallback)
+      const progressCallback = onProgress
+        ? (progress: number) => onProgress(i, progress)
+        : undefined
+
+      const result = await uploadPropertyPhoto(
+        propertyId,
+        file,
+        progressCallback
+      )
       results.push(result)
     }
-    
+
     return results
   } catch (error) {
     throw new Error(`Failed to upload property photos: ${error}`)
@@ -191,32 +189,36 @@ export const uploadPropertyPhotos = async (
 /**
  * Get all property photos
  */
-export const getPropertyPhotos = async (propertyId: string): Promise<FileUploadResult[]> => {
+export const getPropertyPhotos = async (
+  propertyId: string
+): Promise<FileUploadResult[]> => {
   try {
     const userId = getCurrentUserId()
     const folderPath = `${STORAGE_PATHS.PROPERTY_PHOTOS}/${userId}/${propertyId}`
     const folderRef = ref(storage, folderPath)
-    
+
     const listResult = await listAll(folderRef)
     const photos: FileUploadResult[] = []
-    
+
     for (const itemRef of listResult.items) {
       const [url, metadata] = await Promise.all([
         getDownloadURL(itemRef),
-        getMetadata(itemRef)
+        getMetadata(itemRef),
       ])
-      
+
       photos.push({
         url,
         path: itemRef.fullPath,
         fileName: itemRef.name,
         size: metadata.size,
         contentType: metadata.contentType || '',
-        uploadedAt: new Date(metadata.timeCreated)
+        uploadedAt: new Date(metadata.timeCreated),
       })
     }
-    
-    return photos.sort((a, b) => a.uploadedAt.getTime() - b.uploadedAt.getTime())
+
+    return photos.sort(
+      (a, b) => a.uploadedAt.getTime() - b.uploadedAt.getTime()
+    )
   } catch (error) {
     throw new Error(`Failed to get property photos: ${error}`)
   }
@@ -247,42 +249,43 @@ export const uploadRepairPhoto = async (
 ): Promise<FileUploadResult> => {
   try {
     const userId = getCurrentUserId()
-    
+
     // Validate file
     validateFileType(file, ['image/jpeg', 'image/png', 'image/webp'])
     validateFileSize(file, 10) // 10MB limit
-    
+
     // Generate file path
     const fileName = generateFileName(file.name)
     const filePath = `${STORAGE_PATHS.REPAIR_PHOTOS}/${userId}/${propertyId}/${repairEstimateId}/${fileName}`
     const storageRef = ref(storage, filePath)
-    
+
     // Upload file
     if (onProgress) {
       const uploadTask = uploadBytesResumable(storageRef, file)
-      
+
       return new Promise((resolve, reject) => {
         uploadTask.on(
           'state_changed',
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          snapshot => {
+            const progress =
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100
             onProgress(progress)
           },
-          (error) => {
+          error => {
             reject(new Error(`Upload failed: ${error.message}`))
           },
           async () => {
             try {
               const url = await getDownloadURL(uploadTask.snapshot.ref)
               const metadata = await getMetadata(uploadTask.snapshot.ref)
-              
+
               resolve({
                 url,
                 path: filePath,
                 fileName,
                 size: metadata.size,
                 contentType: metadata.contentType || '',
-                uploadedAt: new Date(metadata.timeCreated)
+                uploadedAt: new Date(metadata.timeCreated),
               })
             } catch (error) {
               reject(new Error(`Failed to get download URL: ${error}`))
@@ -294,14 +297,14 @@ export const uploadRepairPhoto = async (
       const snapshot = await uploadBytes(storageRef, file)
       const downloadURL = await getDownloadURL(snapshot.ref)
       const metadata = await getMetadata(snapshot.ref)
-      
+
       return {
         url: downloadURL,
         path: filePath,
         fileName,
         size: metadata.size,
         contentType: metadata.contentType || '',
-        uploadedAt: new Date(metadata.timeCreated)
+        uploadedAt: new Date(metadata.timeCreated),
       }
     }
   } catch (error) {
@@ -320,42 +323,43 @@ export const uploadUserAvatar = async (
 ): Promise<FileUploadResult> => {
   try {
     const userId = getCurrentUserId()
-    
+
     // Validate file
     validateFileType(file, ['image/jpeg', 'image/png', 'image/webp'])
     validateFileSize(file, 5) // 5MB limit for avatars
-    
+
     // Generate file path
     const fileName = `avatar_${Date.now()}.${file.name.split('.').pop()}`
     const filePath = `${STORAGE_PATHS.USER_AVATARS}/${userId}/${fileName}`
     const storageRef = ref(storage, filePath)
-    
+
     // Upload file
     if (onProgress) {
       const uploadTask = uploadBytesResumable(storageRef, file)
-      
+
       return new Promise((resolve, reject) => {
         uploadTask.on(
           'state_changed',
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          snapshot => {
+            const progress =
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100
             onProgress(progress)
           },
-          (error) => {
+          error => {
             reject(new Error(`Upload failed: ${error.message}`))
           },
           async () => {
             try {
               const url = await getDownloadURL(uploadTask.snapshot.ref)
               const metadata = await getMetadata(uploadTask.snapshot.ref)
-              
+
               resolve({
                 url,
                 path: filePath,
                 fileName,
                 size: metadata.size,
                 contentType: metadata.contentType || '',
-                uploadedAt: new Date(metadata.timeCreated)
+                uploadedAt: new Date(metadata.timeCreated),
               })
             } catch (error) {
               reject(new Error(`Failed to get download URL: ${error}`))
@@ -367,14 +371,14 @@ export const uploadUserAvatar = async (
       const snapshot = await uploadBytes(storageRef, file)
       const downloadURL = await getDownloadURL(snapshot.ref)
       const metadata = await getMetadata(snapshot.ref)
-      
+
       return {
         url: downloadURL,
         path: filePath,
         fileName,
         size: metadata.size,
         contentType: metadata.contentType || '',
-        uploadedAt: new Date(metadata.timeCreated)
+        uploadedAt: new Date(metadata.timeCreated),
       }
     }
   } catch (error) {
@@ -392,4 +396,4 @@ export const deleteFile = async (filePath: string): Promise<void> => {
   } catch (error) {
     throw new Error(`Failed to delete file: ${error}`)
   }
-} 
+}

@@ -15,7 +15,7 @@ const firebaseConfig = {
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 }
 
 // Validate required environment variables
@@ -25,29 +25,47 @@ const requiredEnvVars = [
   'VITE_FIREBASE_PROJECT_ID',
   'VITE_FIREBASE_STORAGE_BUCKET',
   'VITE_FIREBASE_MESSAGING_SENDER_ID',
-  'VITE_FIREBASE_APP_ID'
+  'VITE_FIREBASE_APP_ID',
 ]
 
-for (const envVar of requiredEnvVars) {
-  if (!import.meta.env[envVar]) {
-    throw new Error(`Missing required environment variable: ${envVar}`)
+// Safe environment variable validation for Electron context
+if (import.meta.env) {
+  for (const envVar of requiredEnvVars) {
+    if (!import.meta.env[envVar]) {
+      console.error(`Missing required environment variable: ${envVar}`)
+      // Don't throw in Electron context, just log the error
+    }
   }
+} else {
+  console.warn('Environment variables not available in this context')
 }
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig)
+// Initialize Firebase only if we have valid configuration
+let app: any = null
+let auth: any = null
+let db: any = null
+let storage: any = null
 
-// Initialize Firebase services
-export const auth = getAuth(app)
-export const db = getFirestore(app)
-export const storage = getStorage(app)
+try {
+  // Check if we have the minimum required config
+  if (firebaseConfig.apiKey && firebaseConfig.projectId) {
+    app = initializeApp(firebaseConfig)
+    auth = getAuth(app)
+    db = getFirestore(app)
+    storage = getStorage(app)
+  } else {
+    console.warn('Firebase not initialized: Missing required configuration')
+  }
+} catch (error) {
+  console.error('Failed to initialize Firebase:', error)
+}
 
-// Export the Firebase app instance
-export { app as firebaseApp }
+// Export the Firebase services (may be null if initialization failed)
+export { app as firebaseApp, auth, db, storage }
 
 // Export configuration for debugging (without sensitive data)
 export const getFirebaseConfig = () => ({
   projectId: firebaseConfig.projectId,
   authDomain: firebaseConfig.authDomain,
-  storageBucket: firebaseConfig.storageBucket
-}) 
+  storageBucket: firebaseConfig.storageBucket,
+})

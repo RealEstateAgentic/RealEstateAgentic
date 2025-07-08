@@ -4,17 +4,16 @@
  */
 
 // Firebase Configuration
-export { 
-  firebaseApp, 
-  auth, 
-  db, 
-  storage, 
-  getFirebaseConfig 
+export {
+  firebaseApp,
+  auth,
+  db,
+  storage,
+  getFirebaseConfig,
 } from './config'
 
 // Authentication Services
 export {
-  type AuthUser,
   registerUser,
   signInUser,
   signOutUser,
@@ -22,14 +21,11 @@ export {
   updateUserProfile,
   getCurrentUser,
   onAuthStateChange,
-  isAuthenticated
+  isAuthenticated,
 } from './auth'
 
 // Firestore Database Services
 export {
-  type Property,
-  type RepairEstimate,
-  type RepairItem,
   createProperty,
   getProperty,
   getUserProperties,
@@ -39,12 +35,11 @@ export {
   getRepairEstimate,
   getPropertyRepairEstimates,
   updateRepairEstimate,
-  deleteRepairEstimate
+  deleteRepairEstimate,
 } from './firestore'
 
 // Storage Services
 export {
-  type FileUploadResult,
   type UploadProgressCallback,
   uploadPropertyPhoto,
   uploadPropertyPhotos,
@@ -52,8 +47,17 @@ export {
   deletePropertyPhoto,
   uploadRepairPhoto,
   uploadUserAvatar,
-  deleteFile
+  deleteFile,
 } from './storage'
+
+// Re-export types from shared
+export type {
+  AuthUser,
+  Property,
+  RepairEstimate,
+  RepairItem,
+  FileUploadResult,
+} from '../../shared/types'
 
 // Firebase Error Handling Utility
 export const handleFirebaseError = (error: any): string => {
@@ -101,18 +105,18 @@ export const checkFirebaseConnection = async (): Promise<boolean> => {
 export type {
   User,
   UserCredential,
-  AuthError
+  AuthError,
 } from 'firebase/auth'
 
 export type {
   DocumentData,
   DocumentSnapshot,
   QuerySnapshot,
-  Timestamp
+  Timestamp,
 } from 'firebase/firestore'
 
 export type {
   StorageReference,
   UploadTask,
-  FullMetadata
-} from 'firebase/storage' 
+  FullMetadata,
+} from 'firebase/storage'

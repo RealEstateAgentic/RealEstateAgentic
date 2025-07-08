@@ -19,60 +19,11 @@ import {
   serverTimestamp,
   DocumentData,
   QueryDocumentSnapshot,
-  DocumentReference
+  DocumentReference,
 } from 'firebase/firestore'
 import { db } from './config'
 import { getCurrentUser } from './auth'
-
-/**
- * Property data interface
- */
-export interface Property {
-  id?: string
-  userId: string
-  address: string
-  propertyType: 'house' | 'apartment' | 'commercial' | 'land'
-  purchasePrice: number
-  squareFootage: number
-  bedrooms?: number
-  bathrooms?: number
-  yearBuilt?: number
-  description?: string
-  photos?: string[]
-  repairEstimates?: RepairEstimate[]
-  createdAt: Date
-  updatedAt: Date
-}
-
-/**
- * Repair estimate data interface
- */
-export interface RepairEstimate {
-  id?: string
-  propertyId: string
-  userId: string
-  name: string
-  items: RepairItem[]
-  totalCost: number
-  status: 'draft' | 'completed' | 'approved'
-  notes?: string
-  createdAt: Date
-  updatedAt: Date
-}
-
-/**
- * Repair item interface
- */
-export interface RepairItem {
-  id: string
-  category: string
-  description: string
-  quantity: number
-  unitCost: number
-  totalCost: number
-  priority: 'low' | 'medium' | 'high'
-  isCustom: boolean
-}
+import type { Property, RepairEstimate, RepairItem } from '../../shared/types'
 
 /**
  * Collection names
@@ -80,7 +31,7 @@ export interface RepairItem {
 const COLLECTIONS = {
   PROPERTIES: 'properties',
   REPAIR_ESTIMATES: 'repairEstimates',
-  USERS: 'users'
+  USERS: 'users',
 } as const
 
 /**
@@ -109,19 +60,24 @@ const getCurrentUserId = (): string => {
 /**
  * Create a new property
  */
-export const createProperty = async (propertyData: Omit<Property, 'id' | 'userId' | 'createdAt' | 'updatedAt'>): Promise<string> => {
+export const createProperty = async (
+  propertyData: Omit<Property, 'id' | 'userId' | 'createdAt' | 'updatedAt'>
+): Promise<string> => {
   try {
     const userId = getCurrentUserId()
     const now = serverTimestamp()
-    
+
     const property: Omit<Property, 'id'> = {
       ...propertyData,
       userId,
       createdAt: now as any,
-      updatedAt: now as any
+      updatedAt: now as any,
     }
-    
-    const docRef = await addDoc(collection(db, COLLECTIONS.PROPERTIES), property)
+
+    const docRef = await addDoc(
+      collection(db, COLLECTIONS.PROPERTIES),
+      property
+    )
     return docRef.id
   } catch (error) {
     throw new Error(`Failed to create property: ${error}`)
@@ -131,21 +87,23 @@ export const createProperty = async (propertyData: Omit<Property, 'id' | 'userId
 /**
  * Get property by ID
  */
-export const getProperty = async (propertyId: string): Promise<Property | null> => {
+export const getProperty = async (
+  propertyId: string
+): Promise<Property | null> => {
   try {
     const docRef = doc(db, COLLECTIONS.PROPERTIES, propertyId)
     const docSnap = await getDoc(docRef)
-    
+
     if (!docSnap.exists()) {
       return null
     }
-    
+
     const data = docSnap.data()
     return {
       id: docSnap.id,
       ...data,
       createdAt: convertTimestamp(data.createdAt),
-      updatedAt: convertTimestamp(data.updatedAt)
+      updatedAt: convertTimestamp(data.updatedAt),
     } as Property
   } catch (error) {
     throw new Error(`Failed to get property: ${error}`)
@@ -163,7 +121,7 @@ export const getUserProperties = async (): Promise<Property[]> => {
       where('userId', '==', userId),
       orderBy('createdAt', 'desc')
     )
-    
+
     const querySnapshot = await getDocs(q)
     return querySnapshot.docs.map(doc => {
       const data = doc.data()
@@ -171,7 +129,7 @@ export const getUserProperties = async (): Promise<Property[]> => {
         id: doc.id,
         ...data,
         createdAt: convertTimestamp(data.createdAt),
-        updatedAt: convertTimestamp(data.updatedAt)
+        updatedAt: convertTimestamp(data.updatedAt),
       } as Property
     })
   } catch (error) {
@@ -182,12 +140,15 @@ export const getUserProperties = async (): Promise<Property[]> => {
 /**
  * Update property
  */
-export const updateProperty = async (propertyId: string, updates: Partial<Property>): Promise<void> => {
+export const updateProperty = async (
+  propertyId: string,
+  updates: Partial<Property>
+): Promise<void> => {
   try {
     const docRef = doc(db, COLLECTIONS.PROPERTIES, propertyId)
     await updateDoc(docRef, {
       ...updates,
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
     })
   } catch (error) {
     throw new Error(`Failed to update property: ${error}`)
@@ -212,20 +173,26 @@ export const deleteProperty = async (propertyId: string): Promise<void> => {
  * Create a new repair estimate
  */
 export const createRepairEstimate = async (
-  estimateData: Omit<RepairEstimate, 'id' | 'userId' | 'createdAt' | 'updatedAt'>
+  estimateData: Omit<
+    RepairEstimate,
+    'id' | 'userId' | 'createdAt' | 'updatedAt'
+  >
 ): Promise<string> => {
   try {
     const userId = getCurrentUserId()
     const now = serverTimestamp()
-    
+
     const estimate: Omit<RepairEstimate, 'id'> = {
       ...estimateData,
       userId,
       createdAt: now as any,
-      updatedAt: now as any
+      updatedAt: now as any,
     }
-    
-    const docRef = await addDoc(collection(db, COLLECTIONS.REPAIR_ESTIMATES), estimate)
+
+    const docRef = await addDoc(
+      collection(db, COLLECTIONS.REPAIR_ESTIMATES),
+      estimate
+    )
     return docRef.id
   } catch (error) {
     throw new Error(`Failed to create repair estimate: ${error}`)
@@ -235,21 +202,23 @@ export const createRepairEstimate = async (
 /**
  * Get repair estimate by ID
  */
-export const getRepairEstimate = async (estimateId: string): Promise<RepairEstimate | null> => {
+export const getRepairEstimate = async (
+  estimateId: string
+): Promise<RepairEstimate | null> => {
   try {
     const docRef = doc(db, COLLECTIONS.REPAIR_ESTIMATES, estimateId)
     const docSnap = await getDoc(docRef)
-    
+
     if (!docSnap.exists()) {
       return null
     }
-    
+
     const data = docSnap.data()
     return {
       id: docSnap.id,
       ...data,
       createdAt: convertTimestamp(data.createdAt),
-      updatedAt: convertTimestamp(data.updatedAt)
+      updatedAt: convertTimestamp(data.updatedAt),
     } as RepairEstimate
   } catch (error) {
     throw new Error(`Failed to get repair estimate: ${error}`)
@@ -259,14 +228,16 @@ export const getRepairEstimate = async (estimateId: string): Promise<RepairEstim
 /**
  * Get all repair estimates for a property
  */
-export const getPropertyRepairEstimates = async (propertyId: string): Promise<RepairEstimate[]> => {
+export const getPropertyRepairEstimates = async (
+  propertyId: string
+): Promise<RepairEstimate[]> => {
   try {
     const q = query(
       collection(db, COLLECTIONS.REPAIR_ESTIMATES),
       where('propertyId', '==', propertyId),
       orderBy('createdAt', 'desc')
     )
-    
+
     const querySnapshot = await getDocs(q)
     return querySnapshot.docs.map(doc => {
       const data = doc.data()
@@ -274,7 +245,7 @@ export const getPropertyRepairEstimates = async (propertyId: string): Promise<Re
         id: doc.id,
         ...data,
         createdAt: convertTimestamp(data.createdAt),
-        updatedAt: convertTimestamp(data.updatedAt)
+        updatedAt: convertTimestamp(data.updatedAt),
       } as RepairEstimate
     })
   } catch (error) {
@@ -293,7 +264,7 @@ export const updateRepairEstimate = async (
     const docRef = doc(db, COLLECTIONS.REPAIR_ESTIMATES, estimateId)
     await updateDoc(docRef, {
       ...updates,
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
     })
   } catch (error) {
     throw new Error(`Failed to update repair estimate: ${error}`)
@@ -303,11 +274,13 @@ export const updateRepairEstimate = async (
 /**
  * Delete repair estimate
  */
-export const deleteRepairEstimate = async (estimateId: string): Promise<void> => {
+export const deleteRepairEstimate = async (
+  estimateId: string
+): Promise<void> => {
   try {
     const docRef = doc(db, COLLECTIONS.REPAIR_ESTIMATES, estimateId)
     await deleteDoc(docRef)
   } catch (error) {
     throw new Error(`Failed to delete repair estimate: ${error}`)
   }
-} 
+}

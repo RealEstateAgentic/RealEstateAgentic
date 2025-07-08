@@ -9,10 +9,7 @@ interface MainScreenProps {
   navigate?: (path: string) => void
 }
 
-export function MainScreen({ navigate }: MainScreenProps) {
-  const handleRepairEstimator = () => {
-    navigate?.('/repair-estimator')
-  }
+export function MainScreen({}: MainScreenProps) {
 
   return (
     <div className="text-gray-100">

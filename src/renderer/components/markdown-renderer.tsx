@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from 'react'
 import { marked } from 'marked'
-import { FileText, Eye } from 'lucide-react'
+import { FileText, Eye, Download } from 'lucide-react'
 
 interface MarkdownRendererProps {
   content?: string
@@ -71,6 +71,7 @@ export function MarkdownRenderer({
 }: MarkdownRendererProps) {
   const [htmlContent, setHtmlContent] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
 
   useEffect(() => {
     marked.setOptions({
@@ -97,6 +98,55 @@ export function MarkdownRenderer({
     processMarkdown()
   }, [content])
 
+  /**
+   * Export current markdown content as PDF using IPC
+   */
+  const exportToPDF = async () => {
+    if (!htmlContent) return
+    
+    setIsExporting(true)
+    
+    try {
+      // Use IPC to generate PDF in main process
+      const result = await window.App.pdf.generate({
+        htmlContent,
+        title: 'Property Repair Estimate',
+        filename: 'repair-estimate.pdf',
+        additionalStyles: `
+          /* Additional custom styles for PDF */
+          .pdf-container {
+            max-width: 100%;
+            margin: 0;
+            padding: 30px;
+          }
+        `
+      })
+      
+      if (result.success) {
+        console.log('PDF generated successfully:', result.filePath)
+        
+        // Show success notification with options
+        const userChoice = confirm(
+          `PDF generated successfully!\n\nClick OK to open the PDF, or Cancel to show it in folder.`
+        )
+        
+        if (userChoice) {
+          await window.App.pdf.openFile(result.filePath ?? '')
+        } else {
+          await window.App.pdf.showInFolder(result.filePath ?? '')
+        }
+      } else {
+        throw new Error(result.error || 'PDF generation failed')
+      }
+      
+    } catch (error: any) {
+      console.error('Error exporting PDF:', error)
+      alert(`Failed to export PDF: ${error?.message || 'Unknown error'}`)
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   if (!showPreview) return null
 
   return (
@@ -108,9 +158,19 @@ export function MarkdownRenderer({
             <FileText className="size-5 text-teal-400" />
             <h3 className="text-lg font-semibold text-gray-100">Markdown Preview</h3>
           </div>
-          <div className="ml-auto flex items-center gap-2">
-            <Eye className="size-4 text-gray-400" />
-            <span className="text-sm text-gray-400">Live Preview</span>
+          <div className="ml-auto flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Eye className="size-4 text-gray-400" />
+              <span className="text-sm text-gray-400">Live Preview</span>
+            </div>
+            <button
+              onClick={exportToPDF}
+              disabled={isExporting || !htmlContent}
+              className="flex items-center gap-2 px-3 py-1 bg-teal-600 hover:bg-teal-700 disabled:bg-gray-600 text-white text-sm rounded-md transition-colors"
+            >
+              <Download className="size-4" />
+              {isExporting ? 'Exporting...' : 'Export PDF'}
+            </button>
           </div>
         </div>
 

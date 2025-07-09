@@ -28,29 +28,29 @@ interface ClientCardProps {
 export function ClientCard({ client, onClick }: ClientCardProps) {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'critical': return 'border-[#3B7097] bg-[#3B7097]/10'
-      case 'high': return 'border-[#75BDE0] bg-[#75BDE0]/10'
-      case 'medium': return 'border-[#A9D09E] bg-[#A9D09E]/10'
-      case 'low': return 'border-[#F6E2BC] bg-[#F6E2BC]/20'
+      case 'critical': return 'border-[#c05e51] bg-[#c05e51]/10'
+      case 'high': return 'border-[#c05e51] bg-[#c05e51]/10'
+      case 'medium': return 'border-[#F6E2BC] bg-[#F6E2BC]/40'
+      case 'low': return 'border-[#A9D09E] bg-[#A9D09E]/10'
       default: return 'border-gray-300 bg-white'
     }
   }
 
   const getSubStatusColor = (subStatus: string) => {
     switch (subStatus) {
-      case 'to_initiate_contact': return 'bg-[#3B7097]/20 text-[#3B7097]'
-      case 'awaiting_survey': return 'bg-[#F6E2BC]/60 text-gray-800'
-      case 'review_survey': return 'bg-[#75BDE0]/20 text-[#75BDE0]'
-      case 'scheduling_showings': return 'bg-[#A9D09E]/20 text-[#A9D09E]'
-      case 'needs_new_listings': return 'bg-[#F6E2BC]/60 text-gray-800'
-      case 'preparing_offer': return 'bg-[#A9D09E]/20 text-[#A9D09E]'
-      case 'inspection_period': return 'bg-[#3B7097]/20 text-[#3B7097]'
-      case 'awaiting_appraisal': return 'bg-[#75BDE0]/20 text-[#75BDE0]'
-      case 'financing_contingency': return 'bg-[#A9D09E]/20 text-[#A9D09E]'
-      case 'negotiating_repairs': return 'bg-[#F6E2BC]/60 text-gray-800'
-      case 'post_closing_checklist': return 'bg-[#A9D09E]/20 text-[#A9D09E]'
-      case 'nurture_campaign_active': return 'bg-gray-100 text-gray-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'to_initiate_contact': return 'bg-[#c05e51]/10 text-gray-800 border border-[#c05e51]/30'
+      case 'awaiting_survey': return 'bg-[#F6E2BC]/60 text-gray-800 border border-[#F6E2BC]'
+      case 'review_survey': return 'bg-[#75BDE0]/20 text-gray-800 border border-[#75BDE0]/30'
+      case 'scheduling_showings': return 'bg-[#A9D09E]/20 text-gray-800 border border-[#A9D09E]/30'
+      case 'needs_new_listings': return 'bg-[#F6E2BC]/60 text-gray-800 border border-[#F6E2BC]'
+      case 'preparing_offer': return 'bg-[#c05e51]/10 text-gray-800 border border-[#c05e51]/30'
+      case 'inspection_period': return 'bg-[#c05e51]/10 text-gray-800 border border-[#c05e51]/30'
+      case 'awaiting_appraisal': return 'bg-[#75BDE0]/20 text-gray-800 border border-[#75BDE0]/30'
+      case 'financing_contingency': return 'bg-[#F6E2BC]/60 text-gray-800 border border-[#F6E2BC]'
+      case 'negotiating_repairs': return 'bg-[#c05e51]/10 text-gray-800 border border-[#c05e51]/30'
+      case 'post_closing_checklist': return 'bg-[#A9D09E]/20 text-gray-800 border border-[#A9D09E]/30'
+      case 'nurture_campaign_active': return 'bg-[#A9D09E]/20 text-gray-800 border border-[#A9D09E]/30'
+      default: return 'bg-gray-100 text-gray-800 border border-gray-200'
     }
   }
 

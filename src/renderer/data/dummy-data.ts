@@ -1,3 +1,191 @@
+// Generate dynamic dates for calendar events
+const generateDynamicCalendarEvents = () => {
+  const today = new Date()
+  const formatDate = (date: Date) => date.toISOString().split('T')[0]
+  
+  const getDateOffset = (days: number) => {
+    const date = new Date(today)
+    date.setDate(today.getDate() + days)
+    return formatDate(date)
+  }
+
+  return [
+    // Today (Day 0)
+    {
+      id: 1,
+      title: "Property Showing - 123 Main St",
+      time: "9:00 AM",
+      date: getDateOffset(0),
+      type: "showing",
+      location: "123 Main St, Anytown"
+    },
+    {
+      id: 2,
+      title: "Buyer Consultation - Johnson Family",
+      time: "11:30 AM",
+      date: getDateOffset(0),
+      type: "consultation",
+      location: "Office"
+    },
+    {
+      id: 3,
+      title: "Closing - Davis Property",
+      time: "2:00 PM",
+      date: getDateOffset(0),
+      type: "closing",
+      location: "Title Company"
+    },
+    {
+      id: 4,
+      title: "Call Lender - Wilson Loan",
+      time: "4:00 PM",
+      date: getDateOffset(0),
+      type: "consultation",
+      location: "Phone"
+    },
+    
+    // Tomorrow (Day 1)
+    {
+      id: 5,
+      title: "Miller Inspection",
+      time: "10:00 AM",
+      date: getDateOffset(1),
+      type: "inspection",
+      location: "456 Oak St, Anytown"
+    },
+    {
+      id: 6,
+      title: "Open House Prep",
+      time: "1:00 PM",
+      date: getDateOffset(1),
+      type: "listing",
+      location: "789 Pine Ave"
+    },
+    {
+      id: 7,
+      title: "New Lead Follow-up",
+      time: "3:30 PM",
+      date: getDateOffset(1),
+      type: "consultation",
+      location: "Phone"
+    },
+    
+    // Day 2
+    {
+      id: 8,
+      title: "Listing Appointment - Wilson Property",
+      time: "9:00 AM",
+      date: getDateOffset(2),
+      type: "listing",
+      location: "789 Pine Ave, Anytown"
+    },
+    {
+      id: 9,
+      title: "Property Showing - Multiple",
+      time: "11:00 AM",
+      date: getDateOffset(2),
+      type: "showing",
+      location: "Various locations"
+    },
+    {
+      id: 10,
+      title: "Title Review Meeting",
+      time: "2:00 PM",
+      date: getDateOffset(2),
+      type: "consultation",
+      location: "Title Company"
+    },
+    
+    // Day 3
+    {
+      id: 11,
+      title: "Appraisal Appointment",
+      time: "9:30 AM",
+      date: getDateOffset(3),
+      type: "inspection",
+      location: "321 Elm St"
+    },
+    {
+      id: 12,
+      title: "Contract Review - Brown Offer",
+      time: "1:00 PM",
+      date: getDateOffset(3),
+      type: "consultation",
+      location: "Office"
+    },
+    {
+      id: 13,
+      title: "Property Photography",
+      time: "3:00 PM",
+      date: getDateOffset(3),
+      type: "listing",
+      location: "567 Broadway"
+    },
+    
+    // Day 4
+    {
+      id: 14,
+      title: "Open House - Pine Ave",
+      time: "10:00 AM",
+      date: getDateOffset(4),
+      type: "listing",
+      location: "789 Pine Ave"
+    },
+    {
+      id: 15,
+      title: "Buyer Showings - Thompson",
+      time: "2:00 PM",
+      date: getDateOffset(4),
+      type: "showing",
+      location: "East Side Properties"
+    },
+    {
+      id: 16,
+      title: "Lender Update Call",
+      time: "4:30 PM",
+      date: getDateOffset(4),
+      type: "consultation",
+      location: "Phone"
+    },
+    
+    // Day 5
+    {
+      id: 17,
+      title: "Weekend Showings",
+      time: "10:00 AM",
+      date: getDateOffset(5),
+      type: "showing",
+      location: "Multiple Properties"
+    },
+    {
+      id: 18,
+      title: "Open House - Main St",
+      time: "1:00 PM",
+      date: getDateOffset(5),
+      type: "listing",
+      location: "123 Main St"
+    },
+    
+    // Day 6
+    {
+      id: 19,
+      title: "Final Walkthrough - Davis",
+      time: "11:00 AM",
+      date: getDateOffset(6),
+      type: "inspection",
+      location: "456 Oak St"
+    },
+    {
+      id: 20,
+      title: "Client Strategy Meeting",
+      time: "2:00 PM",
+      date: getDateOffset(6),
+      type: "consultation",
+      location: "Office"
+    }
+  ]
+}
+
 export const dummyData = {
   // Agent info
   agent: {
@@ -16,49 +204,8 @@ export const dummyData = {
     { id: 5, task: "Call lender about Davis pre-approval status", completed: false }
   ],
 
-  // Calendar events for the week
-  calendarEvents: [
-    {
-      id: 1,
-      title: "Property Showing - 123 Main St",
-      time: "9:00 AM",
-      date: "2024-01-15",
-      type: "showing",
-      location: "123 Main St, Anytown"
-    },
-    {
-      id: 2,
-      title: "Buyer Consultation - Johnson Family",
-      time: "11:30 AM",
-      date: "2024-01-15",
-      type: "consultation",
-      location: "Office"
-    },
-    {
-      id: 3,
-      title: "Closing - Davis Property",
-      time: "2:00 PM",
-      date: "2024-01-15",
-      type: "closing",
-      location: "Title Company"
-    },
-    {
-      id: 4,
-      title: "Home Inspection - 456 Oak St",
-      time: "10:00 AM",
-      date: "2024-01-16",
-      type: "inspection",
-      location: "456 Oak St, Anytown"
-    },
-    {
-      id: 5,
-      title: "Listing Appointment - Wilson Property",
-      time: "3:00 PM",
-      date: "2024-01-17",
-      type: "listing",
-      location: "789 Pine Ave, Anytown"
-    }
-  ],
+  // Calendar events for the week - now dynamic!
+  calendarEvents: generateDynamicCalendarEvents(),
 
   // New leads
   newLeads: [

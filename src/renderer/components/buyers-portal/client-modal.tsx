@@ -118,8 +118,8 @@ export function ClientModal({ client, onClose }: ClientModalProps) {
       case 'new_leads':
         return (
           <div className="space-y-4">
-            <div className="bg-[#75BDE0]/10 p-4 rounded-lg">
-              <h4 className="font-medium text-[#3B7097] mb-2">Lead Information</h4>
+            <div className="bg-[#75BDE0]/10 p-4 rounded-lg border border-[#75BDE0]/30">
+              <h4 className="font-medium text-gray-800 mb-2">Lead Information</h4>
               <div className="space-y-2 text-sm">
                 <div><strong>Source:</strong> {client.leadSource}</div>
                 <div><strong>Priority:</strong> {client.priority}</div>
@@ -127,7 +127,7 @@ export function ClientModal({ client, onClose }: ClientModalProps) {
                 <div><strong>Last Contact:</strong> {formatDate(client.lastContact)}</div>
               </div>
             </div>
-            <div className="bg-[#F6E2BC]/40 p-4 rounded-lg">
+            <div className="bg-[#c05e51]/10 p-4 rounded-lg border border-[#c05e51]/30">
               <h4 className="font-medium text-gray-800 mb-2">Next Steps</h4>
               <p className="text-sm text-gray-700">
                 {client.subStatus === 'to_initiate_contact' && 'Schedule initial consultation call'}
@@ -140,8 +140,8 @@ export function ClientModal({ client, onClose }: ClientModalProps) {
       case 'active_search':
         return (
           <div className="space-y-4">
-            <div className="bg-[#A9D09E]/10 p-4 rounded-lg">
-              <h4 className="font-medium text-[#3B7097] mb-2">Property Search</h4>
+            <div className="bg-[#A9D09E]/10 p-4 rounded-lg border border-[#A9D09E]/30">
+              <h4 className="font-medium text-gray-800 mb-2">Property Search</h4>
               <div className="space-y-2 text-sm">
                 <div><strong>Favorited Properties:</strong> {client.favoritedProperties?.length || 0}</div>
                 <div><strong>Viewed Properties:</strong> {client.viewedProperties?.length || 0}</div>
@@ -149,7 +149,7 @@ export function ClientModal({ client, onClose }: ClientModalProps) {
               </div>
             </div>
             {client.favoritedProperties && client.favoritedProperties.length > 0 && (
-              <div className="bg-[#F6E2BC]/30 p-4 rounded-lg">
+              <div className="bg-[#F6E2BC]/50 p-4 rounded-lg border border-[#F6E2BC]">
                 <h4 className="font-medium text-gray-800 mb-2">Favorited Properties</h4>
                 <div className="space-y-1">
                   {client.favoritedProperties.map((property, index) => (
@@ -163,8 +163,8 @@ export function ClientModal({ client, onClose }: ClientModalProps) {
       case 'under_contract':
         return (
           <div className="space-y-4">
-            <div className="bg-[#3B7097]/10 p-4 rounded-lg">
-              <h4 className="font-medium text-[#3B7097] mb-2">Contract Details</h4>
+            <div className="bg-[#c05e51]/10 p-4 rounded-lg border border-[#c05e51]/30">
+              <h4 className="font-medium text-gray-800 mb-2">Contract Details</h4>
               <div className="space-y-2 text-sm">
                 <div><strong>Property:</strong> {client.contractProperty}</div>
                 <div><strong>Contract Date:</strong> {formatDate(client.contractDate)}</div>
@@ -173,7 +173,7 @@ export function ClientModal({ client, onClose }: ClientModalProps) {
                 <div><strong>Closing Date:</strong> {formatDate(client.closingDate)}</div>
               </div>
             </div>
-            <div className="bg-[#F6E2BC]/40 p-4 rounded-lg">
+            <div className="bg-[#c05e51]/10 p-4 rounded-lg border border-[#c05e51]/30">
               <h4 className="font-medium text-gray-800 mb-2">Critical Deadlines</h4>
               <div className="flex items-center text-sm text-gray-700">
                 <Clock className="size-4 mr-2" />
@@ -185,8 +185,8 @@ export function ClientModal({ client, onClose }: ClientModalProps) {
       case 'closed':
         return (
           <div className="space-y-4">
-            <div className="bg-[#A9D09E]/10 p-4 rounded-lg">
-              <h4 className="font-medium text-[#3B7097] mb-2">Closed Transaction</h4>
+            <div className="bg-[#A9D09E]/10 p-4 rounded-lg border border-[#A9D09E]/30">
+              <h4 className="font-medium text-gray-800 mb-2">Closed Transaction</h4>
               <div className="space-y-2 text-sm">
                 <div><strong>Property:</strong> {client.contractProperty}</div>
                 <div><strong>Sale Price:</strong> {client.soldPrice}</div>
@@ -194,8 +194,8 @@ export function ClientModal({ client, onClose }: ClientModalProps) {
                 <div><strong>Status:</strong> {client.subStatus.replace('_', ' ')}</div>
               </div>
             </div>
-            <div className="bg-[#75BDE0]/10 p-4 rounded-lg">
-              <h4 className="font-medium text-[#3B7097] mb-2">Post-Closing Tasks</h4>
+            <div className="bg-[#A9D09E]/10 p-4 rounded-lg border border-[#A9D09E]/30">
+              <h4 className="font-medium text-gray-800 mb-2">Post-Closing Tasks</h4>
               <p className="text-sm text-gray-700">
                 {client.subStatus === 'post_closing_checklist' && 'Complete post-closing checklist and schedule follow-up'}
                 {client.subStatus === 'nurture_campaign_active' && 'Client in nurture campaign, potential referral source'}

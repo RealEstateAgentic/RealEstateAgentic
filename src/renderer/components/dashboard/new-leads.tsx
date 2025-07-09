@@ -9,10 +9,10 @@ export function NewLeads() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800'
-      case 'medium': return 'bg-yellow-100 text-yellow-800'
-      case 'low': return 'bg-green-100 text-green-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'high': return 'bg-[#c05e51]/10 text-gray-800 border border-[#c05e51]/30'
+      case 'medium': return 'bg-[#F6E2BC]/60 text-gray-800 border border-[#F6E2BC]'
+      case 'low': return 'bg-[#A9D09E]/20 text-gray-800 border border-[#A9D09E]/30'
+      default: return 'bg-gray-100 text-gray-800 border border-gray-200'
     }
   }
 
@@ -28,19 +28,18 @@ export function NewLeads() {
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <Button
-          onClick={() => setIsModalOpen(true)}
-          className="w-full bg-[#3B7097] hover:bg-[#3B7097]/90 text-white font-medium py-6 relative"
-        >
-          New Leads
-          {leads.length > 0 && (
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center">
-              {leads.length}
-            </span>
-          )}
-        </Button>
-      </div>
+      {/* New Leads Button - designed to fit within parent container */}
+      <Button
+        onClick={() => setIsModalOpen(true)}
+        className="w-full bg-[#3B7097] hover:bg-[#3B7097]/90 text-white font-medium py-4 relative"
+      >
+        New Leads
+        {leads.length > 0 && (
+          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center">
+            {leads.length}
+          </span>
+        )}
+      </Button>
 
       {/* Modal */}
       {isModalOpen && (

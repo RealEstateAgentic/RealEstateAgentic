@@ -20,10 +20,12 @@ Accent colors:
 
  #3B7097 (Muted Blue)
 
-#75BDE0 (Sky Blue)
+#75BDE0 (Sky Blue) (Use for low urgent tasks)
 
-#A9D09E (Sage Green)
+#A9D09E (Sage Green) (Use for non urgent tasks)
 
-#F6E2BC (Pale Sand)
+#F6E2BC (Pale Sand) (Use for creeping urgency tasks)
+
+#c05e51 (Muted Red-Orange) (Use for high urgency tasks)
 
 Don't use bright stupid colors

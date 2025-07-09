@@ -3,7 +3,7 @@
  * Collapsible sidebar displaying previous inspection reports
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, FileText, Clock, DollarSign } from 'lucide-react'
 import { Button } from '../ui/button'
 import { mockInspectionReports, type InspectionReport } from '../../data/mock-inspection-reports'
@@ -27,6 +27,11 @@ export function ReportsSidebar({
   const [internalIsOpen, setInternalIsOpen] = useState(isOpen)
   const reports = Object.values(mockInspectionReports)
 
+  // Sync internal state with parent state
+  useEffect(() => {
+    setInternalIsOpen(isOpen)
+  }, [isOpen])
+
   /**
    * Handle toggle sidebar
    */
@@ -41,6 +46,9 @@ export function ReportsSidebar({
    */
   const handleSelectReport = (report: InspectionReport) => {
     onSelectReport?.(report)
+    // Auto-collapse sidebar after selecting a report
+    setInternalIsOpen(false)
+    onToggle?.(false)
   }
 
   /**
@@ -135,7 +143,7 @@ export function ReportsSidebar({
       {!internalIsOpen && (
         <button
           onClick={handleToggle}
-          className="fixed right-4 top-4 z-40 bg-[#3B7097] hover:bg-[#3B7097]/90 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:shadow-xl"
+          className="fixed right-6 top-20 z-40 bg-[#3B7097] hover:bg-[#3B7097]/90 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:shadow-xl"
           aria-label="Open inspection reports sidebar"
         >
           <ChevronLeft className="size-5" />

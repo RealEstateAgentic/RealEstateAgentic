@@ -13,6 +13,7 @@ import { LearnPortalScreen } from './screens/learn-portal'
 import { MarketingPortalScreen } from './screens/marketing-portal'
 import { RepairEstimator } from './screens/repair-estimator'
 import { BuyersPortalScreen } from './screens/buyers-portal'
+import { BuyersArchiveScreen } from './screens/buyers-archive'
 import { SellersPortalScreen } from './screens/sellers-portal'
 import { LearnPortalScreen } from './screens/learn-portal'
 import { MarketingPortalScreen } from './screens/marketing-portal'
@@ -62,6 +63,8 @@ export function App() {
         return <MainScreen {...navigationProps} />
       case '/buyers-portal':
         return <BuyersPortalScreen {...navigationProps} />
+      case '/buyers-archive':
+        return <BuyersArchiveScreen {...navigationProps} />
       case '/sellers-portal':
         return <SellersPortalScreen {...navigationProps} />
       case '/learn-portal':

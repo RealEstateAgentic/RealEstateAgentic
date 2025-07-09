@@ -7,6 +7,10 @@ import { useState } from 'react'
 import { Layout } from './components/layout'
 import { MainScreen } from './screens/main'
 import { RepairEstimatorScreen } from './screens/repair-estimator'
+import { BuyersPortalScreen } from './screens/buyers-portal'
+import { SellersPortalScreen } from './screens/sellers-portal'
+import { LearnPortalScreen } from './screens/learn-portal'
+import { MarketingPortalScreen } from './screens/marketing-portal'
 
 export function App() {
   const [currentRoute, setCurrentRoute] = useState('/')
@@ -21,6 +25,14 @@ export function App() {
 
   const renderCurrentScreen = () => {
     switch (currentRoute) {
+      case '/buyers-portal':
+        return <BuyersPortalScreen {...navigationProps} />
+      case '/sellers-portal':
+        return <SellersPortalScreen {...navigationProps} />
+      case '/learn-portal':
+        return <LearnPortalScreen {...navigationProps} />
+      case '/marketing-portal':
+        return <MarketingPortalScreen {...navigationProps} />
       case '/repair-estimator':
         return <RepairEstimatorScreen />
       default:
@@ -29,7 +41,7 @@ export function App() {
   }
 
   return (
-    <Layout navigate={navigate}>
+    <Layout navigate={navigate} currentRoute={currentRoute}>
       {renderCurrentScreen()}
     </Layout>
   )

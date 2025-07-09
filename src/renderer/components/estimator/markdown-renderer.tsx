@@ -151,22 +151,22 @@ export function MarkdownRenderer({
 
   return (
     <div className={`w-full ${className}`}>
-      <div className="bg-gray-900 rounded-xl border border-gray-700 overflow-hidden">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
         {/* Header */}
-        <div className="flex items-center gap-3 px-6 py-4 bg-gray-800 border-b border-gray-700">
+        <div className="flex items-center gap-3 px-6 py-4 bg-gray-50 border-b border-gray-200">
           <div className="flex items-center gap-2">
-            <FileText className="size-5 text-teal-400" />
-            <h3 className="text-lg font-semibold text-gray-100">Markdown Preview</h3>
+            <FileText className="size-5 text-[#3B7097]" />
+            <h3 className="text-lg font-semibold text-gray-900">Markdown Preview</h3>
           </div>
           <div className="ml-auto flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <Eye className="size-4 text-gray-400" />
-              <span className="text-sm text-gray-400">Live Preview</span>
+              <Eye className="size-4 text-gray-600" />
+              <span className="text-sm text-gray-600">Live Preview</span>
             </div>
             <button
               onClick={exportToPDF}
               disabled={isExporting || !htmlContent}
-              className="flex items-center gap-2 px-3 py-1 bg-teal-600 hover:bg-teal-700 disabled:bg-gray-600 text-white text-sm rounded-md transition-colors"
+              className="flex items-center gap-2 px-3 py-1 bg-[#3B7097] hover:bg-[#3B7097]/90 disabled:bg-gray-400 text-white text-sm rounded-md transition-colors"
             >
               <Download className="size-4" />
               {isExporting ? 'Exporting...' : 'Export PDF'}
@@ -178,38 +178,38 @@ export function MarkdownRenderer({
         <div className="p-6">
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-400"></div>
-              <span className="ml-3 text-gray-400">Rendering markdown...</span>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3B7097]"></div>
+              <span className="ml-3 text-gray-600">Rendering markdown...</span>
             </div>
           ) : (
             <div className="w-full overflow-x-auto">
               <div 
-                className="prose prose-invert max-w-none text-gray-200
-                  [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:text-teal-400 [&_h1]:mb-6 [&_h1]:mt-0
-                  [&_h2]:text-3xl [&_h2]:font-bold [&_h2]:text-teal-300 [&_h2]:mb-4 [&_h2]:mt-8
-                  [&_h3]:text-2xl [&_h3]:font-bold [&_h3]:text-gray-100 [&_h3]:mb-3 [&_h3]:mt-6
-                  [&_h4]:text-xl [&_h4]:font-semibold [&_h4]:text-gray-200 [&_h4]:mb-2 [&_h4]:mt-4
-                  [&_h5]:text-lg [&_h5]:font-semibold [&_h5]:text-gray-300 [&_h5]:mb-2 [&_h5]:mt-4
-                  [&_h6]:text-base [&_h6]:font-semibold [&_h6]:text-gray-400 [&_h6]:mb-2 [&_h6]:mt-4
-                  [&_p]:text-gray-200 [&_p]:leading-relaxed [&_p]:mb-4
-                  [&_strong]:text-gray-100 [&_strong]:font-semibold
-                  [&_ul]:text-gray-200 [&_ol]:text-gray-200
-                  [&_li]:text-gray-200 [&_li]:marker:text-teal-400 [&_li]:mb-1
-                  [&_blockquote]:border-l-4 [&_blockquote]:border-teal-400 [&_blockquote]:bg-gray-800 [&_blockquote]:p-4 [&_blockquote]:rounded-r-lg
-                  [&_blockquote]:text-gray-200 [&_blockquote]:italic [&_blockquote]:my-4
-                  [&_code]:text-teal-400 [&_code]:bg-gray-800 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm
-                  [&_pre]:bg-gray-800 [&_pre]:border [&_pre]:border-gray-700 [&_pre]:p-4 [&_pre]:rounded [&_pre]:my-4
-                  [&_hr]:border-gray-700 [&_hr]:my-8
-                  [&_a]:text-teal-400 [&_a]:no-underline [&_a]:hover:text-teal-300 [&_a]:hover:underline
-                  [&_em]:text-gray-300 [&_em]:italic
-                  [&_table]:w-full [&_table]:border-collapse [&_table]:border-2 [&_table]:border-gray-600 [&_table]:rounded-lg [&_table]:overflow-hidden [&_table]:my-6 [&_table]:shadow-lg [&_table]:shadow-black/20
-                  [&_thead]:bg-gray-800
-                  [&_th]:bg-gray-800 [&_th]:border [&_th]:border-gray-600 [&_th]:px-6 [&_th]:py-4 [&_th]:text-left [&_th]:font-semibold [&_th]:text-gray-100 [&_th]:text-sm [&_th]:uppercase [&_th]:tracking-wider
-                  [&_tbody]:bg-gray-900
-                  [&_td]:border [&_td]:border-gray-600 [&_td]:px-6 [&_td]:py-4 [&_td]:text-gray-200 [&_td]:font-medium
+                className="prose prose-slate max-w-none text-gray-900
+                  [&_h1]:text-4xl [&_h1]:font-bold [&_h1]:text-[#3B7097] [&_h1]:mb-6 [&_h1]:mt-0
+                  [&_h2]:text-3xl [&_h2]:font-bold [&_h2]:text-[#3B7097] [&_h2]:mb-4 [&_h2]:mt-8
+                  [&_h3]:text-2xl [&_h3]:font-bold [&_h3]:text-gray-900 [&_h3]:mb-3 [&_h3]:mt-6
+                  [&_h4]:text-xl [&_h4]:font-semibold [&_h4]:text-gray-800 [&_h4]:mb-2 [&_h4]:mt-4
+                  [&_h5]:text-lg [&_h5]:font-semibold [&_h5]:text-gray-700 [&_h5]:mb-2 [&_h5]:mt-4
+                  [&_h6]:text-base [&_h6]:font-semibold [&_h6]:text-gray-600 [&_h6]:mb-2 [&_h6]:mt-4
+                  [&_p]:text-gray-800 [&_p]:leading-relaxed [&_p]:mb-4
+                  [&_strong]:text-gray-900 [&_strong]:font-semibold
+                  [&_ul]:text-gray-800 [&_ol]:text-gray-800
+                  [&_li]:text-gray-800 [&_li]:marker:text-[#3B7097] [&_li]:mb-1
+                  [&_blockquote]:border-l-4 [&_blockquote]:border-[#3B7097] [&_blockquote]:bg-[#F6E2BC]/30 [&_blockquote]:p-4 [&_blockquote]:rounded-r-lg
+                  [&_blockquote]:text-gray-800 [&_blockquote]:italic [&_blockquote]:my-4
+                  [&_code]:text-[#3B7097] [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm
+                  [&_pre]:bg-gray-100 [&_pre]:border [&_pre]:border-gray-300 [&_pre]:p-4 [&_pre]:rounded [&_pre]:my-4
+                  [&_hr]:border-gray-300 [&_hr]:my-8
+                  [&_a]:text-[#3B7097] [&_a]:no-underline [&_a]:hover:text-[#3B7097]/80 [&_a]:hover:underline
+                  [&_em]:text-gray-700 [&_em]:italic
+                  [&_table]:w-full [&_table]:border-collapse [&_table]:border-2 [&_table]:border-gray-300 [&_table]:rounded-lg [&_table]:overflow-hidden [&_table]:my-6 [&_table]:shadow-lg [&_table]:shadow-gray-200
+                  [&_thead]:bg-gray-100
+                  [&_th]:bg-gray-100 [&_th]:border [&_th]:border-gray-300 [&_th]:px-6 [&_th]:py-4 [&_th]:text-left [&_th]:font-semibold [&_th]:text-gray-900 [&_th]:text-sm [&_th]:uppercase [&_th]:tracking-wider
+                  [&_tbody]:bg-white
+                  [&_td]:border [&_td]:border-gray-300 [&_td]:px-6 [&_td]:py-4 [&_td]:text-gray-800 [&_td]:font-medium
                   [&_tbody_tr]:transition-colors [&_tbody_tr]:duration-200
-                  [&_tbody_tr:nth-child(even)]:bg-gray-800/30
-                  [&_tbody_tr:hover]:bg-gray-700/50
+                  [&_tbody_tr:nth-child(even)]:bg-gray-50
+                  [&_tbody_tr:hover]:bg-gray-100
                   [&_td:last-child]:text-right [&_th:last-child]:text-right"
                 dangerouslySetInnerHTML={{ __html: htmlContent }}
               />

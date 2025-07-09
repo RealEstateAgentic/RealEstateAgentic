@@ -6,7 +6,7 @@
 
 import { useState, useRef } from 'react'
 import { Upload, FileText, X } from 'lucide-react'
-import { Button } from './ui/button'
+import { Button } from '../ui/button'
 
 interface FileUploadProps {
   title?: string
@@ -109,8 +109,8 @@ export function FileUpload({
         className={`
           relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-200
           ${isDragActive 
-            ? 'border-teal-400 bg-teal-400/5' 
-            : 'border-gray-700 hover:border-gray-600'
+            ? 'border-[#3B7097] bg-[#3B7097]/5' 
+            : 'border-gray-300 hover:border-gray-400 bg-white'
           }
         `}
       >
@@ -126,23 +126,23 @@ export function FileUpload({
         <div className="flex flex-col items-center justify-center gap-4">
           <div className={`
             p-4 rounded-full transition-colors duration-200
-            ${isDragActive ? 'bg-teal-400/20' : 'bg-gray-800'}
+            ${isDragActive ? 'bg-[#3B7097]/20' : 'bg-gray-100'}
           `}>
             <Upload className={`size-8 transition-colors duration-200 ${
-              isDragActive ? 'text-teal-400' : 'text-gray-400'
+              isDragActive ? 'text-[#3B7097]' : 'text-gray-600'
             }`} />
           </div>
 
           <div>
-            <p className="text-lg font-medium text-gray-100 mb-2">
+            <p className="text-lg font-medium text-gray-900 mb-2">
               {isDragActive ? 'Drop files here' : title}
             </p>
-            <p className="text-gray-400 mb-4">
+            <p className="text-gray-600 mb-4">
               {subtitle}{' '}
               <Button
                 variant="link"
                 onClick={handleBrowseClick}
-                className="text-teal-400 hover:text-teal-300 underline transition-colors"
+                className="text-[#3B7097] hover:text-[#3B7097]/80 underline transition-colors"
               >
                 browse files
               </Button>
@@ -157,26 +157,26 @@ export function FileUpload({
       {/* Uploaded Files List */}
       {uploadedFiles.length > 0 && (
         <div className="mt-8">
-          <h3 className="text-xl font-semibold text-gray-100 mb-4">
+          <h3 className="text-xl font-semibold text-gray-900 mb-4">
             Uploaded Files ({uploadedFiles.length})
           </h3>
           <div className="space-y-3">
             {uploadedFiles.map((file, index) => (
               <div
                 key={index}
-                className="flex items-center justify-between p-4 bg-gray-800 rounded-lg border border-gray-700"
+                className="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200 shadow-sm"
               >
                 <div className="flex items-center gap-3">
-                  <FileText className="size-5 text-teal-400" />
+                  <FileText className="size-5 text-[#3B7097]" />
                   <div>
-                    <p className="font-medium text-gray-100">{file.name}</p>
-                    <p className="text-sm text-gray-400">{formatFileSize(file.size)}</p>
+                    <p className="font-medium text-gray-900">{file.name}</p>
+                    <p className="text-sm text-gray-600">{formatFileSize(file.size)}</p>
                   </div>
                 </div>
                 <Button
                   variant="ghost"
                   onClick={() => removeFile(index)}
-                  className="p-2 text-gray-400 hover:text-red-400 transition-colors"
+                  className="p-2 text-gray-600 hover:text-red-600 transition-colors"
                 >
                   <X className="size-4" />
                 </Button>

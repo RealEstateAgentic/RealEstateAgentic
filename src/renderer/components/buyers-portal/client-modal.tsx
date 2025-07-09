@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, Phone, Mail, MapPin, Calendar, DollarSign, FileText, Download, Plus, Home, Clock } from 'lucide-react'
+import { X, Phone, Mail, MapPin, Calendar, DollarSign, FileText, Download, Plus, Home, Clock, Archive, ArrowRight, RotateCcw } from 'lucide-react'
 import { Button } from '../ui/button'
 
 interface ClientModalProps {
@@ -25,11 +25,17 @@ interface ClientModalProps {
     appraisalDate?: string
     closingDate?: string
     soldPrice?: string
+    archivedDate?: string
+    archivedFromStage?: string
   }
   onClose: () => void
+  onArchive?: (client: any) => void
+  onProgress?: (client: any) => void
+  onUnarchive?: (client: any) => void
+  isArchiveMode?: boolean
 }
 
-export function ClientModal({ client, onClose }: ClientModalProps) {
+export function ClientModal({ client, onClose, onArchive, onProgress, onUnarchive, isArchiveMode = false }: ClientModalProps) {
   const [activeTab, setActiveTab] = useState('summary')
 
   const formatDate = (dateString: string | null) => {
@@ -40,6 +46,56 @@ export function ClientModal({ client, onClose }: ClientModalProps) {
       day: 'numeric',
       year: 'numeric'
     })
+  }
+
+  const getProgressButtonText = (stage: string) => {
+    switch (stage) {
+      case 'new_leads':
+        return 'Progress to Active Search'
+      case 'active_search':
+        return 'Progress to Under Contract'
+      case 'under_contract':
+        return 'Progress to Closed'
+      default:
+        return null
+    }
+  }
+
+  const shouldShowProgressButton = (stage: string) => {
+    return stage !== 'closed'
+  }
+
+  const getStageName = (stage: string) => {
+    switch (stage) {
+      case 'new_leads':
+        return 'New Leads'
+      case 'active_search':
+        return 'Active Search'
+      case 'under_contract':
+        return 'Under Contract'
+      case 'closed':
+        return 'Closed'
+      default:
+        return stage
+    }
+  }
+
+  const handleArchive = () => {
+    if (onArchive) {
+      onArchive(client)
+    }
+  }
+
+  const handleProgress = () => {
+    if (onProgress) {
+      onProgress(client)
+    }
+  }
+
+  const handleUnarchive = () => {
+    if (onUnarchive) {
+      onUnarchive(client)
+    }
   }
 
   const getStageActions = () => {
@@ -300,7 +356,48 @@ export function ClientModal({ client, onClose }: ClientModalProps) {
 
         {/* Actions */}
         <div className="p-6 border-t border-gray-200 bg-gray-50">
-          {getStageActions()}
+          <div className="flex justify-between items-start">
+            {/* Stage-specific actions */}
+            <div className="flex-1">
+              {getStageActions()}
+            </div>
+            
+            {/* Archive/Progress buttons or Unarchive button */}
+            <div className="flex gap-2 ml-4">
+              {isArchiveMode ? (
+                // Archive mode: Show only Unarchive button
+                <Button
+                  onClick={handleUnarchive}
+                  className="bg-[#A9D09E] hover:bg-[#A9D09E]/90 text-white"
+                >
+                  <RotateCcw className="size-4 mr-2" />
+                  Unarchive
+                </Button>
+              ) : (
+                // Normal mode: Show Archive and Progress buttons
+                <>
+                  {shouldShowProgressButton(client.stage) && (
+                    <Button
+                      onClick={handleProgress}
+                      className="bg-[#3B7097] hover:bg-[#3B7097]/90 text-white"
+                    >
+                      <ArrowRight className="size-4 mr-2" />
+                      {getProgressButtonText(client.stage)}
+                    </Button>
+                  )}
+                  
+                  <Button
+                    onClick={handleArchive}
+                    variant="outline"
+                    className="border-[#c05e51] text-[#c05e51] hover:bg-[#c05e51]/10"
+                  >
+                    <Archive className="size-4 mr-2" />
+                    Archive
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

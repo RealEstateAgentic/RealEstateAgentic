@@ -8,6 +8,7 @@ import { Layout } from './components/layout'
 import { MainScreen } from './screens/main'
 import { RepairEstimatorScreen } from './screens/repair-estimator'
 import { BuyersPortalScreen } from './screens/buyers-portal'
+import { BuyersArchiveScreen } from './screens/buyers-archive'
 import { SellersPortalScreen } from './screens/sellers-portal'
 import { LearnPortalScreen } from './screens/learn-portal'
 import { MarketingPortalScreen } from './screens/marketing-portal'
@@ -27,6 +28,8 @@ export function App() {
     switch (currentRoute) {
       case '/buyers-portal':
         return <BuyersPortalScreen {...navigationProps} />
+      case '/buyers-archive':
+        return <BuyersArchiveScreen {...navigationProps} />
       case '/sellers-portal':
         return <SellersPortalScreen {...navigationProps} />
       case '/learn-portal':

@@ -558,6 +558,49 @@ export const dummyData = {
     }
   ],
 
+  // Archived buyer clients
+  archivedBuyerClients: [
+    {
+      id: 101,
+      name: "Taylor Family",
+      email: "taylor.family@email.com",
+      phone: "(555) 111-2222",
+      stage: "active_search",
+      subStatus: "scheduling_showings",
+      budget: "$380,000 - $420,000",
+      location: "Northeast",
+      leadSource: "Referral",
+      priority: "medium",
+      dateAdded: "2023-12-20",
+      lastContact: "2024-01-05",
+      notes: "Looking for starter home, first-time buyers",
+      favoritedProperties: ["101 Pine St", "202 Oak Ave"],
+      viewedProperties: ["303 Maple Dr", "404 Elm St"],
+      archivedDate: "2024-01-05T10:30:00Z",
+      archivedFromStage: "Active Search"
+    },
+    {
+      id: 102,
+      name: "Roberts Family",
+      email: "roberts.family@email.com",
+      phone: "(555) 333-4444",
+      stage: "under_contract",
+      subStatus: "inspection_period",
+      budget: "$550,000",
+      location: "Westside",
+      leadSource: "Website Form",
+      priority: "high",
+      dateAdded: "2023-12-01",
+      lastContact: "2024-01-03",
+      notes: "Deal fell through after inspection",
+      contractProperty: "505 Valley Rd",
+      contractDate: "2023-12-15",
+      inspectionDate: "2024-01-03",
+      archivedDate: "2024-01-03T14:15:00Z",
+      archivedFromStage: "Under Contract"
+    }
+  ],
+
   // Client communication feed
   clientCommunications: [
     {

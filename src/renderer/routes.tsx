@@ -12,6 +12,10 @@ import { SellersPortalScreen } from './screens/sellers-portal'
 import { LearnPortalScreen } from './screens/learn-portal'
 import { MarketingPortalScreen } from './screens/marketing-portal'
 import { RepairEstimator } from './screens/repair-estimator'
+import { BuyersPortalScreen } from './screens/buyers-portal'
+import { SellersPortalScreen } from './screens/sellers-portal'
+import { LearnPortalScreen } from './screens/learn-portal'
+import { MarketingPortalScreen } from './screens/marketing-portal'
 
 export function App() {
   const [currentRoute, setCurrentRoute] = useState('/')
@@ -56,6 +60,14 @@ export function App() {
         return <MarketingPortalScreen {...navigationProps} />
       case '/':
         return <MainScreen {...navigationProps} />
+      case '/buyers-portal':
+        return <BuyersPortalScreen {...navigationProps} />
+      case '/sellers-portal':
+        return <SellersPortalScreen {...navigationProps} />
+      case '/learn-portal':
+        return <LearnPortalScreen {...navigationProps} />
+      case '/marketing-portal':
+        return <MarketingPortalScreen {...navigationProps} />
       default:
         return <MainScreen {...navigationProps} />
     }

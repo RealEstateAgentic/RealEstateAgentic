@@ -20,7 +20,6 @@ A persistent navigation bar at the top of the application window provides access
   * **On Client Selection:** Activates the "Second Brain" RAG system for that specific client, preparing the AI to provide real-time insights for a call or meeting. The button could change color or state (e.g., glow) to indicate it's active.  
 * **Notifications Bell:** An icon that displays a badge for unread notifications (e.g., new leads, upcoming deadlines, document submissions).  
 * **User Profile/Settings:** Icon leading to account settings, preferences, and logout.
-
 ### **2\. Page: Home Dashboard**
 
 The Home Dashboard is the agent's command center, designed to provide an at-a-glance overview of their most critical tasks, appointments, and client statuses. The layout is modular, using "widgets" or "cards."

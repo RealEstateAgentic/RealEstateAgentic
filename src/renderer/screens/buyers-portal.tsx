@@ -7,15 +7,18 @@ import { useState } from 'react'
 import { KanbanColumn } from '../components/buyers-portal/kanban-column'
 import { ClientModal } from '../components/buyers-portal/client-modal'
 import { ClientCommunicationFeed } from '../components/buyers-portal/client-communication-feed'
+import { Button } from '../components/ui/button'
+import { Archive } from 'lucide-react'
 import { dummyData } from '../data/dummy-data'
 
 interface BuyersPortalScreenProps {
   navigate?: (path: string) => void
 }
 
-export function BuyersPortalScreen({}: BuyersPortalScreenProps) {
+export function BuyersPortalScreen({ navigate }: BuyersPortalScreenProps) {
   const [selectedClient, setSelectedClient] = useState<any>(null)
-  const { buyerClients } = dummyData
+  const [buyerClients, setBuyerClients] = useState(dummyData.buyerClients)
+  const [archivedClients, setArchivedClients] = useState(dummyData.archivedBuyerClients)
 
   const handleClientClick = (client: any) => {
     setSelectedClient(client)
@@ -23,6 +26,71 @@ export function BuyersPortalScreen({}: BuyersPortalScreenProps) {
 
   const handleCloseModal = () => {
     setSelectedClient(null)
+  }
+
+  const handleArchive = (client: any) => {
+    // Remove from active clients
+    const updatedBuyerClients = buyerClients.filter(c => c.id !== client.id)
+    setBuyerClients(updatedBuyerClients)
+    
+    // Add to archived clients with additional properties
+    const archivedClient = {
+      ...client,
+      archivedDate: new Date().toISOString(),
+      archivedFromStage: getStageName(client.stage)
+    }
+    setArchivedClients([archivedClient, ...archivedClients])
+    
+    // Close modal
+    setSelectedClient(null)
+  }
+
+  const handleProgress = (client: any) => {
+    const nextStage = getNextStage(client.stage)
+    if (nextStage) {
+      // Update client's stage
+      const updatedBuyerClients = buyerClients.map(c => 
+        c.id === client.id ? { ...c, stage: nextStage } : c
+      )
+      setBuyerClients(updatedBuyerClients)
+      
+      // Update selected client to reflect changes
+      setSelectedClient({ ...client, stage: nextStage })
+    }
+  }
+
+  const getNextStage = (currentStage: string) => {
+    switch (currentStage) {
+      case 'new_leads':
+        return 'active_search'
+      case 'active_search':
+        return 'under_contract'
+      case 'under_contract':
+        return 'closed'
+      default:
+        return null
+    }
+  }
+
+  const getStageName = (stage: string) => {
+    switch (stage) {
+      case 'new_leads':
+        return 'New Leads'
+      case 'active_search':
+        return 'Active Search'
+      case 'under_contract':
+        return 'Under Contract'
+      case 'closed':
+        return 'Closed'
+      default:
+        return stage
+    }
+  }
+
+  const handleBuyerArchive = () => {
+    if (navigate) {
+      navigate('/buyers-archive')
+    }
   }
 
   const kanbanStages = [
@@ -56,8 +124,22 @@ export function BuyersPortalScreen({}: BuyersPortalScreenProps) {
         </div>
 
         {/* Sidebar */}
-        <div className="w-80 p-6 border-l border-gray-200">
-          <ClientCommunicationFeed />
+        <div className="w-80 p-6 border-l border-gray-200 flex flex-col">
+          <div className="flex-1">
+            <ClientCommunicationFeed />
+          </div>
+          
+          {/* Buyer Archive Button */}
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <Button
+              onClick={handleBuyerArchive}
+              variant="outline"
+              className="w-full border-[#3B7097] text-[#3B7097] hover:bg-[#3B7097]/10"
+            >
+              <Archive className="size-4 mr-2" />
+              Buyer Archive
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -66,6 +148,8 @@ export function BuyersPortalScreen({}: BuyersPortalScreenProps) {
         <ClientModal
           client={selectedClient}
           onClose={handleCloseModal}
+          onArchive={handleArchive}
+          onProgress={handleProgress}
         />
       )}
     </div>

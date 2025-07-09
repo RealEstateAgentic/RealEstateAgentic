@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #ffffff;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .memo-header {
+            border: 3px solid #2c3e50;
+            padding: 25px;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 8px;
+        }
+        
+        .memo-header h1 {
+            color: #2c3e50;
+            font-size: 32px;
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .memo-header .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .memo-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .memo-field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .memo-field .label {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        
+        .memo-field .value {
+            color: #34495e;
+            font-size: 16px;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            border-left: 4px solid #3498db;
+            background: #f8f9fa;
+            border-radius: 0 6px 6px 0;
+        }
+        
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 20px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+        
+        .section-content {
+            line-height: 1.8;
+        }
+        
+        .section-content p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        .key-points {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .key-points h3 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .key-points ul {
+            margin-left: 20px;
+        }
+        
+        .key-points li {
+            margin-bottom: 8px;
+            color: #2e7d32;
+        }
+        
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .warning-box h3 {
+            color: #856404;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .warning-box p {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .risk-assessment {
+            background: #f8d7da;
+            border: 1px solid #dc3545;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .risk-assessment h3 {
+            color: #721c24;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .risk-assessment p {
+            color: #721c24;
+            margin-bottom: 10px;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .data-table th,
+        .data-table td {
+            border: 1px solid #dee2e6;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        .data-table th {
+            background: #2c3e50;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .data-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .data-table tr:hover {
+            background: #e3f2fd;
+        }
+        
+        .recommendations {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .recommendations h3 {
+            color: #1565c0;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .recommendations ol {
+            margin-left: 20px;
+        }
+        
+        .recommendations li {
+            margin-bottom: 10px;
+            color: #1565c0;
+        }
+        
+        .agent-signature {
+            margin-top: 40px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .agent-signature h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .signature-line {
+            border-bottom: 2px solid #2c3e50;
+            width: 300px;
+            margin: 20px 0 10px 0;
+        }
+        
+        .agent-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .agent-info div {
+            font-size: 14px;
+            color: #34495e;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #ecf0f1;
+            font-size: 12px;
+            color: #95a5a6;
+        }
+        
+        .confidential {
+            background: #f8f9fa;
+            border: 2px dashed #6c757d;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: 600;
+            color: #6c757d;
+        }
+        
+        @media print {
+            body {
+                padding: 20px;
+                max-width: none;
+            }
+            
+            .memo-header {
+                border: 2px solid #000;
+                background: #f8f9fa;
+            }
+            
+            .section {
+                border-left: 3px solid #000;
+                background: #f8f9fa;
+            }
+            
+            .key-points, .warning-box, .risk-assessment, .recommendations {
+                background: #f8f9fa;
+                border: 1px solid #000;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="memo-header">
+        <h1>Real Estate Memo</h1>
+        <div class="subtitle">Professional Analysis & Explanation</div>
+        
+        <div class="memo-details">
+            <div class="memo-field">
+                <span class="label">To:</span>
+                <span class="value">{{recipientName}}</span>
+            </div>
+            <div class="memo-field">
+                <span class="label">From:</span>
+                <span class="value">{{agentName}}</span>
+            </div>
+            <div class="memo-field">
+                <span class="label">Date:</span>
+                <span class="value">{{currentDate}}</span>
+            </div>
+            <div class="memo-field">
+                <span class="label">Re:</span>
+                <span class="value">{{subject}}</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="confidential">
+        CONFIDENTIAL & PRIVILEGED - FOR CLIENT USE ONLY
+    </div>
+    
+    <div class="section">
+        <h2>Executive Summary</h2>
+        <div class="section-content">
+            <p>{{executiveSummary}}</p>
+        </div>
+    </div>
+    
+    {{#if propertyDetails}}
+    <div class="section">
+        <h2>Property Information</h2>
+        <div class="section-content">
+            <table class="data-table">
+                <tbody>
+                    <tr>
+                        <th>Property Address</th>
+                        <td>{{propertyDetails.address}}</td>
+                    </tr>
+                    <tr>
+                        <th>Property Type</th>
+                        <td>{{propertyDetails.type}}</td>
+                    </tr>
+                    <tr>
+                        <th>Square Footage</th>
+                        <td>{{propertyDetails.squareFootage}} sq ft</td>
+                    </tr>
+                    <tr>
+                        <th>Year Built</th>
+                        <td>{{propertyDetails.yearBuilt}}</td>
+                    </tr>
+                    <tr>
+                        <th>Lot Size</th>
+                        <td>{{propertyDetails.lotSize}}</td>
+                    </tr>
+                    <tr>
+                        <th>MLS Number</th>
+                        <td>{{propertyDetails.mlsNumber}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {{/if}}
+    
+    <div class="section">
+        <h2>Detailed Analysis</h2>
+        <div class="section-content">
+            <p>{{detailedAnalysis}}</p>
+        </div>
+    </div>
+    
+    {{#if marketData}}
+    <div class="section">
+        <h2>Market Data & Comparables</h2>
+        <div class="section-content">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Property</th>
+                        <th>Sale Price</th>
+                        <th>Price/Sq Ft</th>
+                        <th>Days on Market</th>
+                        <th>Sale Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each marketData}}
+                    <tr>
+                        <td>{{this.address}}</td>
+                        <td>${{this.salePrice}}</td>
+                        <td>${{this.pricePerSqFt}}</td>
+                        <td>{{this.daysOnMarket}}</td>
+                        <td>{{this.saleDate}}</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {{/if}}
+    
+    {{#if keyPoints}}
+    <div class="key-points">
+        <h3>📝 Key Points</h3>
+        <ul>
+            {{#each keyPoints}}
+            <li>{{this}}</li>
+            {{/each}}
+        </ul>
+    </div>
+    {{/if}}
+    
+    {{#if concerns}}
+    <div class="warning-box">
+        <h3>⚠️ Areas of Concern</h3>
+        {{#each concerns}}
+        <p>{{this}}</p>
+        {{/each}}
+    </div>
+    {{/if}}
+    
+    {{#if risks}}
+    <div class="risk-assessment">
+        <h3>🚨 Risk Assessment</h3>
+        {{#each risks}}
+        <p><strong>{{this.category}}:</strong> {{this.description}}</p>
+        {{/each}}
+    </div>
+    {{/if}}
+    
+    {{#if recommendations}}
+    <div class="recommendations">
+        <h3>💡 Recommendations</h3>
+        <ol>
+            {{#each recommendations}}
+            <li>{{this}}</li>
+            {{/each}}
+        </ol>
+    </div>
+    {{/if}}
+    
+    <div class="section">
+        <h2>Conclusion</h2>
+        <div class="section-content">
+            <p>{{conclusion}}</p>
+        </div>
+    </div>
+    
+    <div class="agent-signature">
+        <h3>Professional Opinion</h3>
+        <p>This memo represents my professional analysis based on current market conditions, available data, and my experience in the {{marketArea}} real estate market.</p>
+        
+        <div class="signature-line"></div>
+        <p><strong>{{agentName}}</strong></p>
+        <p>{{agentTitle}}</p>
+        
+        <div class="agent-info">
+            <div><strong>License:</strong> {{licenseNumber}}</div>
+            <div><strong>Brokerage:</strong> {{brokerageName}}</div>
+            <div><strong>Phone:</strong> {{agentPhone}}</div>
+            <div><strong>Email:</strong> {{agentEmail}}</div>
+            <div><strong>Specialization:</strong> {{specialization}}</div>
+            <div><strong>Years Experience:</strong> {{yearsExperience}}</div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>This memo was prepared on {{currentDate}} by {{agentName}}, {{brokerageName}}</p>
+        <p>The information contained herein is confidential and proprietary. Distribution is limited to authorized parties only.</p>
+        <p>© {{currentYear}} {{brokerageName}}. All rights reserved.</p>
+    </div>
+</body>
+</html> 

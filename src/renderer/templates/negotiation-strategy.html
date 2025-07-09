@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            line-height: 1.6;
+            color: #2c3e50;
+            background-color: #ffffff;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .strategy-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        
+        .strategy-header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            text-align: center;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .strategy-header .subtitle {
+            text-align: center;
+            font-size: 18px;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+        
+        .strategy-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .strategy-field {
+            background: rgba(255,255,255,0.2);
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        .strategy-field .label {
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+        
+        .strategy-field .value {
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .market-position {
+            background: #e8f5e8;
+            border: 2px solid #4caf50;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 25px 0;
+            position: relative;
+        }
+        
+        .market-position::before {
+            content: '📊';
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: #4caf50;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 50%;
+            font-size: 20px;
+        }
+        
+        .market-position h2 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+            font-size: 24px;
+            margin-left: 40px;
+        }
+        
+        .position-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .position-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid #4caf50;
+        }
+        
+        .position-card h3 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .position-card .metric {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2e7d32;
+            margin-bottom: 5px;
+        }
+        
+        .position-card .description {
+            color: #34495e;
+            font-size: 14px;
+        }
+        
+        .strategy-section {
+            margin: 30px 0;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 5px solid #3498db;
+        }
+        
+        .strategy-section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .strategy-section .content {
+            line-height: 1.8;
+        }
+        
+        .tactics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .tactic-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-top: 4px solid #e74c3c;
+        }
+        
+        .tactic-card h3 {
+            color: #e74c3c;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .tactic-card .priority {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .tactic-card .priority.high {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .tactic-card .priority.medium {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+        
+        .tactic-card .priority.low {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .risk-matrix {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .risk-card {
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .risk-card.strengths {
+            background: #e8f5e8;
+            border-left: 4px solid #4caf50;
+        }
+        
+        .risk-card.weaknesses {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+        }
+        
+        .risk-card.opportunities {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .risk-card.threats {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+        }
+        
+        .risk-card h3 {
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .risk-card.strengths h3 { color: #2e7d32; }
+        .risk-card.weaknesses h3 { color: #c62828; }
+        .risk-card.opportunities h3 { color: #1565c0; }
+        .risk-card.threats h3 { color: #f57c00; }
+        
+        .risk-card ul {
+            margin-left: 20px;
+        }
+        
+        .risk-card li {
+            margin-bottom: 8px;
+            color: #34495e;
+        }
+        
+        .timeline {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .timeline-item .phase {
+            background: #3498db;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: 600;
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        .timeline-item .description {
+            flex: 1;
+        }
+        
+        .timeline-item .timeframe {
+            color: #7f8c8d;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .action-items {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .action-items h3 {
+            color: #856404;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        
+        .action-items ol {
+            margin-left: 20px;
+        }
+        
+        .action-items li {
+            margin-bottom: 15px;
+            color: #856404;
+            font-weight: 500;
+        }
+        
+        .contingency-plan {
+            background: #f8d7da;
+            border: 1px solid #dc3545;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .contingency-plan h3 {
+            color: #721c24;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        
+        .contingency-plan .scenario {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            border-left: 4px solid #dc3545;
+        }
+        
+        .contingency-plan .scenario h4 {
+            color: #721c24;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .contingency-plan .scenario p {
+            color: #721c24;
+            margin-bottom: 10px;
+        }
+        
+        .agent-recommendation {
+            background: #e3f2fd;
+            border: 2px solid #2196f3;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .agent-recommendation h3 {
+            color: #1565c0;
+            margin-bottom: 20px;
+            font-size: 20px;
+        }
+        
+        .agent-recommendation p {
+            color: #1565c0;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .signature-section {
+            margin-top: 40px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .signature-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .signature-line {
+            border-bottom: 2px solid #2c3e50;
+            width: 300px;
+            margin: 20px 0 10px 0;
+        }
+        
+        .agent-credentials {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .agent-credentials div {
+            font-size: 14px;
+            color: #34495e;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #ecf0f1;
+            font-size: 12px;
+            color: #95a5a6;
+        }
+        
+        @media print {
+            body {
+                padding: 20px;
+                max-width: none;
+            }
+            
+            .strategy-header {
+                background: #667eea;
+                color: white;
+            }
+            
+            .market-position, .strategy-section, .action-items, .contingency-plan {
+                background: #f8f9fa;
+                border: 1px solid #000;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="strategy-header">
+        <h1>Negotiation Strategy</h1>
+        <div class="subtitle">Tactical Plan for Real Estate Transaction</div>
+        
+        <div class="strategy-details">
+            <div class="strategy-field">
+                <div class="label">Property:</div>
+                <div class="value">{{propertyAddress}}</div>
+            </div>
+            <div class="strategy-field">
+                <div class="label">Client:</div>
+                <div class="value">{{clientName}}</div>
+            </div>
+            <div class="strategy-field">
+                <div class="label">Agent:</div>
+                <div class="value">{{agentName}}</div>
+            </div>
+            <div class="strategy-field">
+                <div class="label">Date:</div>
+                <div class="value">{{currentDate}}</div>
+            </div>
+            <div class="strategy-field">
+                <div class="label">Market Type:</div>
+                <div class="value">{{marketType}}</div>
+            </div>
+            <div class="strategy-field">
+                <div class="label">Transaction Type:</div>
+                <div class="value">{{transactionType}}</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="market-position">
+        <h2>Market Position Analysis</h2>
+        <div class="position-grid">
+            <div class="position-card">
+                <h3>List Price</h3>
+                <div class="metric">${{listPrice}}</div>
+                <div class="description">Current asking price</div>
+            </div>
+            <div class="position-card">
+                <h3>Market Value</h3>
+                <div class="metric">${{marketValue}}</div>
+                <div class="description">Estimated fair market value</div>
+            </div>
+            <div class="position-card">
+                <h3>Days on Market</h3>
+                <div class="metric">{{daysOnMarket}}</div>
+                <div class="description">Time listed for sale</div>
+            </div>
+            <div class="position-card">
+                <h3>Price per Sq Ft</h3>
+                <div class="metric">${{pricePerSqFt}}</div>
+                <div class="description">Comparative pricing metric</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="strategy-section">
+        <h2>🎯 Overall Strategy</h2>
+        <div class="content">
+            <p>{{overallStrategy}}</p>
+        </div>
+    </div>
+    
+    <div class="strategy-section">
+        <h2>⚔️ Negotiation Tactics</h2>
+        <div class="tactics-grid">
+            {{#each tactics}}
+            <div class="tactic-card">
+                <div class="priority {{this.priority}}">{{this.priority}} Priority</div>
+                <h3>{{this.title}}</h3>
+                <p>{{this.description}}</p>
+            </div>
+            {{/each}}
+        </div>
+    </div>
+    
+    <div class="strategy-section">
+        <h2>📊 SWOT Analysis</h2>
+        <div class="risk-matrix">
+            <div class="risk-card strengths">
+                <h3>💪 Strengths</h3>
+                <ul>
+                    {{#each swot.strengths}}
+                    <li>{{this}}</li>
+                    {{/each}}
+                </ul>
+            </div>
+            <div class="risk-card weaknesses">
+                <h3>⚠️ Weaknesses</h3>
+                <ul>
+                    {{#each swot.weaknesses}}
+                    <li>{{this}}</li>
+                    {{/each}}
+                </ul>
+            </div>
+            <div class="risk-card opportunities">
+                <h3>🚀 Opportunities</h3>
+                <ul>
+                    {{#each swot.opportunities}}
+                    <li>{{this}}</li>
+                    {{/each}}
+                </ul>
+            </div>
+            <div class="risk-card threats">
+                <h3>⚡ Threats</h3>
+                <ul>
+                    {{#each swot.threats}}
+                    <li>{{this}}</li>
+                    {{/each}}
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="strategy-section">
+        <h2>📅 Negotiation Timeline</h2>
+        <div class="timeline">
+            {{#each timeline}}
+            <div class="timeline-item">
+                <div class="phase">Phase {{this.phase}}</div>
+                <div class="description">{{this.description}}</div>
+                <div class="timeframe">{{this.timeframe}}</div>
+            </div>
+            {{/each}}
+        </div>
+    </div>
+    
+    <div class="action-items">
+        <h3>📋 Immediate Action Items</h3>
+        <ol>
+            {{#each actionItems}}
+            <li>{{this}}</li>
+            {{/each}}
+        </ol>
+    </div>
+    
+    <div class="contingency-plan">
+        <h3>🔄 Contingency Scenarios</h3>
+        {{#each contingencies}}
+        <div class="scenario">
+            <h4>Scenario: {{this.title}}</h4>
+            <p><strong>Trigger:</strong> {{this.trigger}}</p>
+            <p><strong>Response:</strong> {{this.response}}</p>
+        </div>
+        {{/each}}
+    </div>
+    
+    <div class="agent-recommendation">
+        <h3>🎯 Agent Recommendation</h3>
+        <p>{{recommendation}}</p>
+        <p><strong>Confidence Level:</strong> {{confidenceLevel}}</p>
+        <p><strong>Expected Outcome:</strong> {{expectedOutcome}}</p>
+    </div>
+    
+    <div class="signature-section">
+        <h3>Professional Assessment</h3>
+        <p>This negotiation strategy has been developed based on current market conditions, property analysis, and {{yearsExperience}} years of experience in the {{marketArea}} market.</p>
+        
+        <div class="signature-line"></div>
+        <p><strong>{{agentName}}</strong></p>
+        <p>{{agentTitle}}</p>
+        
+        <div class="agent-credentials">
+            <div><strong>License:</strong> {{licenseNumber}}</div>
+            <div><strong>Brokerage:</strong> {{brokerageName}}</div>
+            <div><strong>Phone:</strong> {{agentPhone}}</div>
+            <div><strong>Email:</strong> {{agentEmail}}</div>
+            <div><strong>Specialization:</strong> {{specialization}}</div>
+            <div><strong>Certifications:</strong> {{certifications}}</div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>This strategy document was prepared on {{currentDate}} by {{agentName}}, {{brokerageName}}</p>
+        <p>This document contains confidential information and strategic insights for authorized use only.</p>
+        <p>© {{currentYear}} {{brokerageName}}. All rights reserved.</p>
+    </div>
+</body>
+</html> 

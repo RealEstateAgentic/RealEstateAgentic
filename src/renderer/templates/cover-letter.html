@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            line-height: 1.6;
+            color: #2c3e50;
+            background-color: #ffffff;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        .letterhead {
+            text-align: center;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .letterhead h1 {
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+        
+        .letterhead .subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        
+        .contact-info {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            font-size: 14px;
+            color: #34495e;
+        }
+        
+        .contact-info div {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .date-section {
+            text-align: right;
+            margin-bottom: 30px;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        
+        .recipient-section {
+            margin-bottom: 30px;
+        }
+        
+        .recipient-section h3 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+        
+        .property-highlight {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .property-highlight h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 18px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+        
+        .property-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .property-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .property-item .label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .property-item .value {
+            color: #27ae60;
+            font-weight: 700;
+        }
+        
+        .content-section {
+            margin: 30px 0;
+            line-height: 1.8;
+        }
+        
+        .content-section p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        .signature-section {
+            margin-top: 40px;
+            text-align: left;
+        }
+        
+        .signature-section .closing {
+            margin-bottom: 50px;
+        }
+        
+        .signature-line {
+            border-bottom: 1px solid #bdc3c7;
+            width: 200px;
+            margin: 10px 0;
+        }
+        
+        .agent-credentials {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            font-size: 13px;
+            color: #34495e;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ecf0f1;
+            font-size: 12px;
+            color: #95a5a6;
+        }
+        
+        .emphasis {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        
+        .highlight {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 15px 0;
+        }
+        
+        @media print {
+            body {
+                padding: 20px;
+                max-width: none;
+            }
+            
+            .letterhead {
+                border-bottom: 2px solid #000;
+            }
+            
+            .property-highlight {
+                background: #f8f9fa;
+                box-shadow: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="letterhead">
+        <h1>{{agentName}}</h1>
+        <div class="subtitle">Licensed Real Estate Professional</div>
+        <div class="contact-info">
+            <div>📧 {{agentEmail}}</div>
+            <div>📱 {{agentPhone}}</div>
+            <div>🏢 {{brokerageName}}</div>
+        </div>
+    </div>
+    
+    <div class="date-section">
+        {{currentDate}}
+    </div>
+    
+    <div class="recipient-section">
+        <h3>{{recipientName}}</h3>
+        <div>{{recipientTitle}}</div>
+        <div>{{recipientCompany}}</div>
+        <div>{{recipientAddress}}</div>
+    </div>
+    
+    <div class="property-highlight">
+        <h3>🏠 Property & Offer Summary</h3>
+        <div class="property-grid">
+            <div class="property-item">
+                <span class="label">Property Address:</span>
+                <span class="value">{{propertyAddress}}</span>
+            </div>
+            <div class="property-item">
+                <span class="label">Offer Price:</span>
+                <span class="value">${{offerPrice}}</span>
+            </div>
+            <div class="property-item">
+                <span class="label">Buyer:</span>
+                <span class="value">{{buyerName}}</span>
+            </div>
+            <div class="property-item">
+                <span class="label">Earnest Money:</span>
+                <span class="value">${{earnestMoney}}</span>
+            </div>
+            <div class="property-item">
+                <span class="label">Closing Date:</span>
+                <span class="value">{{closingDate}}</span>
+            </div>
+            <div class="property-item">
+                <span class="label">Inspection Period:</span>
+                <span class="value">{{inspectionPeriod}} days</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="content-section">
+        <p><strong>Dear {{recipientName}},</strong></p>
+        
+        <p>I am pleased to submit this offer on behalf of my client, <strong>{{buyerName}}</strong>, for the property located at <strong>{{propertyAddress}}</strong>. After careful consideration of the market conditions and property features, we believe this offer represents a fair and competitive proposal.</p>
+        
+        {{#if marketAnalysis}}
+        <div class="highlight">
+            <p><strong>Market Analysis:</strong> {{marketAnalysis}}</p>
+        </div>
+        {{/if}}
+        
+        <p>{{customMessage}}</p>
+        
+        {{#if buyerStrengths}}
+        <p><strong>Buyer Qualifications:</strong></p>
+        <ul>
+            {{#each buyerStrengths}}
+            <li>{{this}}</li>
+            {{/each}}
+        </ul>
+        {{/if}}
+        
+        {{#if contingencies}}
+        <p><strong>Key Contingencies:</strong></p>
+        <ul>
+            {{#each contingencies}}
+            <li>{{this}}</li>
+            {{/each}}
+        </ul>
+        {{/if}}
+        
+        <p>This offer is submitted with <span class="emphasis">{{offerExpiry}}</span> expiration. We are prepared to proceed quickly and professionally through the transaction process.</p>
+        
+        <p>Please review the attached purchase agreement and addenda. I am available to discuss any questions or negotiate terms that work for all parties involved.</p>
+        
+        <p>Thank you for your time and consideration. I look forward to your response.</p>
+    </div>
+    
+    <div class="signature-section">
+        <div class="closing">
+            <p>Professional regards,</p>
+        </div>
+        
+        <div class="signature-line"></div>
+        <p><strong>{{agentName}}</strong></p>
+        <p>{{agentTitle}}</p>
+        <p>{{brokerageName}}</p>
+        
+        <div class="agent-credentials">
+            <p><strong>License:</strong> {{licenseNumber}} | <strong>MLS:</strong> {{mlsNumber}}</p>
+            <p><strong>Specialization:</strong> {{specialization}}</p>
+            <p><strong>Years of Experience:</strong> {{yearsExperience}}</p>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>This offer letter was generated on {{currentDate}} • {{brokerageName}} • All Rights Reserved</p>
+        <p>{{disclaimer}}</p>
+    </div>
+</body>
+</html> 

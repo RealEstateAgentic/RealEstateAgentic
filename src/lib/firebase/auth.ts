@@ -1,82 +1,103 @@
 /**
- * Firebase Authentication Service
- * Handles user authentication for the Real Estate Agentic application
+ * Firebase Authentication Module
+ * Handles user authentication, registration, and profile management for agents
  */
 
 import {
-  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
-  onAuthStateChanged,
-  updateProfile,
   sendPasswordResetEmail,
-  sendEmailVerification,
+  updateProfile,
+  onAuthStateChanged,
   type User,
-  type UserCredential,
 } from 'firebase/auth'
-import { auth } from './config'
-import type { AuthUser } from '../../shared/types'
+import { doc, getDoc } from 'firebase/firestore'
+import { auth, db } from './config'
+import type {
+  AuthUser,
+  UserProfile,
+  AgentProfile,
+  UserRole,
+  AgentRegistrationData,
+} from '../../shared/types'
+import { registerAgent, signInAgent } from './auth-agent'
 
 /**
- * Register a new user with email and password
+ * Register a new agent
+ */
+export const registerUserAsAgent = async (
+  registrationData: AgentRegistrationData
+): Promise<AgentProfile> => {
+  return await registerAgent(registrationData)
+}
+
+/**
+ * Sign in with role-based authentication - agents only
+ */
+export const signInUserWithRole = async (
+  email: string,
+  password: string,
+  expectedRole?: UserRole
+): Promise<UserProfile> => {
+  try {
+    // First, get the user's role from Firestore
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    )
+    const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid))
+
+    if (!userDoc.exists()) {
+      throw new Error('User profile not found')
+    }
+
+    const userData = userDoc.data()
+    const userRole = userData.role
+
+    // Validate expected role if provided
+    if (expectedRole && userRole !== expectedRole) {
+      throw new Error(
+        `Invalid user type. Expected ${expectedRole} credentials.`
+      )
+    }
+
+    // Sign out and re-sign in with role-specific service
+    await signOut(auth)
+
+    if (userRole === 'agent') {
+      return await signInAgent(email, password)
+    } else {
+      throw new Error('Invalid user role - only agents are supported')
+    }
+  } catch (error: any) {
+    throw new Error(`Role-based sign in failed: ${error.message}`)
+  }
+}
+
+/**
+ * Legacy register function - deprecated, use role-specific registration
+ * @deprecated Use registerUserAsAgent instead
  */
 export const registerUser = async (
   email: string,
   password: string,
   displayName?: string
 ): Promise<AuthUser> => {
-  try {
-    const userCredential: UserCredential = await createUserWithEmailAndPassword(
-      auth,
-      email,
-      password
-    )
-
-    // Update profile with display name if provided
-    if (displayName) {
-      await updateProfile(userCredential.user, { displayName })
-    }
-
-    // Send email verification
-    await sendEmailVerification(userCredential.user)
-
-    return {
-      uid: userCredential.user.uid,
-      email: userCredential.user.email,
-      displayName: userCredential.user.displayName,
-      emailVerified: userCredential.user.emailVerified,
-      createdAt: new Date().toISOString(),
-    }
-  } catch (error) {
-    throw new Error(`Registration failed: ${error}`)
-  }
+  throw new Error(
+    'Legacy registration deprecated. Use registerUserAsAgent instead.'
+  )
 }
 
 /**
- * Sign in user with email and password
+ * Legacy sign in function - deprecated, use role-based sign in
+ * @deprecated Use signInUserWithRole instead
  */
 export const signInUser = async (
   email: string,
   password: string
 ): Promise<AuthUser> => {
-  try {
-    const userCredential: UserCredential = await signInWithEmailAndPassword(
-      auth,
-      email,
-      password
-    )
-
-    return {
-      uid: userCredential.user.uid,
-      email: userCredential.user.email,
-      displayName: userCredential.user.displayName,
-      emailVerified: userCredential.user.emailVerified,
-      createdAt:
-        userCredential.user.metadata.creationTime || new Date().toISOString(),
-    }
-  } catch (error) {
-    throw new Error(`Sign in failed: ${error}`)
-  }
+  throw new Error('Legacy sign in deprecated. Use signInUserWithRole instead.')
 }
 
 /**
@@ -127,20 +148,82 @@ export const getCurrentUser = (): User | null => {
 }
 
 /**
- * Listen to authentication state changes
+ * Listen to authentication state changes with role-based user profiles
  */
 export const onAuthStateChange = (
+  callback: (user: UserProfile | null) => void
+) => {
+  return onAuthStateChanged(auth, async user => {
+    if (user) {
+      try {
+        // Get user profile from Firestore to determine role
+        const userDoc = await getDoc(doc(db, 'users', user.uid))
+
+        if (!userDoc.exists()) {
+          callback(null)
+          return
+        }
+
+        const userData = userDoc.data()
+        const userRole = userData.role
+
+        // Return role-based profile - only support agents
+        const baseProfile = {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+          emailVerified: user.emailVerified,
+          role: userRole,
+          createdAt:
+            userData.createdAt?.toDate?.()?.toISOString() || userData.createdAt,
+          updatedAt:
+            userData.updatedAt?.toDate?.()?.toISOString() || userData.updatedAt,
+        }
+
+        if (userRole === 'agent') {
+          callback({
+            ...baseProfile,
+            licenseNumber: userData.licenseNumber,
+            brokerage: userData.brokerage,
+            phoneNumber: userData.phoneNumber,
+            profileImageUrl: userData.profileImageUrl,
+            bio: userData.bio,
+            specialties: userData.specialties || [],
+            yearsExperience: userData.yearsExperience,
+            isActive: userData.isActive,
+          } as AgentProfile)
+        } else {
+          callback(null)
+        }
+      } catch (error) {
+        callback(null)
+      }
+    } else {
+      callback(null)
+    }
+  })
+}
+
+/**
+ * Legacy auth state change listener
+ * @deprecated Use onAuthStateChange instead
+ */
+export const onLegacyAuthStateChange = (
   callback: (user: AuthUser | null) => void
 ) => {
   return onAuthStateChanged(auth, user => {
     if (user) {
-      callback({
+      // Convert Firebase User to AuthUser for legacy compatibility
+      const authUser: AuthUser = {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
         emailVerified: user.emailVerified,
-        createdAt: user.metadata.creationTime || new Date().toISOString(),
-      })
+        role: 'agent', // Default role for legacy compatibility
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      callback(authUser)
     } else {
       callback(null)
     }
@@ -151,5 +234,74 @@ export const onAuthStateChange = (
  * Check if user is authenticated
  */
 export const isAuthenticated = (): boolean => {
-  return auth.currentUser !== null
+  return !!auth.currentUser
+}
+
+/**
+ * Get current user profile with role information
+ */
+export const getCurrentUserProfile = async (): Promise<UserProfile | null> => {
+  try {
+    const user = auth.currentUser
+    if (!user) {
+      return null
+    }
+
+    const userDoc = await getDoc(doc(db, 'users', user.uid))
+    if (!userDoc.exists()) {
+      return null
+    }
+
+    const userData = userDoc.data()
+    const userRole = userData.role
+
+    const baseProfile = {
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      emailVerified: user.emailVerified,
+      role: userRole,
+      createdAt:
+        userData.createdAt?.toDate?.()?.toISOString() || userData.createdAt,
+      updatedAt:
+        userData.updatedAt?.toDate?.()?.toISOString() || userData.updatedAt,
+    }
+
+    if (userRole === 'agent') {
+      return {
+        ...baseProfile,
+        licenseNumber: userData.licenseNumber,
+        brokerage: userData.brokerage,
+        phoneNumber: userData.phoneNumber,
+        profileImageUrl: userData.profileImageUrl,
+        bio: userData.bio,
+        specialties: userData.specialties || [],
+        yearsExperience: userData.yearsExperience,
+        isActive: userData.isActive,
+      } as AgentProfile
+    }
+
+    return null
+  } catch (error) {
+    return null
+  }
+}
+
+/**
+ * Check if user has specific role
+ */
+export const hasRole = async (role: UserRole): Promise<boolean> => {
+  try {
+    const profile = await getCurrentUserProfile()
+    return profile?.role === role
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Check if user is an agent
+ */
+export const isAgent = async (): Promise<boolean> => {
+  return await hasRole('agent')
 }

@@ -18,13 +18,61 @@ export interface WindowCreationByIPC {
 }
 // ========== FIREBASE TYPES ==========
 
+// ========== USER ROLE TYPES ==========
+
+export const USER_ROLES = {
+  AGENT: 'agent',
+} as const
+
+export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES]
+
+export const USER_ROLE_INFO: Record<
+  UserRole,
+  { name: string; description: string }
+> = {
+  [USER_ROLES.AGENT]: {
+    name: 'Real Estate Agent',
+    description: 'Licensed real estate professional',
+  },
+}
+
 // Define Firebase types locally to avoid early initialization
 export interface AuthUser {
   uid: string
   email: string | null
   displayName: string | null
   emailVerified: boolean
+  role: UserRole
   createdAt: string
+  updatedAt: string
+}
+
+// Extended profile information for agents
+export interface AgentProfile extends AuthUser {
+  role: typeof USER_ROLES.AGENT
+  licenseNumber: string
+  brokerage: string
+  phoneNumber: string
+  profileImageUrl?: string
+  bio?: string
+  specialties: string[]
+  yearsExperience: number
+  isActive: boolean
+}
+
+// Union type for all user profiles
+export type UserProfile = AgentProfile
+
+// Registration data for new users
+export interface AgentRegistrationData {
+  email: string
+  password: string
+  displayName: string
+  licenseNumber: string
+  brokerage: string
+  phoneNumber: string
+  specialties: string[]
+  yearsExperience: number
 }
 
 export interface Property {
@@ -41,6 +89,30 @@ export interface Property {
   photos?: string[]
   createdAt: Date
   updatedAt: Date
+}
+
+export interface RepairEstimate {
+  id?: string
+  propertyId: string
+  userId: string
+  name: string
+  items: RepairItem[]
+  totalCost: number
+  status: 'draft' | 'completed' | 'approved'
+  notes?: string
+  createdAt: Date
+  updatedAt: Date
+}
+
+export interface RepairItem {
+  id: string
+  category: string
+  description: string
+  quantity: number
+  unitCost: number
+  totalCost: number
+  priority: 'low' | 'medium' | 'high'
+  isCustom: boolean
 }
 
 export interface FileUploadResult {

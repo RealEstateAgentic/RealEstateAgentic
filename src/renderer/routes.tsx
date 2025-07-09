@@ -56,16 +56,6 @@ export function App() {
         return <MarketingPortalScreen {...navigationProps} />
       case '/':
         return <MainScreen {...navigationProps} />
-      case '/buyers-portal':
-        return <BuyersPortalScreen {...navigationProps} />
-      case '/buyers-archive':
-        return <BuyersArchiveScreen {...navigationProps} />
-      case '/sellers-portal':
-        return <SellersPortalScreen {...navigationProps} />
-      case '/learn-portal':
-        return <LearnPortalScreen {...navigationProps} />
-      case '/marketing-portal':
-        return <MarketingPortalScreen {...navigationProps} />
       default:
         return <MainScreen {...navigationProps} />
     }

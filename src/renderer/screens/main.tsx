@@ -84,19 +84,6 @@ export function MainScreen({ navigate }: MainScreenProps) {
             </Button>
           </div>
         </div>
-
-        {/* Test Button */}
-        <div className="text-center">
-          <Button
-            onClick={() => {
-              console.log('Test button clicked!')
-              alert('Button click works!')
-            }}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3"
-          >
-            Test Click (Should Show Alert)
-          </Button>
-        </div>
       </div>
     </div>
   )

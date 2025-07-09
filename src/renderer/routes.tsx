@@ -1,23 +1,37 @@
 /**
  * Simple application routing for Electron app
- * Uses standard state-based navigation
+ * Uses browser history API for navigation
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Layout } from './components/layout'
 import { MainScreen } from './screens/main'
-import { RepairEstimatorScreen } from './screens/repair-estimator'
 import { BuyersPortalScreen } from './screens/buyers-portal'
 import { BuyersArchiveScreen } from './screens/buyers-archive'
 import { SellersPortalScreen } from './screens/sellers-portal'
 import { LearnPortalScreen } from './screens/learn-portal'
 import { MarketingPortalScreen } from './screens/marketing-portal'
+import { RepairEstimator } from './screens/repair-estimator'
 
 export function App() {
   const [currentRoute, setCurrentRoute] = useState('/')
   
+  // Initialize route from current URL
+  useEffect(() => {
+    setCurrentRoute(window.location.pathname)
+    
+    // Listen for back/forward navigation
+    const handlePopState = () => {
+      setCurrentRoute(window.location.pathname)
+    }
+    
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+  
   // Simple navigation function
   const navigate = (path: string) => {
+    window.history.pushState({}, '', path)
     setCurrentRoute(path)
   }
 
@@ -25,6 +39,10 @@ export function App() {
   const navigationProps = { navigate }
 
   const renderCurrentScreen = () => {
+    if (currentRoute.startsWith('/repair-estimator')) {
+      return <RepairEstimator />
+    }
+    
     switch (currentRoute) {
       case '/buyers-portal':
         return <BuyersPortalScreen {...navigationProps} />
@@ -36,8 +54,8 @@ export function App() {
         return <LearnPortalScreen {...navigationProps} />
       case '/marketing-portal':
         return <MarketingPortalScreen {...navigationProps} />
-      case '/repair-estimator':
-        return <RepairEstimatorScreen />
+      case '/':
+        return <MainScreen {...navigationProps} />
       default:
         return <MainScreen {...navigationProps} />
     }

@@ -35,7 +35,7 @@ export function Calendar() {
       case 'consultation': return 'bg-[#A9D09E] text-white'
       case 'closing': return 'bg-[#3B7097] text-white'
       case 'inspection': return 'bg-[#F6E2BC] text-gray-800'
-      case 'listing': return 'bg-purple-100 text-purple-800'
+      case 'listing': return 'bg-[#A9D09E]/30 text-gray-800'
       default: return 'bg-gray-100 text-gray-800'
     }
   }

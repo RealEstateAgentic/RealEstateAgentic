@@ -18,10 +18,13 @@ import {
   serverTimestamp,
 } from 'firebase/firestore'
 import { auth, db } from './config'
-import type {
-  AgentProfile,
-  AgentRegistrationData,
-} from '../../shared/types'
+import {
+  isFirebaseAvailable,
+  mockRegisterAgent,
+  mockSignInAgent,
+} from './mock-auth'
+import { debugAgentAuth } from './debug-auth'
+import type { AgentProfile, AgentRegistrationData } from '../../shared/types'
 import { getCurrentUser } from './auth'
 
 /**
@@ -31,6 +34,12 @@ export const registerAgent = async (
   registrationData: AgentRegistrationData
 ): Promise<AgentProfile> => {
   try {
+    // Use mock authentication if Firebase is not available
+    if (!isFirebaseAvailable()) {
+      console.log('Using mock authentication for agent registration')
+      return await mockRegisterAgent(registrationData)
+    }
+
     const { email, password, displayName, ...agentDetails } = registrationData
 
     // Create Firebase Auth user
@@ -87,6 +96,12 @@ export const signInAgent = async (
   password: string
 ): Promise<AgentProfile> => {
   try {
+    // Use mock authentication if Firebase is not available
+    if (!isFirebaseAvailable()) {
+      console.log('Using mock authentication for agent sign in')
+      return await mockSignInAgent(email, password)
+    }
+
     // Sign in with Firebase Auth
     const userCredential = await signInWithEmailAndPassword(
       auth,
@@ -98,7 +113,10 @@ export const signInAgent = async (
     const agentProfile = await getAgentProfile(userCredential.user.uid)
 
     if (!agentProfile) {
-      throw new Error('Agent profile not found')
+      console.log('⚠️ Agent profile not found, attempting debug and auto-fix...')
+      // Use debug function to diagnose and fix the issue
+      const debugResult = await debugAgentAuth(email, password)
+      return debugResult as AgentProfile
     }
 
     if (agentProfile.role !== 'agent') {
@@ -111,6 +129,16 @@ export const signInAgent = async (
 
     return agentProfile
   } catch (error: any) {
+    // If normal sign in fails, try debug function for detailed diagnosis
+    if (error.message.includes('Agent profile not found')) {
+      console.log('🔧 Attempting to debug and fix authentication issue...')
+      try {
+        const debugResult = await debugAgentAuth(email, password)
+        return debugResult as AgentProfile
+      } catch (debugError: any) {
+        throw new Error(`Agent sign in failed: ${debugError.message}`)
+      }
+    }
     throw new Error(`Agent sign in failed: ${error.message}`)
   }
 }

@@ -56,8 +56,6 @@ export function App() {
         return <MarketingPortalScreen {...navigationProps} />
       case '/':
         return <MainScreen {...navigationProps} />
-      default:
-        return <MainScreen {...navigationProps} />
     }
   }
 

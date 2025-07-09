@@ -5,14 +5,14 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { 
-  AuthUser, 
+  type AuthUser, 
   onAuthStateChange, 
   signInUser, 
   signOutUser, 
   registerUser,
-  Property,
+  type Property,
   getUserProperties,
-  RepairEstimate,
+  type RepairEstimate,
   getPropertyRepairEstimates,
   handleFirebaseError
 } from './index'
@@ -224,7 +224,7 @@ export const useFormState = <T extends Record<string, any>>(initialState: T) => 
     setErrors(prev => ({ ...prev, [field]: error }))
   }, [])
 
-  const markFieldTouched = useCallback((field: keyof T, isTouched: boolean = true) => {
+  const markFieldTouched = useCallback((field: keyof T, isTouched = true) => {
     setTouched(prev => ({ ...prev, [field]: isTouched }))
   }, [])
 

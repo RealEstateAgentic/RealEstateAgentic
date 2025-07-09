@@ -11,9 +11,6 @@ import {
   deleteObject,
   listAll,
   getMetadata,
-  UploadTask,
-  StorageReference,
-  FullMetadata,
 } from 'firebase/storage'
 import { storage } from './config'
 import { getCurrentUser } from './auth'

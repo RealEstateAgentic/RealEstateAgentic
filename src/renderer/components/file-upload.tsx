@@ -6,6 +6,7 @@
 
 import { useState, useRef } from 'react'
 import { Upload, FileText, X } from 'lucide-react'
+import { Button } from './ui/button'
 
 interface FileUploadProps {
   title?: string
@@ -138,12 +139,13 @@ export function FileUpload({
             </p>
             <p className="text-gray-400 mb-4">
               {subtitle}{' '}
-              <button
+              <Button
+                variant="link"
                 onClick={handleBrowseClick}
                 className="text-teal-400 hover:text-teal-300 underline transition-colors"
               >
                 browse files
-              </button>
+              </Button>
             </p>
             <p className="text-sm text-gray-500">
               Supports: Images, PDF, DOC, DOCX
@@ -171,12 +173,13 @@ export function FileUpload({
                     <p className="text-sm text-gray-400">{formatFileSize(file.size)}</p>
                   </div>
                 </div>
-                <button
+                <Button
+                  variant="ghost"
                   onClick={() => removeFile(index)}
                   className="p-2 text-gray-400 hover:text-red-400 transition-colors"
                 >
                   <X className="size-4" />
-                </button>
+                </Button>
               </div>
             ))}
           </div>

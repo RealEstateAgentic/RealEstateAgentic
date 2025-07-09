@@ -28,25 +28,19 @@
   },
   "dependencies": {
     "@types/marked": "^5.0.2",
-    "@types/pdfkit": "^0.14.0",
-    "@types/uuid": "^10.0.0",
+    "@types/puppeteer": "^5.4.7",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "electron-router-dom": "^2.1.0",
     "firebase": "^11.10.0",
-    "html-pdf-node": "^1.0.8",
     "lucide-react": "^0.477.0",
     "marked": "^16.0.0",
-    "openai": "^5.8.3",
-    "pdfkit": "^0.17.1",
-    "pdfkit-table": "^0.1.99",
     "puppeteer": "^24.12.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.2.0",
     "tailwind-merge": "^3.0.2",
-    "tailwindcss-animate": "^1.0.7",
-    "uuid": "^11.1.0"
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

@@ -16,7 +16,6 @@ export interface WindowCreationByIPC {
   window(): BrowserWindowOrNull
   callback(window: BrowserWindow, event: IpcMainInvokeEvent): void
 }
-
 // ========== FIREBASE TYPES ==========
 
 // ========== USER ROLE TYPES ==========
@@ -124,7 +123,6 @@ export interface Property {
   yearBuilt?: number
   description?: string
   photos?: string[]
-  repairEstimates?: RepairEstimate[]
   createdAt: Date
   updatedAt: Date
 }
@@ -193,4 +191,47 @@ export const PROPERTY_TYPE_INFO: Record<
     name: 'Land',
     description: 'Vacant land or lot',
   },
+}
+/**
+ * PDF API types for IPC communication
+ */
+export interface PDFGenerateData {
+  htmlContent: string
+  title: string
+  filename: string
+  additionalStyles?: string
+}
+
+export interface PDFGenerateResult {
+  success: boolean
+  filePath?: string
+  message?: string
+  error?: string
+}
+
+export interface PDFFileResult {
+  success: boolean
+  error?: string
+}
+
+/**
+ * App API exposed to renderer process
+ */
+export interface AppAPI {
+  sayHelloFromBridge(): void
+  username: string | undefined
+  pdf: {
+    generate(data: PDFGenerateData): Promise<PDFGenerateResult>
+    openFile(filePath: string): Promise<PDFFileResult>
+    showInFolder(filePath: string): Promise<PDFFileResult>
+  }
+}
+
+/**
+ * Global window type extension
+ */
+declare global {
+  interface Window {
+    App: AppAPI
+  }
 }

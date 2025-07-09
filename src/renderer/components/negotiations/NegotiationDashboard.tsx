@@ -12,17 +12,17 @@ import { Alert } from '../ui/alert'
 import {
   createNegotiation,
   updateNegotiation,
-  getNegotiationsByAgent,
-  getNegotiationsByClient,
-} from '../../lib/firebase/collections/negotiations'
-import { NegotiationStrategyService } from '../../lib/openai/prompts/negotiation-strategy'
+  getAgentNegotiations,
+  getClientNegotiations,
+} from '../../../lib/firebase/collections/negotiations'
+import { NegotiationStrategyService } from '../../../lib/openai/prompts/negotiation-strategy'
 import type {
   Negotiation,
   NegotiationPhase,
   NegotiationStrategy,
-} from '../../shared/types/negotiations'
-import type { Offer } from '../../shared/types/offers'
-import type { AgentProfile, ClientProfile } from '../../shared/types'
+} from '../../../shared/types/negotiations'
+import type { Offer } from '../../../shared/types/offers'
+import type { AgentProfile, ClientProfile } from '../../../shared/types'
 
 // ========== DASHBOARD TYPES ==========
 
@@ -706,9 +706,11 @@ export const NegotiationDashboard: React.FC<NegotiationDashboardProps> = ({
       let fetchedNegotiations: Negotiation[]
 
       if (userType === 'agent') {
-        fetchedNegotiations = await getNegotiationsByAgent(userProfile.id)
+        const result = await getAgentNegotiations(userProfile.uid)
+        fetchedNegotiations = result.data || []
       } else {
-        fetchedNegotiations = await getNegotiationsByClient(userProfile.id)
+        const result = await getClientNegotiations(userProfile.uid)
+        fetchedNegotiations = result.data || []
       }
 
       setNegotiations(fetchedNegotiations)

@@ -7,6 +7,18 @@
 export const APP_NAME = 'Real Estate Agentic'
 export const APP_VERSION = '1.0.0'
 
+// Environment constants
+export const ENVIRONMENT = {
+  IS_DEV: process.env.NODE_ENV === 'development',
+}
+
+// Platform constants
+export const PLATFORM = {
+  IS_MAC: process.platform === 'darwin',
+  IS_WINDOWS: process.platform === 'win32',
+  IS_LINUX: process.platform === 'linux',
+}
+
 // ========== IPC CHANNELS ==========
 
 export const IPC_CHANNELS = {

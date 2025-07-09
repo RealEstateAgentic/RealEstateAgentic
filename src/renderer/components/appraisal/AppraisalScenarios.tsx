@@ -9,11 +9,11 @@
 import React, { useState, useEffect } from 'react'
 import { Button } from '../ui/button'
 import { Alert } from '../ui/alert'
-import { NegotiationStrategyService } from '../../lib/openai/prompts/negotiation-strategy'
-import { MockMarketDataService } from '../../lib/openai/services/mock-market-data'
-import type { Offer } from '../../shared/types/offers'
-import type { Negotiation } from '../../shared/types/negotiations'
-import type { AgentProfile, ClientProfile } from '../../shared/types'
+import { NegotiationStrategyService } from '../../../lib/openai/prompts/negotiation-strategy'
+import { MockMarketDataService } from '../../../lib/openai/services/mock-market-data'
+import type { Offer } from '../../../shared/types/offers'
+import type { Negotiation } from '../../../shared/types/negotiations'
+import type { AgentProfile, ClientProfile } from '../../../shared/types'
 
 // ========== APPRAISAL SCENARIO TYPES ==========
 

@@ -8,7 +8,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { useAuth } from '../../lib/firebase/hooks'
+import { useAuth } from '../../../lib/firebase/hooks'
 import { DOCUMENT_TYPES, DOCUMENT_STATUS } from '../../../shared/constants'
 import { Button } from '../ui/button'
 import {

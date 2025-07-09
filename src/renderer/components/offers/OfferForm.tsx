@@ -13,14 +13,14 @@ import {
   createOffer,
   updateOffer,
   getOffer,
-} from '../../lib/firebase/collections/offers'
-import { MockMarketDataService } from '../../lib/openai/services/mock-market-data'
+} from '../../../lib/firebase/collections/offers'
+import { MockMarketDataService } from '../../../lib/openai/services/mock-market-data'
 import type {
   Offer,
   OfferContingency,
   OfferType,
-} from '../../shared/types/offers'
-import type { AgentProfile, ClientProfile } from '../../shared/types'
+} from '../../../shared/types/offers'
+import type { AgentProfile, ClientProfile } from '../../../shared/types'
 
 // ========== OFFER FORM TYPES ==========
 

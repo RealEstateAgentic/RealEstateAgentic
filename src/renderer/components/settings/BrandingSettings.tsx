@@ -7,7 +7,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from 'react'
-import { useAuth } from '../../lib/firebase/hooks'
+import { useAuth } from '../../../lib/firebase/hooks'
 import { Button } from '../ui/button'
 import {
   AlertCircle,

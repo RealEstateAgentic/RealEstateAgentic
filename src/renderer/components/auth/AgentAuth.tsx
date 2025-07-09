@@ -10,12 +10,12 @@ import { Button } from '../ui/button'
 import { Alert } from '../ui/alert'
 import {
   registerAgent,
-  loginAgent,
+  signInAgent,
   updateAgentProfile,
   getAgentProfile,
-  logout,
-} from '../../lib/firebase/auth-agent'
-import type { AgentProfile, AgentRegistrationData } from '../../shared/types'
+} from '../../../lib/firebase/auth-agent'
+import { signOutUser } from '../../../lib/firebase/auth'
+import type { AgentProfile, AgentRegistrationData } from '../../../shared/types'
 
 // ========== AGENT LOGIN COMPONENT ==========
 
@@ -43,10 +43,7 @@ export const AgentLogin: React.FC<AgentLoginProps> = ({
     setError('')
 
     try {
-      const { user, profile } = await loginAgent(
-        formData.email,
-        formData.password
-      )
+      const profile = await signInAgent(formData.email, formData.password)
       onSuccess(profile)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed')
@@ -188,7 +185,7 @@ export const AgentRegistration: React.FC<AgentRegistrationProps> = ({
     setError('')
 
     try {
-      const { user, profile } = await registerAgent(formData)
+      const profile = await registerAgent(formData)
       onSuccess(profile)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed')
@@ -648,7 +645,7 @@ export const AgentProfile: React.FC<AgentProfileProps> = ({
 
   const handleLogout = async () => {
     try {
-      await logout()
+      await signOutUser()
       onLogout()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Logout failed')

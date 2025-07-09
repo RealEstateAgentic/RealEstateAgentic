@@ -10,12 +10,15 @@ import { Button } from '../ui/button'
 import { Alert } from '../ui/alert'
 import {
   registerClient,
-  loginClient,
+  signInClient,
   updateClientProfile,
   getClientProfile,
-  logout,
-} from '../../lib/firebase/auth-client'
-import type { ClientProfile, ClientRegistrationData } from '../../shared/types'
+} from '../../../lib/firebase/auth-client'
+import { signOutUser } from '../../../lib/firebase/auth'
+import type {
+  ClientProfile,
+  ClientRegistrationData,
+} from '../../../shared/types'
 
 // ========== CLIENT LOGIN COMPONENT ==========
 
@@ -43,10 +46,7 @@ export const ClientLogin: React.FC<ClientLoginProps> = ({
     setError('')
 
     try {
-      const { user, profile } = await loginClient(
-        formData.email,
-        formData.password
-      )
+      const profile = await signInClient(formData.email, formData.password)
       onSuccess(profile)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed')
@@ -186,7 +186,7 @@ export const ClientRegistration: React.FC<ClientRegistrationProps> = ({
     setError('')
 
     try {
-      const { user, profile } = await registerClient(formData)
+      const profile = await registerClient(formData)
       onSuccess(profile)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed')
@@ -788,7 +788,7 @@ export const ClientProfile: React.FC<ClientProfileProps> = ({
 
   const handleLogout = async () => {
     try {
-      await logout()
+      await signOutUser()
       onLogout()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Logout failed')

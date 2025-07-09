@@ -13,9 +13,9 @@ import {
   createDocument,
   updateDocument,
   getDocument,
-} from '../../lib/firebase/collections/documents'
-import type { Document, DocumentVersion } from '../../shared/types/documents'
-import type { AgentProfile, ClientProfile } from '../../shared/types'
+} from '../../../lib/firebase/collections/documents'
+import type { Document, DocumentVersion } from '../../../shared/types/documents'
+import type { AgentProfile, ClientProfile } from '../../../shared/types'
 
 // ========== DOCUMENT PREVIEW TYPES ==========
 

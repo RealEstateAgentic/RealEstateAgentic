@@ -15,10 +15,10 @@ import {
   type DocumentPackageResult,
   type DocumentType,
   type DocumentPackageType,
-} from '../../lib/openai/services/document-orchestrator'
-import type { Offer } from '../../shared/types/offers'
-import type { Negotiation } from '../../shared/types/negotiations'
-import type { AgentProfile, ClientProfile } from '../../shared/types'
+} from '../../../lib/openai/services/document-orchestrator'
+import type { Offer } from '../../../shared/types/offers'
+import type { Negotiation } from '../../../shared/types/negotiations'
+import type { AgentProfile, ClientProfile } from '../../../shared/types'
 
 // ========== DOCUMENT GENERATION TYPES ==========
 

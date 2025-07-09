@@ -5,7 +5,7 @@
 
 import { useState } from 'react'
 import { FileUpload } from './file-upload'
-import { Button } from './ui/button'
+import { Button } from '../ui/button'
 import { FileText, Upload, Zap } from 'lucide-react'
 
 interface NewReportContentProps {
@@ -54,18 +54,18 @@ export function NewReportContent({ className = '' }: NewReportContentProps) {
   }
 
   return (
-    <div className={`w-full max-w-4xl mx-auto p-8 bg-gray-950 ${className}`}>
+    <div className={`w-full max-w-4xl mx-auto p-8 bg-white ${className}`}>
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-teal-600 rounded-lg">
+          <div className="p-2 bg-[#3B7097] rounded-lg">
             <FileText className="size-6 text-white" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-100">
+            <h1 className="text-3xl font-bold text-gray-900">
               Create Inspection Report
             </h1>
-            <p className="text-gray-400 mt-1">
+            <p className="text-gray-600 mt-1">
               Upload property inspection documents to generate a comprehensive repair estimate
             </p>
           </div>
@@ -76,8 +76,8 @@ export function NewReportContent({ className = '' }: NewReportContentProps) {
       <div className="space-y-8">
         {/* File Upload Section */}
         <div>
-          <h2 className="text-xl font-semibold text-gray-100 mb-4 flex items-center gap-2">
-            <Upload className="size-5 text-teal-400" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Upload className="size-5 text-[#3B7097]" />
             Upload Inspection Documents
           </h2>
           <FileUpload
@@ -90,19 +90,19 @@ export function NewReportContent({ className = '' }: NewReportContentProps) {
 
         {/* Generate Report Section */}
         {uploadedFiles.length > 0 && (
-          <div className="bg-gray-900 border border-gray-700 rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-gray-100 mb-4 flex items-center gap-2">
-              <Zap className="size-5 text-teal-400" />
+          <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Zap className="size-5 text-[#3B7097]" />
               Generate Report
             </h3>
-            <p className="text-gray-400 mb-6">
+            <p className="text-gray-600 mb-6">
               Ready to analyze {uploadedFiles.length} file{uploadedFiles.length !== 1 ? 's' : ''} 
               and generate your inspection report with repair estimates.
             </p>
             <Button
               onClick={handleGenerateReport}
               disabled={isGenerating}
-              className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+              className="w-full bg-[#3B7097] hover:bg-[#3B7097]/90 text-white font-medium py-3 px-6 rounded-lg transition-colors"
             >
               {isGenerating ? (
                 <div className="flex items-center justify-center gap-2">
@@ -120,11 +120,11 @@ export function NewReportContent({ className = '' }: NewReportContentProps) {
         )}
 
         {/* Info Section */}
-        <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-gray-100 mb-3">
+        <div className="bg-[#F6E2BC]/30 border border-[#F6E2BC] rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">
             How it works
           </h3>
-          <div className="space-y-2 text-gray-400">
+          <div className="space-y-2 text-gray-700">
             <p>• Upload inspection photos, documents, or reports</p>
             <p>• AI analyzes the content to identify repair needs</p>
             <p>• Get a comprehensive report with cost estimates</p>

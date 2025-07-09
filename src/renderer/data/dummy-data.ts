@@ -558,6 +558,58 @@ export const dummyData = {
     }
   ],
 
+  // Seller clients
+  sellerClients: [
+    {
+      id: 1,
+      name: "Thompson Family",
+      email: "thompson.family@email.com",
+      phone: "(555) 111-2222",
+      property: "789 Pine Ave",
+      stage: "listed",
+      listingDate: "2024-01-10",
+      askingPrice: "$485,000",
+      location: "West Hills",
+      notes: "Motivated sellers, open to negotiations"
+    },
+    {
+      id: 2,
+      name: "Martinez Property LLC",
+      email: "martinez.property@email.com",
+      phone: "(555) 222-3333",
+      property: "456 Oak Street",
+      stage: "appointment_set",
+      listingDate: null,
+      askingPrice: "TBD",
+      location: "Downtown",
+      notes: "Investment property, needs staging"
+    },
+    {
+      id: 3,
+      name: "Wilson Estate",
+      email: "wilson.estate@email.com",
+      phone: "(555) 333-4444",
+      property: "123 Main Street",
+      stage: "under_contract",
+      listingDate: "2024-01-05",
+      askingPrice: "$520,000",
+      location: "Eastside",
+      notes: "Estate sale, quick closing preferred"
+    },
+    {
+      id: 4,
+      name: "Brown Family",
+      email: "brown.family@email.com",
+      phone: "(555) 444-5555",
+      property: "321 Elm Street",
+      stage: "closed",
+      listingDate: "2023-12-15",
+      askingPrice: "$395,000",
+      location: "Southside",
+      notes: "Successful sale, happy clients"
+    }
+  ],
+
   // Archived buyer clients
   archivedBuyerClients: [
     {

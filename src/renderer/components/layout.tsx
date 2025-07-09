@@ -4,30 +4,51 @@
  */
 
 import { ReactNode, useState } from 'react'
-import { Search, Bell, User, Brain, ChevronDown } from 'lucide-react'
+import { Search, Bell, User, Brain, ChevronDown, LogOut } from 'lucide-react'
 import { Button } from './ui/button'
 import { dummyData } from '../data/dummy-data'
+import type { AgentProfile, ClientProfile } from '../../shared/types'
 
 interface LayoutProps {
   children: ReactNode
   navigate: (path: string) => void
   currentRoute: string
+  currentUser?: AgentProfile | ClientProfile | null
+  userType?: 'agent' | 'buyer' | 'seller' | null
+  isAuthenticated?: boolean
+  onLogout?: () => void
 }
 
-function Navigation({ navigate, currentRoute }: { navigate: (path: string) => void, currentRoute: string }) {
+function Navigation({
+  navigate,
+  currentRoute,
+  currentUser,
+  userType,
+  isAuthenticated,
+  onLogout,
+}: {
+  navigate: (path: string) => void
+  currentRoute: string
+  currentUser?: AgentProfile | ClientProfile | null
+  userType?: 'agent' | 'buyer' | 'seller' | null
+  isAuthenticated?: boolean
+  onLogout?: () => void
+}) {
   const [isSecondBrainOpen, setIsSecondBrainOpen] = useState(false)
   const [selectedClient, setSelectedClient] = useState<string | null>(null)
-  
+
   const navItems = [
     { path: '/', label: 'Home' },
     { path: '/buyers-portal', label: 'Buyers Portal' },
     { path: '/sellers-portal', label: 'Sellers Portal' },
     { path: '/learn-portal', label: 'Learn Portal' },
     { path: '/marketing-portal', label: 'Marketing Portal' },
-    { path: '/repair-estimator', label: 'Repair Estimator' }
+    { path: '/repair-estimator', label: 'Repair Estimator' },
   ]
 
-  const unreadNotifications = dummyData.notifications.filter(n => !n.read).length
+  const unreadNotifications = dummyData.notifications.filter(
+    n => !n.read
+  ).length
 
   const handleSecondBrainToggle = () => {
     // If a client is already selected, deactivate the feature
@@ -47,15 +68,21 @@ function Navigation({ navigate, currentRoute }: { navigate: (path: string) => vo
 
   // Mock client names for Second Brain dropdown
   const activeClients = [
-    'Miller Family', 'Davis Family', 'Thompson Family', 'Wilson Family',
-    'Johnson Family', 'Chen Family', 'Martinez Family', 'Williams Family'
+    'Miller Family',
+    'Davis Family',
+    'Thompson Family',
+    'Wilson Family',
+    'Johnson Family',
+    'Chen Family',
+    'Martinez Family',
+    'Williams Family',
   ]
 
   return (
     <nav className="bg-white border-b border-gray-200 px-6 py-3 relative z-50">
       <div className="flex items-center justify-between max-w-full mx-auto">
         {/* Logo/Brand */}
-        <button 
+        <button
           onClick={() => navigate('/')}
           className="text-lg font-semibold text-gray-800 hover:text-[#3B7097] transition-colors"
         >
@@ -64,7 +91,7 @@ function Navigation({ navigate, currentRoute }: { navigate: (path: string) => vo
 
         {/* Main Navigation */}
         <div className="flex items-center space-x-6">
-          {navItems.map((item) => (
+          {navItems.map(item => (
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
@@ -96,7 +123,9 @@ function Navigation({ navigate, currentRoute }: { navigate: (path: string) => vo
             <Button
               onClick={handleSecondBrainToggle}
               className={`flex items-center gap-2 ${
-                selectedClient ? 'bg-[#A9D09E] hover:bg-[#A9D09E]/90' : 'bg-[#3B7097] hover:bg-[#3B7097]/90'
+                selectedClient
+                  ? 'bg-[#A9D09E] hover:bg-[#A9D09E]/90'
+                  : 'bg-[#3B7097] hover:bg-[#3B7097]/90'
               }`}
             >
               <Brain className="size-4" />
@@ -107,10 +136,12 @@ function Navigation({ navigate, currentRoute }: { navigate: (path: string) => vo
             {isSecondBrainOpen && (
               <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-md shadow-lg">
                 <div className="px-4 py-2 border-b border-gray-200">
-                  <p className="text-sm font-medium text-gray-700">Select Active Client</p>
+                  <p className="text-sm font-medium text-gray-700">
+                    Select Active Client
+                  </p>
                 </div>
                 <div className="max-h-64 overflow-y-auto">
-                  {activeClients.map((client) => (
+                  {activeClients.map(client => (
                     <button
                       key={client}
                       onClick={() => handleClientSelect(client)}
@@ -137,22 +168,62 @@ function Navigation({ navigate, currentRoute }: { navigate: (path: string) => vo
           </div>
 
           {/* User Profile */}
-          <Button variant="ghost" size="icon">
-            <User className="size-4" />
-          </Button>
+          {isAuthenticated && currentUser ? (
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600">
+                {currentUser.displayName || currentUser.email}
+              </span>
+              <span className="text-xs text-gray-500 capitalize">
+                ({userType})
+              </span>
+              <Button variant="ghost" size="icon" onClick={onLogout}>
+                <LogOut className="size-4" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/auth/agent')}
+              >
+                Agent Login
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/auth/client')}
+              >
+                Client Login
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </nav>
   )
 }
 
-export function Layout({ children, navigate, currentRoute }: LayoutProps) {
+export function Layout({
+  children,
+  navigate,
+  currentRoute,
+  currentUser,
+  userType,
+  isAuthenticated,
+  onLogout,
+}: LayoutProps) {
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navigation navigate={navigate} currentRoute={currentRoute} />
-      <main className="h-[calc(100vh-70px)] overflow-hidden">
-        {children}
-      </main>
+      <Navigation
+        navigate={navigate}
+        currentRoute={currentRoute}
+        currentUser={currentUser}
+        userType={userType}
+        isAuthenticated={isAuthenticated}
+        onLogout={onLogout}
+      />
+      <main className="h-[calc(100vh-70px)] overflow-hidden">{children}</main>
     </div>
   )
-} 
+}

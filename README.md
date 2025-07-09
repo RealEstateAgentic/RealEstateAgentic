@@ -111,28 +111,6 @@ gcloud services list --enabled
 gcloud auth application-default login
 ```
 
-### 5. Create Service Account (Optional)
-
-```bash
-# Create service account for server-side operations
-gcloud iam service-accounts create real-estate-app \
-  --display-name="Real Estate App Service Account"
-
-# Download credentials
-gcloud iam service-accounts keys create credentials.json \
-  --iam-account=real-estate-app@YOUR_PROJECT_ID.iam.gserviceaccount.com
-```
-
-### 6. OAuth 2.0 Setup
-
-For user authentication, configure OAuth 2.0 credentials:
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
-2. Create Credentials → OAuth 2.0 Client ID
-3. Configure consent screen if prompted
-4. Set authorized origins (e.g., `http://localhost:3000`)
-5. Download client configuration
-
 ### Available Google Services
 
 - **📧 Gmail API**: Send property alerts, follow-ups

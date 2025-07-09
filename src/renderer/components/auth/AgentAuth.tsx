@@ -173,9 +173,7 @@ export const AgentRegistration: React.FC<AgentRegistrationProps> = ({
   const [error, setError] = useState('')
   const [step, setStep] = useState(1)
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
+  const handleCreateAccount = async () => {
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match')
       return
@@ -185,7 +183,20 @@ export const AgentRegistration: React.FC<AgentRegistrationProps> = ({
     setError('')
 
     try {
-      const profile = await registerAgent(formData)
+      // Transform complex form data into simple AgentRegistrationData structure
+      const registrationData: AgentRegistrationData = {
+        email: formData.email,
+        password: formData.password,
+        displayName:
+          `${formData.personalInfo.firstName} ${formData.personalInfo.lastName}`.trim(),
+        licenseNumber: formData.licenseInfo.licenseNumber,
+        brokerage: formData.licenseInfo.brokerageName,
+        phoneNumber: formData.personalInfo.phone,
+        specialties: formData.licenseInfo.specializations,
+        yearsExperience: formData.licenseInfo.yearsExperience,
+      }
+
+      const profile = await registerAgent(registrationData)
       onSuccess(profile)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed')
@@ -218,7 +229,7 @@ export const AgentRegistration: React.FC<AgentRegistrationProps> = ({
         <p className="text-gray-600 mt-2">Create your agent account</p>
         <div className="flex justify-center mt-4">
           <div className="flex space-x-2">
-            {[1, 2, 3].map(i => (
+            {[1, 2, 3, 4].map(i => (
               <div
                 key={i}
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
@@ -242,7 +253,7 @@ export const AgentRegistration: React.FC<AgentRegistrationProps> = ({
         </Alert>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="space-y-6">
         {step === 1 && (
           <div className="space-y-4">
             <h2 className="text-lg font-semibold text-gray-900">
@@ -568,6 +579,77 @@ export const AgentRegistration: React.FC<AgentRegistrationProps> = ({
           </div>
         )}
 
+        {step === 4 && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-gray-900">Review</h2>
+            <p className="text-gray-700">
+              Please review the information you have provided.
+            </p>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Account Information
+                </label>
+                <p className="text-gray-900">
+                  {formData.personalInfo.firstName}{' '}
+                  {formData.personalInfo.lastName}
+                </p>
+                <p className="text-gray-900">Email: {formData.email}</p>
+                <p className="text-gray-900">
+                  Phone: {formData.personalInfo.phone}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  License Information
+                </label>
+                <p className="text-gray-900">
+                  License Number: {formData.licenseInfo.licenseNumber}
+                </p>
+                <p className="text-gray-900">
+                  State: {formData.licenseInfo.state}
+                </p>
+                <p className="text-gray-900">
+                  Expiration Date: {formData.licenseInfo.expirationDate}
+                </p>
+                <p className="text-gray-900">
+                  Brokerage: {formData.licenseInfo.brokerageName}
+                </p>
+                <p className="text-gray-900">
+                  Years of Experience: {formData.licenseInfo.yearsExperience}
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Preferences
+                </label>
+                <p className="text-gray-900">
+                  Email Notifications:{' '}
+                  {formData.preferences.notificationSettings.email
+                    ? 'On'
+                    : 'Off'}
+                </p>
+                <p className="text-gray-900">
+                  SMS Notifications:{' '}
+                  {formData.preferences.notificationSettings.sms ? 'On' : 'Off'}
+                </p>
+                <p className="text-gray-900">
+                  Push Notifications:{' '}
+                  {formData.preferences.notificationSettings.push
+                    ? 'On'
+                    : 'Off'}
+                </p>
+                <p className="text-gray-900">
+                  Working Hours: {formData.preferences.workingHours.start} -{' '}
+                  {formData.preferences.workingHours.end}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex justify-between">
           {step > 1 && (
             <Button
@@ -582,7 +664,7 @@ export const AgentRegistration: React.FC<AgentRegistrationProps> = ({
 
           <div className="flex-1" />
 
-          {step < 3 ? (
+          {step < 4 ? (
             <Button
               type="button"
               onClick={() => setStep(step + 1)}
@@ -591,12 +673,17 @@ export const AgentRegistration: React.FC<AgentRegistrationProps> = ({
               Next
             </Button>
           ) : (
-            <Button type="submit" disabled={loading} className="px-6">
+            <Button
+              type="button"
+              onClick={handleCreateAccount}
+              disabled={loading}
+              className="px-6"
+            >
               {loading ? 'Creating Account...' : 'Create Account'}
             </Button>
           )}
         </div>
-      </form>
+      </div>
 
       <div className="mt-6 text-center">
         <button

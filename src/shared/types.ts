@@ -22,8 +22,6 @@ export interface WindowCreationByIPC {
 
 export const USER_ROLES = {
   AGENT: 'agent',
-  BUYER: 'buyer',
-  SELLER: 'seller',
 } as const
 
 export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES]
@@ -35,14 +33,6 @@ export const USER_ROLE_INFO: Record<
   [USER_ROLES.AGENT]: {
     name: 'Real Estate Agent',
     description: 'Licensed real estate professional',
-  },
-  [USER_ROLES.BUYER]: {
-    name: 'Buyer',
-    description: 'Property buyer client',
-  },
-  [USER_ROLES.SELLER]: {
-    name: 'Seller',
-    description: 'Property seller client',
   },
 }
 
@@ -70,25 +60,8 @@ export interface AgentProfile extends AuthUser {
   isActive: boolean
 }
 
-// Extended profile information for clients (buyers/sellers)
-export interface ClientProfile extends AuthUser {
-  role: typeof USER_ROLES.BUYER | typeof USER_ROLES.SELLER
-  phoneNumber: string
-  profileImageUrl?: string
-  // Agent who is representing this client
-  agentId?: string
-  // Client preferences and notes
-  preferences?: {
-    budget?: number
-    location?: string
-    propertyType?: PropertyType
-    notes?: string
-  }
-  isActive: boolean
-}
-
 // Union type for all user profiles
-export type UserProfile = AgentProfile | ClientProfile
+export type UserProfile = AgentProfile
 
 // Registration data for new users
 export interface AgentRegistrationData {
@@ -100,15 +73,6 @@ export interface AgentRegistrationData {
   phoneNumber: string
   specialties: string[]
   yearsExperience: number
-}
-
-export interface ClientRegistrationData {
-  email: string
-  password: string
-  displayName: string
-  role: typeof USER_ROLES.BUYER | typeof USER_ROLES.SELLER
-  phoneNumber: string
-  agentId?: string
 }
 
 export interface Property {

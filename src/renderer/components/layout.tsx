@@ -7,14 +7,14 @@ import { ReactNode, useState } from 'react'
 import { Search, Bell, User, Brain, ChevronDown, LogOut } from 'lucide-react'
 import { Button } from './ui/button'
 import { dummyData } from '../data/dummy-data'
-import type { AgentProfile, ClientProfile } from '../../shared/types'
+import type { AgentProfile } from '../../shared/types'
 
 interface LayoutProps {
   children: ReactNode
   navigate: (path: string) => void
   currentRoute: string
-  currentUser?: AgentProfile | ClientProfile | null
-  userType?: 'agent' | 'buyer' | 'seller' | null
+  currentUser?: AgentProfile | null
+  userType?: 'agent' | null
   isAuthenticated?: boolean
   onLogout?: () => void
 }
@@ -29,8 +29,8 @@ function Navigation({
 }: {
   navigate: (path: string) => void
   currentRoute: string
-  currentUser?: AgentProfile | ClientProfile | null
-  userType?: 'agent' | 'buyer' | 'seller' | null
+  currentUser?: AgentProfile | null
+  userType?: 'agent' | null
   isAuthenticated?: boolean
   onLogout?: () => void
 }) {
@@ -187,14 +187,7 @@ function Navigation({
                 size="sm"
                 onClick={() => navigate('/auth/agent')}
               >
-                Agent Login
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/auth/client')}
-              >
-                Client Login
+                Login
               </Button>
             </div>
           )}

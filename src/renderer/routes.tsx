@@ -14,17 +14,12 @@ import { LearnPortalScreen } from './screens/learn-portal'
 import { MarketingPortalScreen } from './screens/marketing-portal'
 import { AgentDashboardScreen } from './screens/agent-dashboard'
 import { AgentAuthWrapper } from './components/auth/AgentAuth'
-import { ClientAuthWrapper } from './components/auth/ClientAuth'
-import type { AgentProfile, ClientProfile } from '../shared/types'
+import type { AgentProfile } from '../shared/types'
 
 export function App() {
   const [currentRoute, setCurrentRoute] = useState('/')
-  const [currentUser, setCurrentUser] = useState<
-    AgentProfile | ClientProfile | null
-  >(null)
-  const [userType, setUserType] = useState<'agent' | 'buyer' | 'seller' | null>(
-    null
-  )
+  const [currentUser, setCurrentUser] = useState<AgentProfile | null>(null)
+  const [userType, setUserType] = useState<'agent' | null>(null)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   // Initialize route from current URL
@@ -54,15 +49,6 @@ export function App() {
     navigate('/agent-dashboard')
   }
 
-  const handleClientAuthenticated = (profile: ClientProfile) => {
-    setCurrentUser(profile)
-    setUserType(profile.role === 'buyer' ? 'buyer' : 'seller')
-    setIsAuthenticated(true)
-
-    // Route clients to main page (portals are agent-only)
-    navigate('/')
-  }
-
   const handleLogout = () => {
     setCurrentUser(null)
     setUserType(null)
@@ -76,21 +62,7 @@ export function App() {
   const renderCurrentScreen = () => {
     // Authentication routes
     if (currentRoute === '/auth/agent') {
-      return (
-        <AgentAuthWrapper
-          onAuthenticated={handleAgentAuthenticated}
-          onSwitchToClient={() => navigate('/auth/client')}
-        />
-      )
-    }
-
-    if (currentRoute === '/auth/client') {
-      return (
-        <ClientAuthWrapper
-          onAuthenticated={handleClientAuthenticated}
-          onSwitchToAgent={() => navigate('/auth/agent')}
-        />
-      )
+      return <AgentAuthWrapper onAuthenticated={handleAgentAuthenticated} />
     }
 
     // Protected routes - require authentication
@@ -113,13 +85,13 @@ export function App() {
         return (
           <div className="p-8 text-center">
             <p className="text-gray-600 mb-4">
-              Please sign in as an agent to access the Buyers Portal
+              Please sign in to access the Buyers Portal
             </p>
             <button
               onClick={() => navigate('/auth/agent')}
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             >
-              Sign In as Agent
+              Sign In
             </button>
           </div>
         )
@@ -137,13 +109,13 @@ export function App() {
         return (
           <div className="p-8 text-center">
             <p className="text-gray-600 mb-4">
-              Please sign in as an agent to access the Buyers Archive
+              Please sign in to access the Buyers Archive
             </p>
             <button
               onClick={() => navigate('/auth/agent')}
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             >
-              Sign In as Agent
+              Sign In
             </button>
           </div>
         )
@@ -162,13 +134,13 @@ export function App() {
         return (
           <div className="p-8 text-center">
             <p className="text-gray-600 mb-4">
-              Please sign in as an agent to access the Sellers Portal
+              Please sign in to access the Sellers Portal
             </p>
             <button
               onClick={() => navigate('/auth/agent')}
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             >
-              Sign In as Agent
+              Sign In
             </button>
           </div>
         )
@@ -186,13 +158,13 @@ export function App() {
         return (
           <div className="p-8 text-center">
             <p className="text-gray-600 mb-4">
-              Please sign in to access the Agent Dashboard
+              Please sign in to access the Dashboard
             </p>
             <button
               onClick={() => navigate('/auth/agent')}
               className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
             >
-              Sign In as Agent
+              Sign In
             </button>
           </div>
         )

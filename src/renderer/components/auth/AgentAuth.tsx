@@ -22,13 +22,11 @@ import type { AgentProfile, AgentRegistrationData } from '../../../shared/types'
 interface AgentLoginProps {
   onSuccess: (profile: AgentProfile) => void
   onSwitchToRegister: () => void
-  onSwitchToClient: () => void
 }
 
 export const AgentLogin: React.FC<AgentLoginProps> = ({
   onSuccess,
   onSwitchToRegister,
-  onSwitchToClient,
 }) => {
   const [formData, setFormData] = useState({
     email: '',
@@ -55,8 +53,8 @@ export const AgentLogin: React.FC<AgentLoginProps> = ({
   return (
     <div className="max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
       <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Agent Login</h1>
-        <p className="text-gray-600 mt-2">Sign in to your agent account</p>
+        <h1 className="text-2xl font-bold text-gray-900">Login</h1>
+        <p className="text-gray-600 mt-2">Sign in to your account</p>
       </div>
 
       {error && (
@@ -105,19 +103,12 @@ export const AgentLogin: React.FC<AgentLoginProps> = ({
         </Button>
       </form>
 
-      <div className="mt-6 text-center space-y-2">
+      <div className="mt-6 text-center">
         <button
           onClick={onSwitchToRegister}
           className="text-blue-600 hover:text-blue-800 text-sm underline"
         >
-          Don't have an account? Register as Agent
-        </button>
-        <br />
-        <button
-          onClick={onSwitchToClient}
-          className="text-gray-600 hover:text-gray-800 text-sm underline"
-        >
-          Are you a client? Sign in here
+          Don't have an account? Register
         </button>
       </div>
     </div>
@@ -225,8 +216,8 @@ export const AgentRegistration: React.FC<AgentRegistrationProps> = ({
   return (
     <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6">
       <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Agent Registration</h1>
-        <p className="text-gray-600 mt-2">Create your agent account</p>
+        <h1 className="text-2xl font-bold text-gray-900">Registration</h1>
+        <p className="text-gray-600 mt-2">Create your account</p>
         <div className="flex justify-center mt-4">
           <div className="flex space-x-2">
             {[1, 2, 3, 4].map(i => (
@@ -899,12 +890,10 @@ export const AgentProfile: React.FC<AgentProfileProps> = ({
 
 interface AgentAuthWrapperProps {
   onAuthenticated: (profile: AgentProfile) => void
-  onSwitchToClient: () => void
 }
 
 export const AgentAuthWrapper: React.FC<AgentAuthWrapperProps> = ({
   onAuthenticated,
-  onSwitchToClient,
 }) => {
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [profile, setProfile] = useState<AgentProfile | null>(null)
@@ -968,7 +957,6 @@ export const AgentAuthWrapper: React.FC<AgentAuthWrapperProps> = ({
       <AgentLogin
         onSuccess={handleSuccess}
         onSwitchToRegister={() => setMode('register')}
-        onSwitchToClient={onSwitchToClient}
       />
     )
   }

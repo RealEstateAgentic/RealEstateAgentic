@@ -1,15 +1,14 @@
 /**
- * Firebase Authentication Service
- * Handles user authentication for the Real Estate Agentic application
- * Updated with role-based authentication support
+ * Firebase Authentication Module
+ * Handles user authentication, registration, and profile management for agents
  */
 
 import {
   signInWithEmailAndPassword,
   signOut,
-  onAuthStateChanged,
-  updateProfile,
   sendPasswordResetEmail,
+  updateProfile,
+  onAuthStateChanged,
   type User,
 } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
@@ -18,13 +17,10 @@ import type {
   AuthUser,
   UserProfile,
   AgentProfile,
-  ClientProfile,
   UserRole,
   AgentRegistrationData,
-  ClientRegistrationData,
 } from '../../shared/types'
 import { registerAgent, signInAgent } from './auth-agent'
-import { registerClient, signInClient } from './auth-client'
 
 /**
  * Register a new agent
@@ -36,16 +32,7 @@ export const registerUserAsAgent = async (
 }
 
 /**
- * Register a new client (buyer or seller)
- */
-export const registerUserAsClient = async (
-  registrationData: ClientRegistrationData
-): Promise<ClientProfile> => {
-  return await registerClient(registrationData)
-}
-
-/**
- * Sign in with role-based authentication
+ * Sign in with role-based authentication - agents only
  */
 export const signInUserWithRole = async (
   email: string,
@@ -80,10 +67,8 @@ export const signInUserWithRole = async (
 
     if (userRole === 'agent') {
       return await signInAgent(email, password)
-    } else if (userRole === 'buyer' || userRole === 'seller') {
-      return await signInClient(email, password)
     } else {
-      throw new Error('Invalid user role')
+      throw new Error('Invalid user role - only agents are supported')
     }
   } catch (error: any) {
     throw new Error(`Role-based sign in failed: ${error.message}`)
@@ -92,7 +77,7 @@ export const signInUserWithRole = async (
 
 /**
  * Legacy register function - deprecated, use role-specific registration
- * @deprecated Use registerUserAsAgent or registerUserAsClient instead
+ * @deprecated Use registerUserAsAgent instead
  */
 export const registerUser = async (
   email: string,
@@ -100,7 +85,7 @@ export const registerUser = async (
   displayName?: string
 ): Promise<AuthUser> => {
   throw new Error(
-    'Legacy registration deprecated. Use registerUserAsAgent or registerUserAsClient.'
+    'Legacy registration deprecated. Use registerUserAsAgent instead.'
   )
 }
 
@@ -182,7 +167,7 @@ export const onAuthStateChange = (
         const userData = userDoc.data()
         const userRole = userData.role
 
-        // Return role-based profile
+        // Return role-based profile - only support agents
         const baseProfile = {
           uid: user.uid,
           email: user.email,
@@ -207,20 +192,10 @@ export const onAuthStateChange = (
             yearsExperience: userData.yearsExperience,
             isActive: userData.isActive,
           } as AgentProfile)
-        } else if (userRole === 'buyer' || userRole === 'seller') {
-          callback({
-            ...baseProfile,
-            phoneNumber: userData.phoneNumber,
-            profileImageUrl: userData.profileImageUrl,
-            agentId: userData.agentId,
-            preferences: userData.preferences,
-            isActive: userData.isActive,
-          } as ClientProfile)
         } else {
           callback(null)
         }
       } catch (error) {
-        console.error('Error getting user profile:', error)
         callback(null)
       }
     } else {
@@ -230,22 +205,36 @@ export const onAuthStateChange = (
 }
 
 /**
- * Legacy auth state change - deprecated
- * @deprecated Use the updated onAuthStateChange instead
+ * Legacy auth state change listener
+ * @deprecated Use onAuthStateChange instead
  */
 export const onLegacyAuthStateChange = (
   callback: (user: AuthUser | null) => void
 ) => {
-  throw new Error(
-    'Legacy auth state change deprecated. Use updated onAuthStateChange.'
-  )
+  return onAuthStateChanged(auth, user => {
+    if (user) {
+      // Convert Firebase User to AuthUser for legacy compatibility
+      const authUser: AuthUser = {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        emailVerified: user.emailVerified,
+        role: 'agent', // Default role for legacy compatibility
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+      callback(authUser)
+    } else {
+      callback(null)
+    }
+  })
 }
 
 /**
  * Check if user is authenticated
  */
 export const isAuthenticated = (): boolean => {
-  return auth.currentUser !== null
+  return !!auth.currentUser
 }
 
 /**
@@ -253,12 +242,12 @@ export const isAuthenticated = (): boolean => {
  */
 export const getCurrentUserProfile = async (): Promise<UserProfile | null> => {
   try {
-    const currentUser = getCurrentUser()
-    if (!currentUser) {
+    const user = auth.currentUser
+    if (!user) {
       return null
     }
 
-    const userDoc = await getDoc(doc(db, 'users', currentUser.uid))
+    const userDoc = await getDoc(doc(db, 'users', user.uid))
     if (!userDoc.exists()) {
       return null
     }
@@ -267,10 +256,10 @@ export const getCurrentUserProfile = async (): Promise<UserProfile | null> => {
     const userRole = userData.role
 
     const baseProfile = {
-      uid: currentUser.uid,
-      email: currentUser.email,
-      displayName: currentUser.displayName,
-      emailVerified: currentUser.emailVerified,
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      emailVerified: user.emailVerified,
       role: userRole,
       createdAt:
         userData.createdAt?.toDate?.()?.toISOString() || userData.createdAt,
@@ -290,61 +279,29 @@ export const getCurrentUserProfile = async (): Promise<UserProfile | null> => {
         yearsExperience: userData.yearsExperience,
         isActive: userData.isActive,
       } as AgentProfile
-    } else if (userRole === 'buyer' || userRole === 'seller') {
-      return {
-        ...baseProfile,
-        phoneNumber: userData.phoneNumber,
-        profileImageUrl: userData.profileImageUrl,
-        agentId: userData.agentId,
-        preferences: userData.preferences,
-        isActive: userData.isActive,
-      } as ClientProfile
     }
 
     return null
   } catch (error) {
-    console.error('Failed to get current user profile:', error)
     return null
   }
 }
 
 /**
- * Check if current user has specific role
+ * Check if user has specific role
  */
 export const hasRole = async (role: UserRole): Promise<boolean> => {
   try {
     const profile = await getCurrentUserProfile()
     return profile?.role === role
-  } catch (error) {
+  } catch {
     return false
   }
 }
 
 /**
- * Check if current user is an agent
+ * Check if user is an agent
  */
 export const isAgent = async (): Promise<boolean> => {
   return await hasRole('agent')
-}
-
-/**
- * Check if current user is a buyer
- */
-export const isBuyer = async (): Promise<boolean> => {
-  return await hasRole('buyer')
-}
-
-/**
- * Check if current user is a seller
- */
-export const isSeller = async (): Promise<boolean> => {
-  return await hasRole('seller')
-}
-
-/**
- * Check if current user is a client (buyer or seller)
- */
-export const isClient = async (): Promise<boolean> => {
-  const profile = await getCurrentUserProfile()
-  return profile?.role === 'buyer' || profile?.role === 'seller'
 }

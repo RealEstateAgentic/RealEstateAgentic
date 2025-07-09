@@ -379,7 +379,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   const getPageTitle = () => {
     switch (currentPath) {
       case '/agent-dashboard':
-        return 'Agent Dashboard'
+        return 'Dashboard'
       case '/client-dashboard':
         return 'My Dashboard'
       case '/negotiations':

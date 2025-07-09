@@ -5,12 +5,7 @@
  */
 
 import { getCurrentUserProfile } from './auth'
-import type {
-  UserProfile,
-  AgentProfile,
-  ClientProfile,
-  UserRole,
-} from '../../shared/types'
+import type { UserProfile, AgentProfile, UserRole } from '../../shared/types'
 
 // ========== ACCESS CONTROL TYPES ==========
 
@@ -458,7 +453,9 @@ export const requireAgent = requireRole(['agent'])
 /**
  * Client-only access decorator
  */
-export const requireClient = requireRole(['buyer', 'seller'])
+export const requireClient = async () => {
+  throw new Error('Client functionality has been removed - agent-only mode')
+}
 
 /**
  * Multi-role access decorator

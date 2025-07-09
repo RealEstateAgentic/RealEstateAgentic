@@ -18,11 +18,6 @@ import {
   serverTimestamp,
 } from 'firebase/firestore'
 import { auth, db } from './config'
-import {
-  isFirebaseAvailable,
-  mockRegisterAgent,
-  mockSignInAgent,
-} from './mock-auth'
 import { debugAgentAuth } from './debug-auth'
 import type { AgentProfile, AgentRegistrationData } from '../../shared/types'
 import { getCurrentUser } from './auth'
@@ -34,12 +29,6 @@ export const registerAgent = async (
   registrationData: AgentRegistrationData
 ): Promise<AgentProfile> => {
   try {
-    // Use mock authentication if Firebase is not available
-    if (!isFirebaseAvailable()) {
-      console.log('Using mock authentication for agent registration')
-      return await mockRegisterAgent(registrationData)
-    }
-
     const { email, password, displayName, ...agentDetails } = registrationData
 
     // Create Firebase Auth user
@@ -96,12 +85,6 @@ export const signInAgent = async (
   password: string
 ): Promise<AgentProfile> => {
   try {
-    // Use mock authentication if Firebase is not available
-    if (!isFirebaseAvailable()) {
-      console.log('Using mock authentication for agent sign in')
-      return await mockSignInAgent(email, password)
-    }
-
     // Sign in with Firebase Auth
     const userCredential = await signInWithEmailAndPassword(
       auth,

@@ -1,5 +1,5 @@
 /**
- * Debug utilities for authentication issues
+ * Debug utilities for real Firebase authentication issues
  */
 
 import { signInWithEmailAndPassword } from 'firebase/auth'

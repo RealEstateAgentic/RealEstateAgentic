@@ -30,7 +30,14 @@ function Navigation({ navigate, currentRoute }: { navigate: (path: string) => vo
   const unreadNotifications = dummyData.notifications.filter(n => !n.read).length
 
   const handleSecondBrainToggle = () => {
-    setIsSecondBrainOpen(!isSecondBrainOpen)
+    // If a client is already selected, deactivate the feature
+    if (selectedClient) {
+      setSelectedClient(null)
+      setIsSecondBrainOpen(false)
+    } else {
+      // If no client is selected, open the dropdown
+      setIsSecondBrainOpen(!isSecondBrainOpen)
+    }
   }
 
   const handleClientSelect = (clientName: string) => {

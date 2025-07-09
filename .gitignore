@@ -23,3 +23,35 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 feature_docs
+
+# API Keys and sensitive data
+.env.*
+*.key
+*.pem
+*.p12
+*.p8
+config/secrets.json
+secrets/
+private/
+*.secret
+*secret*
+*token*
+*key*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Firebase
+.firebase/
+firebase-debug.log*
+firebase-debug.*.log*
+
+# Logs
+logs
+*.log
+pids
+*.pid
+*.seed
+*.pid.lock

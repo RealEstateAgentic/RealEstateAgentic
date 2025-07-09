@@ -1,4 +1,5 @@
-import { Phone, Mail, MapPin, Calendar, DollarSign } from 'lucide-react'
+import { Phone, Mail, MapPin, Calendar, DollarSign, Send, Loader2 } from 'lucide-react'
+import { useState } from 'react'
 
 interface ClientCardProps {
   client: {
@@ -26,6 +27,42 @@ interface ClientCardProps {
 }
 
 export function ClientCard({ client, onClick }: ClientCardProps) {
+  const [isSending, setIsSending] = useState(false)
+  
+  const handleSendSurvey = async (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent card click event
+    
+    if (isSending) return // Prevent multiple clicks
+    
+    setIsSending(true)
+    
+    try {
+      console.log('Sending survey to:', client.name, client.email)
+      
+      // Import and use the automation service
+      const { startBuyerWorkflow } = await import('../../services/automation')
+      
+      const result = await startBuyerWorkflow({
+        agentId: 'agent-1', // TODO: Get actual agent ID
+        buyerEmail: client.email,
+        buyerName: client.name,
+        buyerPhone: client.phone
+      })
+      
+      if (result.success) {
+        alert(`✅ Survey sent successfully to ${client.name}!\n\nForm URL: ${result.formUrl}`)
+        console.log('Survey sent successfully:', result)
+      } else {
+        throw new Error('Failed to send survey')
+      }
+    } catch (error) {
+      console.error('Error sending survey:', error)
+      alert(`❌ Failed to send survey to ${client.name}.\n\nError: ${error.message}`)
+    } finally {
+      setIsSending(false)
+    }
+  }
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'critical': return 'border-[#c05e51] bg-[#c05e51]/10'
@@ -81,6 +118,29 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
           {formatSubStatus(client.subStatus)}
         </span>
       </div>
+
+      {/* Send Survey Button for New Leads */}
+      {client.stage === 'new_leads' && (
+        <div className="mb-3">
+          <button
+            onClick={handleSendSurvey}
+            disabled={isSending}
+            className="flex items-center gap-2 px-3 py-2 bg-[#3B7097] hover:bg-[#3B7097]/90 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm rounded-md transition-colors"
+          >
+            {isSending ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                Sending...
+              </>
+            ) : (
+              <>
+                <Send className="size-4" />
+                Send Survey
+              </>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Budget and Location */}
       <div className="space-y-1 mb-3">

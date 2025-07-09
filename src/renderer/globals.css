@@ -126,7 +126,6 @@
 
   html,
   body {
-    user-select: none;
     scroll-behavior: smooth;
     -webkit-app-region: no-drag;
     -webkit-font-smoothing: antialiased;

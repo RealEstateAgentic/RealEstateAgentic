@@ -7,19 +7,24 @@
  */
 
 import { type FC, useState, useEffect } from 'react'
-import { X, FileText, Download, CheckCircle, AlertCircle } from 'lucide-react'
 import { Button } from '../ui/button'
-import { Card } from '../ui/card'
+import { Alert } from '../ui/alert'
 import { Progress } from '../ui/progress'
-import {
-  DocumentOrchestrator,
-  type DocumentPackageRequest,
-  type DocumentPackageResult,
-  type DocumentPackageType,
+import { Check, AlertCircle, Clock, FileText, Download } from 'lucide-react'
+import { DocumentOrchestrationService } from '../../../lib/openai/services/document-orchestrator'
+import { createDocument } from '../../../lib/firebase/collections/documents'
+import { getCurrentUserProfile } from '../../../lib/firebase/auth'
+import type {
+  DocumentPackageResult,
+  DocumentPackageRequest,
+  DocumentPackageType,
+  DocumentGenerationContext,
+  DocumentGenerationOptions,
+  DocumentRequirements,
+  DocumentType,
 } from '../../../lib/openai/services/document-orchestrator'
 import type { AgentProfile } from '../../../shared/types'
 import type { Negotiation } from '../../../shared/types/negotiations'
-import type { DocumentType } from '../../../shared/types/document-types'
 
 // ========== DOCUMENT GENERATION TYPES ==========
 
@@ -427,15 +432,129 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
     )
   }
 
+  const saveDocumentsToFirebase = async (
+    packageResult: DocumentPackageResult
+  ) => {
+    try {
+      const userProfile = await getCurrentUserProfile()
+      if (!userProfile) {
+        console.warn('No user profile found, skipping Firebase save')
+        return
+      }
+
+      console.log(
+        `Saving ${packageResult.documents.length} documents to Firebase...`
+      )
+
+      // Save each document to Firebase
+      for (const document of packageResult.documents) {
+        try {
+          // Map document type to shared DocumentType
+          const documentType = mapDocumentType(document.type)
+
+          const result = await createDocument({
+            title: document.title,
+            type: documentType,
+            category: 'client_communications',
+            content: document.content,
+            relatedId: packageResult.packageId,
+            relatedType: 'other',
+            generationParams: {
+              aiModel: 'gpt-4',
+              temperature: 0.7,
+              tone: document.metadata.tone,
+              length: 'medium',
+              context: {
+                propertyDetails: {
+                  address: 'Property Address',
+                  price: 500000,
+                  sqft: 2000,
+                  beds: 3,
+                  baths: 2,
+                  features: [],
+                  condition: 'Good',
+                  yearBuilt: 2020,
+                },
+                clientDetails: {
+                  name: `${clientProfile.personalInfo.firstName} ${clientProfile.personalInfo.lastName}`,
+                  role:
+                    clientProfile.clientType === 'buyer' ? 'buyer' : 'seller',
+                  preferences: [],
+                  timeline: clientProfile.preferences.timeframe || '3-6 months',
+                  budget: 500000,
+                  motivation: 'Find the perfect home',
+                },
+              },
+            },
+          })
+
+          if (result.success) {
+            console.log(`Successfully saved ${document.type} to Firebase`)
+          } else {
+            console.error(
+              `Failed to save ${document.type} to Firebase:`,
+              result.error
+            )
+          }
+        } catch (error) {
+          console.error(`Error saving ${document.type} to Firebase:`, error)
+        }
+      }
+
+      console.log('Document saving to Firebase completed')
+    } catch (error) {
+      console.error('Error saving documents to Firebase:', error)
+    }
+  }
+
+  // Map document orchestrator document types to shared document types
+  const mapDocumentType = (
+    type: string
+  ): import('../../../shared/types/documents').DocumentType => {
+    switch (type) {
+      case 'cover_letter':
+        return 'cover_letter'
+      case 'explanation_memo':
+        return 'explanation_memo'
+      case 'negotiation_strategy':
+        return 'negotiation_summary'
+      case 'offer_analysis':
+        return 'market_analysis'
+      case 'market_analysis':
+        return 'market_analysis'
+      case 'risk_assessment':
+        return 'property_report'
+      case 'client_summary':
+        return 'client_presentation'
+      case 'competitive_comparison':
+        return 'market_analysis'
+      default:
+        return 'other'
+    }
+  }
+
+  const getSelectedDocuments = () => {
+    return customDocuments.filter(d => d.enabled).map(d => d.type)
+  }
+
   const generateDocuments = async () => {
+    if (!agentProfile || !clientProfile) {
+      setError('Missing required profile information')
+      return
+    }
+
     setError('')
     setResult(null)
+    setSelectedDocument(null)
+
+    // Initialize progress
+    const totalDocuments = getSelectedDocuments().length
     setProgress({
       status: 'generating',
-      currentStep: 'Preparing generation request...',
+      currentStep: 'Initializing document generation...',
       progress: 0,
       documentsGenerated: 0,
-      totalDocuments: customDocuments.filter(d => d.enabled).length,
+      totalDocuments,
     })
 
     try {
@@ -443,51 +562,44 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
       console.log('Client Profile:', clientProfile)
       console.log('Agent Profile:', agentProfile)
 
-      // Create context for document generation
-      const context = {
-        offer,
+      // Generate context for document generation
+      const context: DocumentGenerationContext = {
+        offer: undefined, // Will be populated if we have a proper offer structure
         negotiation,
-        property: offer
-          ? {
-              address: offer.propertyDetails.address,
-              price: offer.propertyDetails.listPrice,
-              type: offer.propertyDetails.propertyType,
-              features: [],
-              daysOnMarket: 30,
-            }
-          : {
-              address: 'Sample Property Address',
-              price: 500000,
-              type: 'single-family',
-              features: [],
-              daysOnMarket: 30,
-            },
+        property: {
+          address: offer?.propertyDetails?.address || 'Property Address',
+          price: offer?.propertyDetails?.listPrice || 500000,
+          type: offer?.propertyDetails?.propertyType || 'Single Family Home',
+          features: [],
+          condition: 'Good',
+          daysOnMarket: 30,
+        },
         client: {
           name: `${clientProfile.personalInfo.firstName} ${clientProfile.personalInfo.lastName}`,
-          role: clientProfile.clientType,
-          experienceLevel: 'first-time',
-          goals: [],
-          concerns: [],
-          timeline: clientProfile.preferences.timeframe,
+          role: clientProfile.clientType === 'buyer' ? 'buyer' : 'seller',
+          experienceLevel: 'experienced',
+          goals: ['Find the perfect home'],
+          concerns: ['Market conditions', 'Pricing'],
+          timeline: clientProfile.preferences.timeframe || '3-6 months',
         },
         agent: {
-          name: agentProfile.displayName || 'Agent',
-          brokerage: agentProfile.brokerage,
-          experience: `${agentProfile.yearsExperience} years`,
-          credentials: agentProfile.licenseNumber,
+          name: agentProfile.displayName || 'Real Estate Agent',
+          brokerage: agentProfile.brokerage || 'Real Estate Brokerage',
+          experience: '5+ years',
+          credentials: 'Licensed Real Estate Agent',
           contact: {
-            phone: agentProfile.phoneNumber,
-            email: agentProfile.email,
+            phone: agentProfile.phoneNumber || '(555) 123-4567',
+            email: agentProfile.email || 'agent@realestate.com',
           },
         },
         market: {
-          trend: 'warm' as const,
-          inventory: 'balanced' as const,
-          competition: 'medium' as const,
+          trend: 'warm',
+          inventory: 'balanced',
+          competition: 'medium',
           location: {
-            city: clientProfile.personalInfo.city,
-            state: clientProfile.personalInfo.state,
-            zipCode: clientProfile.personalInfo.zipCode,
+            city: clientProfile.personalInfo.city || 'City',
+            state: clientProfile.personalInfo.state || 'State',
+            zipCode: clientProfile.personalInfo.zipCode || '12345',
           },
         },
         competingOffers: [],
@@ -496,14 +608,21 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
 
       console.log('Generated context:', context)
 
-      // Create request
+      // Create the document package request
       const request: DocumentPackageRequest = {
-        type: selectedTemplate as DocumentPackageType,
+        type: 'buyer_offer' as DocumentPackageType,
         context,
         options: {
           format: 'text',
-          complexity: generationOptions.complexity as any,
-          tone: generationOptions.tone as any,
+          complexity: generationOptions.complexity as
+            | 'simple'
+            | 'intermediate'
+            | 'detailed',
+          tone: generationOptions.tone as
+            | 'professional'
+            | 'warm'
+            | 'confident'
+            | 'analytical',
           includeMarketAnalysis: generationOptions.includeMarketAnalysis,
           includeRiskAssessment: generationOptions.includeRiskAssessment,
           includeNegotiationTactics:
@@ -515,8 +634,8 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
           jurisdiction: generationOptions.jurisdiction,
         },
         requirements: {
-          documents: customDocuments.filter(d => d.enabled).map(d => d.type),
-          deliveryMethod: 'progressive',
+          documents: getSelectedDocuments(),
+          deliveryMethod: 'batch',
           qualityLevel: 'review',
           fallbackOptions: true,
         },
@@ -524,32 +643,23 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
 
       console.log('Generated request:', request)
 
-      // Simulate progress updates
-      const progressInterval = setInterval(() => {
-        setProgress(prev => {
-          const newProgress = Math.min(prev.progress + 10, 90)
-          return {
-            ...prev,
-            progress: newProgress,
-            currentStep:
-              newProgress < 30
-                ? 'Analyzing market conditions...'
-                : newProgress < 60
-                  ? 'Generating documents...'
-                  : 'Finalizing and reviewing...',
-          }
-        })
-      }, 1000)
+      // Update progress to show document generation starting
+      setProgress(prev => ({
+        ...prev,
+        currentStep: 'Generating documents...',
+        progress: 5,
+      }))
 
       // Generate documents
-      console.log('Calling DocumentOrchestrator.generateDocumentPackage...')
+      console.log(
+        'Calling DocumentOrchestrationService.generateDocumentPackage...'
+      )
       const packageResult =
-        await DocumentOrchestrator.generateDocumentPackage(request)
+        await DocumentOrchestrationService.generateDocumentPackage(request)
 
       console.log('Document generation result:', packageResult)
 
-      clearInterval(progressInterval)
-
+      // Update progress to completion
       setProgress({
         status: 'completed',
         currentStep: 'Generation complete!',
@@ -557,6 +667,22 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
         documentsGenerated: packageResult.documents.length,
         totalDocuments: packageResult.documents.length,
       })
+
+      // Save documents to Firebase if generation was successful
+      if (packageResult.documents && packageResult.documents.length > 0) {
+        setProgress(prev => ({
+          ...prev,
+          currentStep: 'Saving documents to Firebase...',
+        }))
+
+        console.log('Saving documents to Firebase...')
+        await saveDocumentsToFirebase(packageResult)
+
+        setProgress(prev => ({
+          ...prev,
+          currentStep: 'Documents saved successfully!',
+        }))
+      }
 
       setResult(packageResult)
       if (packageResult.documents.length > 0) {

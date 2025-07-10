@@ -233,21 +233,26 @@ async function researchAllIssues(
 
       const searchQuery = `cost to repair ${issue.description} in ${propertyAddress}`
       // eslint-disable-next-line no-await-in-loop
-      const searchResult = await searchTool.call(searchQuery)
+      const searchResultString = await searchTool.call(searchQuery)
       logger.info(
         `[ReportAgent] Brave Search result for "${issue.description}":`,
-        searchResult,
+        searchResultString,
       )
-      const researchSummary =
-        typeof searchResult === 'string'
-          ? searchResult
-          : JSON.stringify(searchResult)
+      
+      const searchResults = JSON.parse(searchResultString) as Array<{ title: string, link: string, snippet: string }>
+      
+      const researchSummary = searchResults
+        .map(r => `Title: ${r.title}\nSnippet: ${r.snippet}`)
+        .join('\n\n')
+
+      const sourceLinks = searchResults.map(r => r.link)
 
       const systemPrompt = `You are an expert in home repair cost estimation. Based on the issue description, context from the report, and web search results, output a JSON object with the following keys:
 - "summary": A brief explanation of the issue and recommended action.
 - "estimatedCostRange": A string representing the likely cost range, e.g., "$500 - $2000".
 - "contractorType": The type of professional needed, e.g., "Plumber".
-- "confidence": One of "High", "Medium", or "Low" based on the reliability of the information.`
+- "confidence": One of "High", "Medium", or "Low" based on the reliability of the information.
+- "localContractors": An array of objects, where each object has "name", "phone", and "url" keys. Extract this information from the search results if available. If not, return an empty array.`
 
       const userPrompt = `Issue: ${issue.description}
 Context from Report:
@@ -276,8 +281,8 @@ ${researchSummary.substring(0, 8000)}
         estimatedCost: parsed.estimatedCostRange || 'Unknown',
         confidence: parsed.confidence || 'Medium',
         contractorType: parsed.contractorType || 'General Contractor',
-        localContractors: [], // Placeholder
-        sources: [`Brave Search for "${searchQuery}"`],
+        localContractors: parsed.localContractors || [],
+        sources: sourceLinks,
       }
 
       const completedMessage = `Completed research for ${issue.description}.`
@@ -478,14 +483,16 @@ export const generateReport = async (
       configurable: { threadId },
     })
 
-    let finalReport: string | undefined
+    let finalState: Partial<ReportAgentState> = {}
 
     for await (const chunk of stream) {
-      const stateUpdate = Object.values(chunk)[0] as Partial<ReportAgentState>
+      const nodeName = Object.keys(
+        chunk,
+      )[0] as keyof typeof chunk
+      const stateUpdate = chunk[nodeName]
 
-      if (stateUpdate.finalReport) {
-        finalReport = stateUpdate.finalReport
-      }
+      // Merge the latest updates into the final state
+      finalState = { ...finalState, ...stateUpdate }
 
       if (stateUpdate.progressLog) {
         // Send the latest progress message
@@ -495,6 +502,9 @@ export const generateReport = async (
     }
     logger.info(`[ReportAgent] Stream finished for threadId: ${threadId}.`)
     sendProgress('Agent workflow finished.')
+
+    const finalReport = finalState.finalReport
+    logger.info('[ReportAgent] Final report content to be saved:', finalReport)
 
     if (finalReport) {
       const reportRef = doc(db, COLLECTIONS.INSPECTION_REPORTS, threadId)

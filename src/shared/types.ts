@@ -217,7 +217,7 @@ export interface AppAPI {
   }
   report: {
     generate(
-      filePaths: string[],
+      fileArrayBuffers: ArrayBuffer[],
       reportId: string
     ): Promise<{ success: boolean; reportId?: string; error?: string }>
     onProgress(callback: (message: string) => void): () => void

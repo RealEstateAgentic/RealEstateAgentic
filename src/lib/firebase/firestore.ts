@@ -14,16 +14,12 @@ import {
   query,
   where,
   orderBy,
-  limit,
   Timestamp,
   serverTimestamp,
-  DocumentData,
-  QueryDocumentSnapshot,
-  DocumentReference,
 } from 'firebase/firestore'
 import { db } from './config'
 import { getCurrentUser } from './auth'
-import type { Property, RepairEstimate, RepairItem } from '../../shared/types'
+import type { Property, RepairEstimate, } from '../../shared/types'
 
 /**
  * Collection names

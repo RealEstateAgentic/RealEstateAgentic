@@ -4,8 +4,8 @@
  */
 
 import { ArrowLeft, Calendar, DollarSign, MapPin } from 'lucide-react'
-import { Button } from './ui/button'
-import type { InspectionReport } from '../data/mock-inspection-reports'
+import { Button } from '../ui/button'
+import type { InspectionReport } from '../../data/mock-inspection-reports'
 
 interface ReportHeaderProps {
   report: InspectionReport
@@ -18,12 +18,12 @@ interface ReportHeaderProps {
  */
 export function ReportHeader({ report, onBackClick }: ReportHeaderProps) {
   return (
-    <div className="bg-gray-900 border-b border-gray-700 p-6">
+    <div className="bg-white border-b border-gray-200 p-6 shadow-sm">
       <div className="flex items-center gap-4 mb-6">
         <Button
           variant="ghost"
           onClick={onBackClick}
-          className="flex items-center gap-2 text-gray-400 hover:text-gray-100"
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
         >
           <ArrowLeft className="size-4" />
           Back to New Report
@@ -31,19 +31,19 @@ export function ReportHeader({ report, onBackClick }: ReportHeaderProps) {
       </div>
 
       <div className="space-y-4">
-        <h1 className="text-3xl font-bold text-gray-100">
+        <h1 className="text-3xl font-bold text-gray-900">
           {report.title}
         </h1>
 
         <div className="flex flex-wrap items-center gap-6 text-sm">
           <div className="flex items-center gap-2">
-            <MapPin className="size-4 text-gray-400" />
-            <span className="text-gray-300">{report.address}</span>
+            <MapPin className="size-4 text-gray-600" />
+            <span className="text-gray-700">{report.address}</span>
           </div>
 
           <div className="flex items-center gap-2">
-            <Calendar className="size-4 text-gray-400" />
-            <span className="text-gray-300">
+            <Calendar className="size-4 text-gray-600" />
+            <span className="text-gray-700">
               {new Date(report.createdAt).toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
@@ -53,8 +53,8 @@ export function ReportHeader({ report, onBackClick }: ReportHeaderProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <DollarSign className="size-4 text-teal-400" />
-            <span className="text-teal-400 font-semibold text-lg">
+            <DollarSign className="size-4 text-[#3B7097]" />
+            <span className="text-[#3B7097] font-semibold text-lg">
               ${report.totalCost.toLocaleString()}
             </span>
           </div>

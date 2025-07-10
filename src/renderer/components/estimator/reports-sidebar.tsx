@@ -3,10 +3,10 @@
  * Collapsible sidebar displaying previous inspection reports
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, FileText, Clock, DollarSign } from 'lucide-react'
-import { Button } from './ui/button'
-import { mockInspectionReports, type InspectionReport } from '../data/mock-inspection-reports'
+import { Button } from '../ui/button'
+import { mockInspectionReports, type InspectionReport } from '../../data/mock-inspection-reports'
 
 interface ReportsSidebarProps {
   isOpen?: boolean
@@ -27,6 +27,11 @@ export function ReportsSidebar({
   const [internalIsOpen, setInternalIsOpen] = useState(isOpen)
   const reports = Object.values(mockInspectionReports)
 
+  // Sync internal state with parent state
+  useEffect(() => {
+    setInternalIsOpen(isOpen)
+  }, [isOpen])
+
   /**
    * Handle toggle sidebar
    */
@@ -41,6 +46,9 @@ export function ReportsSidebar({
    */
   const handleSelectReport = (report: InspectionReport) => {
     onSelectReport?.(report)
+    // Auto-collapse sidebar after selecting a report
+    setInternalIsOpen(false)
+    onToggle?.(false)
   }
 
   /**
@@ -67,13 +75,13 @@ export function ReportsSidebar({
     <>
       {/* Sidebar */}
       <div className={`
-        fixed right-0 top-0 h-full bg-gray-900 border-l border-gray-700 z-50
+        fixed right-0 top-0 h-full bg-white border-l border-gray-200 z-50 shadow-xl
         transform transition-transform duration-300 ease-in-out
         ${internalIsOpen ? 'translate-x-0' : 'translate-x-full'}
         w-80
       `}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-800">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gray-50">
           <Button
             variant="ghost"
             size="icon"
@@ -82,8 +90,8 @@ export function ReportsSidebar({
             <ChevronRight className="size-4" />
           </Button>
           <div className="flex items-center gap-2">
-            <FileText className="size-5 text-teal-400" />
-            <h2 className="text-lg font-semibold text-gray-100">Inspection Reports</h2>
+            <FileText className="size-5 text-[#3B7097]" />
+            <h2 className="text-lg font-semibold text-gray-900">Inspection Reports</h2>
           </div>
         </div>
 
@@ -101,15 +109,15 @@ export function ReportsSidebar({
                 className={`
                   p-4 rounded-lg border cursor-pointer transition-all duration-200
                   ${selectedReportId === report.id 
-                    ? 'bg-teal-900/30 border-teal-600' 
-                    : 'bg-gray-800 border-gray-700 hover:border-gray-600'
+                    ? 'bg-[#3B7097]/10 border-[#3B7097] shadow-md' 
+                    : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm'
                   }
                 `}
               >
-                <h3 className="font-medium text-gray-100 mb-1 text-sm leading-tight">
+                <h3 className="font-medium text-gray-900 mb-1 text-sm leading-tight">
                   {report.title}
                 </h3>
-                <p className="text-xs text-gray-400 mb-2">{report.address}</p>
+                <p className="text-xs text-gray-600 mb-2">{report.address}</p>
                 
                 <div className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-1">
@@ -119,8 +127,8 @@ export function ReportsSidebar({
                     </span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <DollarSign className="size-3 text-teal-400" />
-                    <span className="text-teal-400 font-medium">
+                    <DollarSign className="size-3 text-[#3B7097]" />
+                    <span className="text-[#3B7097] font-medium">
                       ${report.totalCost.toLocaleString()}
                     </span>
                   </div>
@@ -135,7 +143,7 @@ export function ReportsSidebar({
       {!internalIsOpen && (
         <button
           onClick={handleToggle}
-          className="fixed right-4 top-4 z-40 bg-teal-600 hover:bg-teal-700 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:shadow-xl"
+          className="fixed right-6 top-20 z-40 bg-[#3B7097] hover:bg-[#3B7097]/90 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:shadow-xl"
           aria-label="Open inspection reports sidebar"
         >
           <ChevronLeft className="size-5" />

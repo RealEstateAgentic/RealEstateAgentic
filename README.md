@@ -61,6 +61,66 @@ npm run lint:fix
 npm run make:release
 ```
 
+## Google Cloud Setup
+
+This application integrates with Google Cloud services (Gmail, Calendar, Drive, Docs, Sheets, etc.). To enable these integrations:
+
+### 1. Install Google Cloud CLI
+
+```bash
+# macOS (using Homebrew)
+brew install --cask google-cloud-sdk
+
+# Or download from: https://cloud.google.com/sdk/docs/install
+```
+
+### 2. Authenticate with Google Cloud
+
+```bash
+# Login with your Google account
+gcloud auth login
+
+# Set your project (use the project ID from your .env file)
+gcloud config set project YOUR_PROJECT_ID
+
+# Verify your setup
+gcloud config list
+```
+
+### 3. Enable Required APIs
+
+```bash
+# Enable Google Workspace APIs for real estate features
+gcloud services enable \
+  gmail.googleapis.com \
+  calendar-json.googleapis.com \
+  drive.googleapis.com \
+  docs.googleapis.com \
+  sheets.googleapis.com \
+  people.googleapis.com \
+  tasks.googleapis.com
+
+# Check enabled services
+gcloud services list --enabled
+```
+
+### 4. Set up Authentication
+
+```bash
+# For development - enables application default credentials
+gcloud auth application-default login
+```
+
+### Available Google Services
+
+- **📧 Gmail API**: Send property alerts, follow-ups
+- **📅 Calendar API**: Schedule showings, appointments  
+- **📁 Drive API**: Store property documents, photos
+- **📄 Docs API**: Generate contracts, reports
+- **📊 Sheets API**: Track leads, analytics
+- **👥 People API**: Manage client contacts
+- **✅ Tasks API**: Task management integration
+
 ## Project Structure
 
 ```

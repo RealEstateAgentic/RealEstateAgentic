@@ -5,10 +5,10 @@
  */
 
 import { useState, useEffect } from 'react'
-import { ReportsSidebar } from '../components/reports-sidebar'
-import { NewReportContent } from '../components/new-report-content'
-import { ReportHeader } from '../components/report-header'
-import { MarkdownRenderer } from '../components/markdown-renderer'
+import { ReportsSidebar } from '../components/estimator/reports-sidebar'
+import { NewReportContent } from '../components/estimator/new-report-content'
+import { ReportHeader } from '../components/estimator/report-header'
+import { MarkdownRenderer } from '../components/estimator/markdown-renderer'
 import { mockInspectionReports, type InspectionReport } from '../data/mock-inspection-reports'
 
 /**
@@ -65,7 +65,7 @@ export function RepairEstimator() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-950 overflow-hidden">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* Main Content Area */}
       <div className={`
         flex-1 flex flex-col transition-all duration-300 ease-in-out
@@ -78,7 +78,7 @@ export function RepairEstimator() {
               report={selectedReport}
               onBackClick={handleBackToNew}
             />
-            <div className="flex-1 p-6 overflow-y-auto">
+            <div className="flex-1 p-6 overflow-y-auto bg-gray-50">
               <div className="max-w-4xl mx-auto">
                 <MarkdownRenderer
                   content={selectedReport.content}
@@ -90,7 +90,7 @@ export function RepairEstimator() {
         ) : (
           /* Creating New Report */
           <div className="flex flex-col h-full">
-            <div className="flex-1 flex items-start justify-center">
+            <div className="flex-1 flex items-start justify-center bg-gray-50 p-6">
               <NewReportContent />
             </div>
           </div>

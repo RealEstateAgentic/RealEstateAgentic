@@ -135,9 +135,17 @@ const API = {
   report: {
     generate: (fileArrayBuffers: ArrayBuffer[], reportId: string) =>
       ipcRenderer.invoke('reports:generate', fileArrayBuffers, reportId),
-    onProgress: (callback: (message: string) => void) => {
-      const handler = (_event: Electron.IpcRendererEvent, message: string) =>
-        callback(message)
+    onProgress: (
+      callback: (payload: {
+        message: string
+        isComplete: boolean
+        finalReport: string
+      }) => void,
+    ) => {
+      const handler = (
+        _event: Electron.IpcRendererEvent,
+        payload: { message: string; isComplete: boolean; finalReport: string },
+      ) => callback(payload)
       ipcRenderer.on('reports:progress', handler)
       return () => {
         ipcRenderer.removeListener('reports:progress', handler)

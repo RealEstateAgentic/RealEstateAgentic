@@ -3,7 +3,7 @@
  * Main content area for creating new inspection reports
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { FileText, Upload, Zap } from 'lucide-react'
 
@@ -15,6 +15,7 @@ import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 import { getCurrentUser } from '~/src/lib/firebase/auth'
 import { createInspectionReport } from '~/src/lib/firebase/firestore'
 import { ReportStatusLogger } from './report-status-logger'
+import { MarkdownRenderer } from './markdown-renderer'
 
 interface NewReportContentProps {
   className?: string
@@ -28,6 +29,28 @@ export function NewReportContent({ className = '' }: NewReportContentProps) {
   const [files, setFiles] = useState<UploadableFile[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [reportId, setReportId] = useState<string | null>(null)
+  const [progressMessages, setProgressMessages] = useState<string[]>([])
+  const [finalMarkdown, setFinalMarkdown] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!reportId) return
+
+    const unsubscribe = window.App.report.onProgress(
+      ({ message, isComplete, finalReport }) => {
+        setProgressMessages(prev => [...prev, message])
+        if (isComplete) {
+          setIsGenerating(false)
+          if (finalReport) {
+            setFinalMarkdown(finalReport)
+          }
+        }
+      },
+    )
+
+    return () => {
+      unsubscribe()
+    }
+  }, [reportId])
 
   const onAddFiles = async (newFiles: File[]) => {
     const newUploadableFiles: UploadableFile[] = newFiles.map(file => ({
@@ -112,6 +135,8 @@ export function NewReportContent({ className = '' }: NewReportContentProps) {
     }
 
     setIsGenerating(true)
+    setProgressMessages([])
+    setFinalMarkdown(null)
 
     try {
       // Create the initial report document in Firestore
@@ -182,14 +207,13 @@ export function NewReportContent({ className = '' }: NewReportContentProps) {
         </div>
       </div>
 
-      {isGenerating ? (
-        reportId ? (
-          <ReportStatusLogger reportId={reportId} />
-        ) : (
-          <div className="flex items-center justify-center p-8">
-            <p>Initializing report generation...</p>
-          </div>
-        )
+      {finalMarkdown ? (
+        <MarkdownRenderer
+          markdownContent={finalMarkdown}
+          onBack={() => setFinalMarkdown(null)}
+        />
+      ) : isGenerating || (reportId && !finalMarkdown) ? (
+        <ReportStatusLogger messages={progressMessages} />
       ) : (
         <div className="space-y-8">
           {/* File Upload Section */}

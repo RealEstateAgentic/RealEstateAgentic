@@ -13,9 +13,9 @@ import { generatePDFFromHTML, createCompleteHTMLDocument } from '../utils/pdf-ge
 export function setupPDFHandlers(): void {
   /**
    * Handle PDF generation from HTML content
-   * Channel: 'pdf:generate'
+   * Channel: 'pdf:generate-from-html'
    */
-  ipcMain.handle('pdf:generate', async (event, data: {
+  ipcMain.handle('pdf:generate-from-html', async (event, data: {
     htmlContent: string
     title: string
     filename: string
@@ -97,7 +97,7 @@ export function setupPDFHandlers(): void {
  * Remove all PDF-related IPC handlers
  */
 export function removePDFHandlers(): void {
-  ipcMain.removeHandler('pdf:generate')
+  ipcMain.removeHandler('pdf:generate-from-html')
   ipcMain.removeHandler('pdf:openFile')
   ipcMain.removeHandler('pdf:showInFolder')
 } 

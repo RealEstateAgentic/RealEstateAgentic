@@ -218,9 +218,15 @@ export interface AppAPI {
   report: {
     generate(
       fileArrayBuffers: ArrayBuffer[],
-      reportId: string
+      reportId: string,
     ): Promise<{ success: boolean; reportId?: string; error?: string }>
-    onProgress(callback: (message: string) => void): () => void
+    onProgress(
+      callback: (payload: {
+        message: string
+        isComplete: boolean
+        finalReport: string
+      }) => void,
+    ): () => void
   }
 }
 

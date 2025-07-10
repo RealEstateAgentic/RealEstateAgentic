@@ -2,13 +2,12 @@
  * Report Status Logger Component
  * Displays real-time progress updates for the report generation process.
  */
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { CheckCircle, Loader, AlertTriangle } from 'lucide-react'
 
-export function ReportStatusLogger({ reportId }: { reportId: string }) {
-  const [messages, setMessages] = useState<string[]>([])
-  const [isComplete, setIsComplete] = useState(false)
+export function ReportStatusLogger({ messages }: { messages: string[] }) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const isComplete = messages.some(msg => msg.toLowerCase().includes('complete'))
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -17,21 +16,6 @@ export function ReportStatusLogger({ reportId }: { reportId: string }) {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
-
-  useEffect(() => {
-    const unsubscribe = window.App.report.onProgress((message: string) => {
-      console.log('Received progress message in renderer:', message)
-      setMessages(prev => [...prev, message])
-      if (message.toLowerCase().includes('complete')) {
-        setIsComplete(true)
-      }
-    })
-
-    // Cleanup subscription on component unmount
-    return () => {
-      unsubscribe()
-    }
-  }, [reportId])
 
   const getIcon = (message: string, isLast: boolean) => {
     const lowerCaseMessage = message.toLowerCase()

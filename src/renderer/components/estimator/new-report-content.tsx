@@ -27,6 +27,7 @@ interface NewReportContentProps {
 export function NewReportContent({ className = '' }: NewReportContentProps) {
   const [files, setFiles] = useState<UploadableFile[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
+  const [reportId, setReportId] = useState<string | null>(null)
 
   const onAddFiles = async (newFiles: File[]) => {
     const newUploadableFiles: UploadableFile[] = newFiles.map(file => ({
@@ -127,13 +128,29 @@ export function NewReportContent({ className = '' }: NewReportContentProps) {
         progressLog: ['Report generation initiated...']
       }
       const newReportId = await createInspectionReport(newReportData)
+      setReportId(newReportId)
 
-      // TODO: Get the actual file path on the user's system to pass to the main process
-      // For now, we'll use a placeholder. This needs to be resolved.
-      const filePaths = successfulUploads.map(f => f.file.path || 'path/to/file')
+      const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => {
+            if (reader.result instanceof ArrayBuffer) {
+              resolve(reader.result)
+            } else {
+              reject(new Error('Failed to read file as ArrayBuffer.'))
+            }
+          }
+          reader.onerror = reject
+          reader.readAsArrayBuffer(file)
+        })
+      }
+
+      const fileArrayBuffers = await Promise.all(
+        successfulUploads.map(f => readFileAsArrayBuffer(f.file))
+      )
 
       // Trigger the agent in the main process
-      const result = await window.App.report.generate(filePaths, newReportId)
+      const result = await window.App.report.generate(fileArrayBuffers, newReportId)
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to start agent.')
@@ -166,7 +183,13 @@ export function NewReportContent({ className = '' }: NewReportContentProps) {
       </div>
 
       {isGenerating ? (
-        <ReportStatusLogger reportId={reportId} />
+        reportId ? (
+          <ReportStatusLogger reportId={reportId} />
+        ) : (
+          <div className="flex items-center justify-center p-8">
+            <p>Initializing report generation...</p>
+          </div>
+        )
       ) : (
         <div className="space-y-8">
           {/* File Upload Section */}
@@ -226,4 +249,4 @@ export function NewReportContent({ className = '' }: NewReportContentProps) {
       )}
     </div>
   )
-} 
+}

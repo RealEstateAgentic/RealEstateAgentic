@@ -67,9 +67,8 @@ class JotFormPollingService {
       seller: this.sellerFormId
     });
     
-    // Initialize last processed time for each form
-    this.lastProcessedTime[this.buyerFormId] = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(); // 24 hours ago
-    this.lastProcessedTime[this.sellerFormId] = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(); // 24 hours ago
+    // Initialize last processed time for each form from Firebase
+    await this.loadLastProcessedTimes();
   }
 
   async startPolling() {
@@ -158,7 +157,11 @@ class JotFormPollingService {
         
         // Update last processed time
         const latestSubmission = newSubmissions[0]; // Should be most recent due to orderby
-        this.lastProcessedTime[formId] = new Date(latestSubmission.created_at).toISOString();
+        const newLastProcessedTime = new Date(latestSubmission.created_at).toISOString();
+        this.lastProcessedTime[formId] = newLastProcessedTime;
+        
+        // Save to Firebase
+        await firebaseCollections.updatePollingState(formId, newLastProcessedTime);
       }
       
     } catch (error) {
@@ -169,6 +172,13 @@ class JotFormPollingService {
   private async processSubmission(submission: JotFormSubmission, formType: 'buyer' | 'seller') {
     try {
       console.log(`🔄 Processing ${formType} submission:`, submission.id);
+      
+      // Check if submission has already been processed
+      const existingAnalysis = await firebaseCollections.getGPTAnalysisBySubmissionId(submission.id);
+      if (existingAnalysis) {
+        console.log(`⏭️ Submission ${submission.id} already processed, skipping`);
+        return;
+      }
       
       // Extract client info from answers
       const clientInfo = this.extractClientInfo(submission.answers);
@@ -488,6 +498,46 @@ class JotFormPollingService {
       console.error('❌ Failed to create Google Sheet:', error);
       // Return a fallback URL if sheet creation fails
       return `https://docs.google.com/spreadsheets/d/error_${Date.now()}`;
+    }
+  }
+
+  private async loadLastProcessedTimes() {
+    try {
+      console.log('📋 Loading last processed times from Firebase...');
+      
+      if (this.buyerFormId) {
+        const buyerState = await firebaseCollections.getPollingState(this.buyerFormId);
+        if (buyerState) {
+          this.lastProcessedTime[this.buyerFormId] = buyerState.lastProcessedTime;
+          console.log(`✅ Loaded buyer last processed time: ${buyerState.lastProcessedTime}`);
+        } else {
+          // Default to 24 hours ago if no state found
+          this.lastProcessedTime[this.buyerFormId] = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+          console.log(`⚠️ No buyer state found, using default: ${this.lastProcessedTime[this.buyerFormId]}`);
+        }
+      }
+      
+      if (this.sellerFormId) {
+        const sellerState = await firebaseCollections.getPollingState(this.sellerFormId);
+        if (sellerState) {
+          this.lastProcessedTime[this.sellerFormId] = sellerState.lastProcessedTime;
+          console.log(`✅ Loaded seller last processed time: ${sellerState.lastProcessedTime}`);
+        } else {
+          // Default to 24 hours ago if no state found
+          this.lastProcessedTime[this.sellerFormId] = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+          console.log(`⚠️ No seller state found, using default: ${this.lastProcessedTime[this.sellerFormId]}`);
+        }
+      }
+      
+    } catch (error) {
+      console.error('❌ Error loading last processed times:', error);
+      // Fallback to default values
+      if (this.buyerFormId) {
+        this.lastProcessedTime[this.buyerFormId] = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      }
+      if (this.sellerFormId) {
+        this.lastProcessedTime[this.sellerFormId] = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+      }
     }
   }
 

@@ -13,7 +13,7 @@ const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: 'damonbodine@gmail.com',
-    pass: process.env.GMAIL_APP_PASSWORD || 'snxjhlkkxsqvcfds'
+    pass: process.env.GMAIL_APP_PASSWORD || ''
   }
 });
 
@@ -78,6 +78,31 @@ const templates = {
         <p>Best regards,<br>{{agentName}}</p>
       </div>
     `
+  },
+  agent_summary: {
+    subject: 'New {{clientType}} Form Completed - {{clientName}}',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>New {{clientType}} form completed</h2>
+        <p><strong>Client:</strong> {{clientName}}</p>
+        
+        <h3>AI Summary:</h3>
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+          <pre style="white-space: pre-wrap; font-family: Arial;">{{summary}}</pre>
+        </div>
+        
+        <h3>Form Responses:</h3>
+        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+          <pre style="white-space: pre-wrap; font-family: Arial;">{{formData}}</pre>
+        </div>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="{{excelUrl}}" style="background-color: #34a853; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">📊 View Google Sheets Report</a>
+        </div>
+        
+        <p>Follow up with this {{clientType}} within 24 hours.</p>
+      </div>
+    `
   }
 };
 
@@ -107,7 +132,7 @@ export function setupEmailHandler() {
       const mailOptions = {
         from: {
           name: 'Real Estate Agent',
-          address: 'damonbodine@gmail.com'
+          address: 'damon.bodine@gauntletai.com'
         },
         to: emailData.to,
         subject: subject,

@@ -1,5 +1,5 @@
 // JotForm API service to fetch actual forms
-const JOTFORM_API_KEY = process.env.JOTFORM_API_KEY || '4113b2524b553f4f124f40c2a8741565';
+const JOTFORM_API_KEY = process.env.JOTFORM_API_KEY || '';
 const JOTFORM_API_BASE = 'https://api.jotform.com';
 
 interface JotFormResponse {

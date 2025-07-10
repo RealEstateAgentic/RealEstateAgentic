@@ -23,11 +23,11 @@ async function initializeFormUrls() {
 // Initialize on load
 initializeFormUrls();
 
-// Import and start form submission listener
-import { startFormSubmissionListener } from './form-submission-listener';
+// Import and start JotForm polling service
+import { jotformPolling } from './jotform-polling';
 
-// Start listening for form submissions
-startFormSubmissionListener();
+// Start polling for form submissions
+jotformPolling.startPolling();
 
 // Buyer workflow handler
 export async function startBuyerWorkflow({ agentId, buyerEmail, buyerName, buyerPhone }: {
@@ -54,28 +54,8 @@ export async function startBuyerWorkflow({ agentId, buyerEmail, buyerName, buyer
       status: 'survey_sent'
     });
 
-    // Step 2: Create workflow tracking
-    console.log('📝 Step 2: Creating workflow tracking...');
-    const workflow = await firebaseCollections.createWorkflow({
-      clientId: buyer.id,
-      clientType: 'buyer',
-      agentId,
-      type: 'onboarding',
-      status: 'in-progress',
-      steps: [
-        { name: 'create_buyer_record', status: 'completed', completedAt: new Date().toISOString() },
-        { name: 'send_form_email', status: 'pending' },
-        { name: 'await_form_completion', status: 'pending' },
-        { name: 'process_webhook', status: 'pending' },
-        { name: 'generate_summary', status: 'pending' }
-      ],
-      emailsSent: [],
-      documentsGenerated: [],
-      formId: BUYER_FORM_URL
-    });
-
-    // Step 3: Send email via main process (to avoid browser compatibility issues)
-    console.log('📝 Step 3: Sending email via main process...');
+    // Step 2: Send email via main process (to avoid browser compatibility issues)
+    console.log('📝 Step 2: Sending email via main process...');
     
     // Use Electron IPC to send email from main process
     if (typeof window !== 'undefined' && window.electronAPI) {
@@ -103,21 +83,12 @@ export async function startBuyerWorkflow({ agentId, buyerEmail, buyerName, buyer
       console.log('📧 Form URL:', BUYER_FORM_URL);
     }
 
-    // Step 4: Update workflow
-    console.log('📝 Step 4: Updating workflow status...');
-    await firebaseCollections.updateWorkflow(workflow.id, {
-      steps: workflow.steps.map((step: any, index: number) => 
-        index === 1 ? { ...step, status: 'completed', completedAt: new Date().toISOString() } : step
-      )
-    });
-
     console.log('✅ Buyer workflow completed successfully!');
     console.log('📧 Email sent to:', buyerEmail);
     console.log('📋 Form URL:', BUYER_FORM_URL);
 
     return {
       success: true,
-      workflowId: workflow.id,
       buyerId: buyer.id,
       formUrl: BUYER_FORM_URL,
       message: 'Buyer survey sent successfully'
@@ -156,28 +127,8 @@ export async function startSellerWorkflow({ agentId, sellerEmail, sellerName, se
       status: 'survey_sent'
     });
 
-    // Step 2: Create workflow tracking
-    console.log('📝 Step 2: Creating workflow tracking...');
-    const workflow = await firebaseCollections.createWorkflow({
-      clientId: seller.id,
-      clientType: 'seller',
-      agentId,
-      type: 'onboarding',
-      status: 'in-progress',
-      steps: [
-        { name: 'create_seller_record', status: 'completed', completedAt: new Date().toISOString() },
-        { name: 'send_form_email', status: 'pending' },
-        { name: 'await_form_completion', status: 'pending' },
-        { name: 'process_webhook', status: 'pending' },
-        { name: 'generate_summary', status: 'pending' }
-      ],
-      emailsSent: [],
-      documentsGenerated: [],
-      formId: SELLER_FORM_URL
-    });
-
-    // Step 3: Send email via main process
-    console.log('📝 Step 3: Sending email via main process...');
+    // Step 2: Send email via main process (to avoid browser compatibility issues)
+    console.log('📝 Step 2: Sending email via main process...');
     
     if (typeof window !== 'undefined' && window.electronAPI) {
       try {
@@ -202,21 +153,12 @@ export async function startSellerWorkflow({ agentId, sellerEmail, sellerName, se
       console.log('📧 Form URL:', SELLER_FORM_URL);
     }
 
-    // Step 4: Update workflow
-    console.log('📝 Step 4: Updating workflow status...');
-    await firebaseCollections.updateWorkflow(workflow.id, {
-      steps: workflow.steps.map((step: any, index: number) => 
-        index === 1 ? { ...step, status: 'completed', completedAt: new Date().toISOString() } : step
-      )
-    });
-
     console.log('✅ Seller workflow completed successfully!');
     console.log('📧 Email sent to:', sellerEmail);
     console.log('📋 Form URL:', SELLER_FORM_URL);
 
     return {
       success: true,
-      workflowId: workflow.id,
       sellerId: seller.id,
       formUrl: SELLER_FORM_URL,
       message: 'Seller survey sent successfully'

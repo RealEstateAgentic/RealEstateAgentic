@@ -23,6 +23,19 @@ interface SellerData {
   qualificationSummary?: string;
 }
 
+interface GPTAnalysisData {
+  clientId: string;
+  clientName: string;
+  clientEmail: string;
+  clientType: 'buyer' | 'seller';
+  agentId: string;
+  formData: Record<string, any>;
+  aiSummary: string;
+  analysisModel: string;
+  createdAt: string;
+  submissionId?: string;
+}
+
 interface WorkflowData {
   clientId: string;
   clientType: 'buyer' | 'seller';
@@ -193,6 +206,118 @@ export const firebaseCollections = {
       return { id: docRef.id };
     } catch (error) {
       console.error('❌ Error adding document:', error);
+      throw error;
+    }
+  },
+
+  async getBuyers() {
+    console.log('💾 Getting all buyers from Firebase');
+    
+    try {
+      const buyersCollection = collection(db, 'buyers');
+      const querySnapshot = await getDocs(buyersCollection);
+      const buyers = [];
+      
+      querySnapshot.forEach((doc) => {
+        buyers.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+      
+      console.log('✅ Retrieved', buyers.length, 'buyers');
+      return buyers;
+    } catch (error) {
+      console.error('❌ Error getting buyers:', error);
+      throw error;
+    }
+  },
+
+  async getSellers() {
+    console.log('💾 Getting all sellers from Firebase');
+    
+    try {
+      const sellersCollection = collection(db, 'sellers');
+      const querySnapshot = await getDocs(sellersCollection);
+      const sellers = [];
+      
+      querySnapshot.forEach((doc) => {
+        sellers.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+      
+      console.log('✅ Retrieved', sellers.length, 'sellers');
+      return sellers;
+    } catch (error) {
+      console.error('❌ Error getting sellers:', error);
+      throw error;
+    }
+  },
+
+  async createGPTAnalysis(analysisData: GPTAnalysisData) {
+    console.log('💾 Creating GPT analysis in Firebase for:', analysisData.clientName);
+    
+    try {
+      const analysisWithTimestamp = {
+        ...analysisData,
+        createdAt: new Date().toISOString()
+      };
+      
+      const docRef = await addDoc(collection(db, 'gpt-analysis'), analysisWithTimestamp);
+      
+      console.log('✅ GPT analysis created:', docRef.id);
+      return { id: docRef.id };
+    } catch (error) {
+      console.error('❌ Error creating GPT analysis:', error);
+      throw error;
+    }
+  },
+
+  async getGPTAnalyses() {
+    console.log('💾 Getting all GPT analyses from Firebase');
+    
+    try {
+      const analysesCollection = collection(db, 'gpt-analysis');
+      const querySnapshot = await getDocs(analysesCollection);
+      const analyses = [];
+      
+      querySnapshot.forEach((doc) => {
+        analyses.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+      
+      console.log('✅ Retrieved', analyses.length, 'GPT analyses');
+      return analyses;
+    } catch (error) {
+      console.error('❌ Error getting GPT analyses:', error);
+      throw error;
+    }
+  },
+
+  async getGPTAnalysesByClient(clientEmail: string) {
+    console.log('💾 Getting GPT analyses for client:', clientEmail);
+    
+    try {
+      const analysesCollection = collection(db, 'gpt-analysis');
+      const q = query(analysesCollection, where('clientEmail', '==', clientEmail));
+      const querySnapshot = await getDocs(q);
+      const analyses = [];
+      
+      querySnapshot.forEach((doc) => {
+        analyses.push({
+          id: doc.id,
+          ...doc.data()
+        });
+      });
+      
+      console.log('✅ Retrieved', analyses.length, 'GPT analyses for', clientEmail);
+      return analyses;
+    } catch (error) {
+      console.error('❌ Error getting GPT analyses for client:', error);
       throw error;
     }
   },

@@ -2,6 +2,7 @@ import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import { codeInspectorPlugin } from 'code-inspector-plugin'
 import { resolve, normalize, dirname } from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
+import { config } from 'dotenv'
 
 import injectProcessEnvPlugin from 'rollup-plugin-inject-process-env'
 import tsconfigPathsPlugin from 'vite-tsconfig-paths'
@@ -9,6 +10,9 @@ import reactPlugin from '@vitejs/plugin-react'
 
 import { settings } from './src/lib/electron-router-dom'
 import { main, resources } from './package.json'
+
+// Load .env file
+config()
 
 const [nodeModules, devFolder] = normalize(dirname(main)).split(/\/|\\/g)
 const devPath = [nodeModules, devFolder].join('/')
@@ -45,6 +49,7 @@ export default defineConfig({
   renderer: {
     define: {
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+      'process.env.OPENAI_API_KEY': JSON.stringify(process.env.OPENAI_API_KEY),
       'process.platform': JSON.stringify(process.platform),
     },
 
@@ -73,6 +78,7 @@ export default defineConfig({
         plugins: [
           injectProcessEnvPlugin({
             NODE_ENV: 'production',
+            OPENAI_API_KEY: process.env.OPENAI_API_KEY,
             platform: process.platform,
           }),
         ],

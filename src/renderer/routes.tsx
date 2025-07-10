@@ -10,6 +10,8 @@ import { RepairEstimator } from './screens/repair-estimator'
 import { BuyersPortalScreen } from './screens/buyers-portal'
 import { BuyersArchiveScreen } from './screens/buyers-archive'
 import { SellersPortalScreen } from './screens/sellers-portal'
+import { SellersPortalV2Screen } from './screens/sellers-portal-v2'
+import { SellersArchiveScreen } from './screens/sellers-archive'
 import { LearnPortalScreen } from './screens/learn-portal'
 import { MarketingPortalScreen } from './screens/marketing-portal'
 import { AgentDashboardScreen } from './screens/agent-dashboard'
@@ -124,7 +126,7 @@ export function App() {
         // Protected route - only agents can access
         if (isAuthenticated && userType === 'agent') {
           return (
-            <SellersPortalScreen
+            <SellersPortalV2Screen
               {...navigationProps}
               currentUser={currentUser}
               userType={userType}
@@ -135,6 +137,30 @@ export function App() {
           <div className="p-8 text-center">
             <p className="text-gray-600 mb-4">
               Please sign in to access the Sellers Portal
+            </p>
+            <button
+              onClick={() => navigate('/auth/agent')}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              Sign In
+            </button>
+          </div>
+        )
+
+      case '/sellers-archive':
+        if (isAuthenticated && userType === 'agent') {
+          return (
+            <SellersArchiveScreen
+              {...navigationProps}
+              currentUser={currentUser}
+              userType={userType}
+            />
+          )
+        }
+        return (
+          <div className="p-8 text-center">
+            <p className="text-gray-600 mb-4">
+              Please sign in to access the Sellers Archive
             </p>
             <button
               onClick={() => navigate('/auth/agent')}

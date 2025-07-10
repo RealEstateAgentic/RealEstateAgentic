@@ -63,6 +63,7 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
     }
   }
 
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'critical': return 'border-[#c05e51] bg-[#c05e51]/10'
@@ -121,11 +122,11 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
 
       {/* Send Survey Button for New Leads */}
       {client.stage === 'new_leads' && (
-        <div className="mb-3">
+        <div className="mb-3 space-y-2">
           <button
             onClick={handleSendSurvey}
             disabled={isSending}
-            className="flex items-center gap-2 px-3 py-2 bg-[#3B7097] hover:bg-[#3B7097]/90 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm rounded-md transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-[#3B7097] hover:bg-[#3B7097]/90 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm rounded-md transition-colors w-full"
           >
             {isSending ? (
               <>

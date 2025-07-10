@@ -146,4 +146,12 @@ const API = {
   },
 }
 
+// Email API for renderer process
+const emailAPI = {
+  sendEmail: async (emailData: any) => {
+    return await ipcRenderer.invoke('send-email', emailData)
+  }
+}
+
 contextBridge.exposeInMainWorld('App', API)
+contextBridge.exposeInMainWorld('electronAPI', emailAPI)

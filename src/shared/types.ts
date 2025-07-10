@@ -91,6 +91,23 @@ export interface Property {
   updatedAt: Date
 }
 
+export interface UploadedFile {
+  downloadURL: string
+  storagePath: string
+  fileName: string
+  size: number
+  contentType: string
+}
+
+export interface InspectionReport {
+  id?: string
+  userId: string
+  name: string
+  files: UploadedFile[]
+  createdAt: Date
+  updatedAt: Date
+}
+
 export interface RepairEstimate {
   id?: string
   propertyId: string

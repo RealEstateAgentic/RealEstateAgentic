@@ -16,6 +16,7 @@ export type UploadableFile = {
   status: 'pending' | 'uploading' | 'completed' | 'error'
   progress: number
   downloadURL?: string
+  storagePath?: string
   error?: string
 }
 

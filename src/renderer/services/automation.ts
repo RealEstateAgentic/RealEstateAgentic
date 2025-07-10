@@ -15,36 +15,6 @@ let exportToExcel: any;
 
 // Lazy load services to avoid initialization issues
 async function loadServices() {
-  if (!buyerAgent) {
-    const agents = await import('../../services/langchain/agents');
-    buyerAgent = agents.buyerAgent;
-    sellerAgent = agents.sellerAgent;
-  }
-  
-  if (!firebaseCollections) {
-    const { firebaseCollections: fc } = await import('../../services/firebase/collections');
-    firebaseCollections = fc;
-  }
-  
-  if (!sendEmailWithTemplate) {
-    const { sendEmailWithTemplate: set } = await import('../../services/email/templates');
-    sendEmailWithTemplate = set;
-  }
-  
-  if (!createJotForm) {
-    const { createJotForm: cjf } = await import('../../services/google/forms');
-    createJotForm = cjf;
-  }
-  
-  if (!generateGammaPresentation) {
-    const { generateGammaPresentation: ggp } = await import('../../services/gamma/presentation');
-    generateGammaPresentation = ggp;
-  }
-  
-  if (!exportToExcel) {
-    const { exportToExcel: ete } = await import('../../services/excel/export');
-    exportToExcel = ete;
-  }
 }
 
 // Buyer workflow handler
@@ -234,28 +204,3 @@ export async function startSellerWorkflow({ agentId, sellerEmail, sellerName, se
     throw new Error(`Failed to start seller workflow: ${error.message}`);
   }
 }
-
-// Initialize services
-export async function initializeServices() {
-  try {
-    console.log('🔥 Initializing Firebase and LangChain services...');
-    
-    // Initialize Firebase first
-    const { initializeFirebase } = await import('../../services/firebase/config');
-    initializeFirebase();
-    
-    // Then load other services
-    await loadServices();
-    
-    console.log('✅ Services initialized successfully with REAL OpenAI agents and Firebase');
-    return { 
-      success: true, 
-      message: 'Firebase + LangChain + Email services ready'
-    };
-  } catch (error) {
-    console.error('❌ Services initialization failed:', error);
-    throw new Error(`Failed to initialize services: ${error.message}`);
-  }
-}
-
-console.log('🚀 Automation services loaded in renderer');

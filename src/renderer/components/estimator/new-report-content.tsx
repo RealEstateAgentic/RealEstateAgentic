@@ -12,6 +12,8 @@ import { Button } from '~/src/renderer/components/ui/button'
 
 import { storage } from '~/src/lib/firebase/config'
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
+import { getCurrentUser } from '~/src/lib/firebase/auth'
+import { createInspectionReport } from '~/src/lib/firebase/firestore'
 
 interface NewReportContentProps {
   className?: string
@@ -46,8 +48,22 @@ export function NewReportContent({ className = '' }: NewReportContentProps) {
   }
 
   const uploadFile = async (uploadableFile: UploadableFile) => {
+    const user = getCurrentUser()
+    if (!user) {
+      // This should not happen if the user is on this screen,
+      // but as a fallback, we can prevent the upload.
+      setFiles(p =>
+        p.map(f =>
+          f.id === uploadableFile.id
+            ? { ...f, status: 'error', error: 'You must be logged in to upload files.' }
+            : f
+        )
+      )
+      return
+    }
+
     const { id, file } = uploadableFile
-    const storageRef = ref(storage, `inspection-reports/${id}-${file.name}`)
+    const storageRef = ref(storage, `users/${user.uid}/inspection-reports/${id}-${file.name}`)
     const uploadTask = uploadBytesResumable(storageRef, file)
 
     setFiles(p => p.map(f => (f.id === id ? { ...f, status: 'uploading' } : f)))
@@ -72,7 +88,7 @@ export function NewReportContent({ className = '' }: NewReportContentProps) {
         setFiles(p =>
           p.map(f =>
             f.id === id
-              ? { ...f, status: 'completed', progress: 100, downloadURL }
+              ? { ...f, status: 'completed', progress: 100, downloadURL, storagePath: uploadTask.snapshot.ref.fullPath }
               : f
           )
         )
@@ -81,6 +97,12 @@ export function NewReportContent({ className = '' }: NewReportContentProps) {
   }
 
   const handleGenerateReport = async () => {
+    const user = getCurrentUser()
+    if (!user) {
+      alert('You must be logged in to generate a report.')
+      return
+    }
+
     if (files.length === 0) return
 
     const successfulUploads = files.filter(f => f.status === 'completed')
@@ -92,17 +114,29 @@ export function NewReportContent({ className = '' }: NewReportContentProps) {
     setIsGenerating(true)
 
     try {
-      console.log(
-        'Generating report from files:',
-        successfulUploads.map(f => ({ name: f.file.name, url: f.downloadURL }))
-      )
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      const newReport = {
+        name: `Inspection Report - ${new Date().toLocaleString()}`,
+        files: successfulUploads.map(f => ({
+          fileName: f.file.name,
+          downloadURL: f.downloadURL || '',
+          storagePath: f.storagePath || '',
+          size: f.file.size,
+          contentType: f.file.type
+        })),
+      }
+
+      const newReportId = await createInspectionReport(newReport)
+
       alert(
-        'Report generation would happen here. For MVP, this creates a new inspection report.'
+        `Successfully created new inspection report with ID: ${newReportId}`
       )
+      
+      // Clear the form
+      setFiles([])
+
     } catch (error) {
-      console.error('Error generating report:', error)
-      alert('Failed to generate report. Please try again.')
+      console.error('Error creating inspection report:', error)
+      alert('Failed to create inspection report. Please try again.')
     } finally {
       setIsGenerating(false)
     }

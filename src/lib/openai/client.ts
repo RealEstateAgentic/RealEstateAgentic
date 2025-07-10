@@ -74,7 +74,7 @@ export const AI_MODELS: Record<string, AIModelConfig> = {
   // Complex reasoning - maximum capability
   COMPLEX_REASONING: {
     name: 'gpt-4-turbo-preview',
-    maxTokens: 8000,
+    maxTokens: 4000,
     temperature: 0.2,
     topP: 0.8,
     frequencyPenalty: 0.0,
@@ -103,6 +103,7 @@ class OpenAIClient {
       baseURL: this.config.baseURL,
       timeout: this.config.timeout,
       maxRetries: this.config.maxRetries,
+      dangerouslyAllowBrowser: true, // Allow browser usage for Electron renderer process
     })
   }
 

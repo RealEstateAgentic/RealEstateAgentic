@@ -1,6 +1,54 @@
 import { useState } from 'react'
-import { X, Phone, Mail, MapPin, Calendar, DollarSign, FileText, Download, Plus, Home, Clock, Archive, ArrowRight, RotateCcw, History, FolderOpen, CalendarDays, Upload, Eye, Edit, MessageCircle, User } from 'lucide-react'
+import {
+  X,
+  Phone,
+  Mail,
+  MapPin,
+  Calendar,
+  DollarSign,
+  FileText,
+  Download,
+  Plus,
+  Home,
+  Clock,
+  Archive,
+  ArrowRight,
+  RotateCcw,
+  Upload,
+  User,
+  FolderOpen,
+  CalendarDays,
+  Eye,
+  Edit,
+  MessageCircle,
+} from 'lucide-react'
 import { Button } from '../ui/button'
+import { DocumentGenerator } from '../documents/DocumentGenerator'
+import type { AgentProfile } from '../../../shared/types'
+
+// Define ClientProfile interface locally since it's not in shared types
+interface ClientProfile {
+  id: string
+  name: string
+  email: string
+  phone: string
+  clientType: 'buyer' | 'seller'
+  personalInfo: {
+    firstName: string
+    lastName: string
+    city: string
+    state: string
+    zipCode: string
+  }
+  preferences: {
+    timeframe: string
+    budget?: string
+    location?: string
+  }
+  notes?: string
+  createdAt: string
+  updatedAt: string
+}
 
 interface ClientModalProps {
   client: {
@@ -33,21 +81,28 @@ interface ClientModalProps {
   onProgress?: (client: any) => void
   onUnarchive?: (client: any) => void
   isArchiveMode?: boolean
+  currentUser?: AgentProfile | null
 }
 
-export function ClientModal({ client, onClose, onArchive, onProgress, onUnarchive, isArchiveMode = false }: ClientModalProps) {
-  const [activeTab, setActiveTab] = useState('overview')
-  const [selectedEmailThread, setSelectedEmailThread] = useState<any>(null)
-  const [showFullSummary, setShowFullSummary] = useState(false)
-  const [selectedDocument, setSelectedDocument] = useState<any>(null)
+export function ClientModal({
+  client,
+  onClose,
+  onArchive,
+  onProgress,
+  onUnarchive,
+  isArchiveMode = false,
+  currentUser,
+}: ClientModalProps) {
+  const [activeTab, setActiveTab] = useState('summary')
+  const [showDocumentGenerator, setShowDocumentGenerator] = useState(false)
 
-  const formatDate = (dateString: string | null) => {
+  const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return 'Not set'
     const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
     })
   }
 
@@ -114,80 +169,312 @@ export function ClientModal({ client, onClose, onArchive, onProgress, onUnarchiv
     }
   }
 
-  const handleSendSurvey = () => {
-    // TODO: Implement LangChain workflow for sending survey
-    console.log('Send Survey clicked for client:', client.id)
+  const handleGenerateOfferCoverLetter = () => {
+    if (!currentUser) {
+      alert('Please make sure you are logged in to generate documents.')
+      return
+    }
+
+    // Debug logging
+    console.log('Client data:', client)
+    console.log('Current user data:', currentUser)
+
+    // Validate that currentUser has required structure
+    if (!currentUser.displayName) {
+      alert(
+        'Agent profile is incomplete. Please update your profile before generating documents.'
+      )
+      return
+    }
+
+    setShowDocumentGenerator(true)
   }
 
-  const handleUploadOffer = () => {
-    // TODO: Implement offer upload workflow
-    console.log('Upload Offer clicked for client:', client.id)
+  // Create adapter for AgentProfile to match DocumentGenerator expectations
+  const createAgentProfileAdapter = (): any => {
+    if (!currentUser) return null
+
+    try {
+      // Parse agent name
+      const nameParts = (currentUser.displayName || '').trim().split(' ')
+      const firstName = nameParts[0] || 'Agent'
+      const lastName = nameParts.slice(1).join(' ') || 'Name'
+
+      return {
+        ...currentUser,
+        personalInfo: {
+          firstName,
+          lastName,
+          phone: currentUser.phoneNumber || 'Unknown Phone',
+        },
+        licenseInfo: {
+          brokerageName: currentUser.brokerage || 'Unknown Brokerage',
+          yearsExperience: currentUser.yearsExperience || 0,
+          licenseNumber: currentUser.licenseNumber || 'Unknown License',
+        },
+      }
+    } catch (error) {
+      console.error('Error creating agent profile adapter:', error)
+      return {
+        ...currentUser,
+        personalInfo: {
+          firstName: 'Agent',
+          lastName: 'Name',
+          phone: 'Unknown Phone',
+        },
+        licenseInfo: {
+          brokerageName: 'Unknown Brokerage',
+          yearsExperience: 0,
+          licenseNumber: 'Unknown License',
+        },
+      }
+    }
   }
 
-  const handleGenerateClosingPacket = () => {
-    // TODO: Implement closing packet generation from Content tab
-    console.log('Generate Closing Packet clicked for client:', client.id)
+  const handleDocumentGenerated = (result: any) => {
+    console.log('Document generated:', result)
+    // Don't immediately close the modal - let the user review the generated documents
+    // The user can manually close the modal when they're done
+
+    // Optional: Show a success notification or update UI to indicate completion
+    // For now, just log the result and keep the modal open
   }
 
-  const handleReturnToPreviousStage = () => {
-    // TODO: Implement stage rollback functionality
-    console.log('Return to previous stage clicked for client:', client.id)
+  const handleCancelDocumentGeneration = () => {
+    setShowDocumentGenerator(false)
   }
 
+  // Handler for Download Meeting Materials
+  const handleDownloadMeetingMaterials = () => {
+    if (!currentUser) {
+      alert('Please make sure you are logged in to access meeting materials.')
+      return
+    }
+
+    if (!currentUser.displayName) {
+      alert(
+        'Agent profile is incomplete. Please update your profile before generating documents.'
+      )
+      return
+    }
+
+    // Open document generator with client education package
+    setShowDocumentGenerator(true)
+  }
+
+  // Handler for Add Client Details
+  const handleAddClientDetails = () => {
+    alert(
+      `Opening client details editor for ${client.name}. This would navigate to a detailed client information form.`
+    )
+    // TODO: Navigate to client details editor or open modal
+  }
+
+  // Handler for Compare Properties
+  const handleCompareProperties = () => {
+    alert(
+      `Opening property comparison tool for ${client.name}. This would show favorited properties side-by-side with market analysis.`
+    )
+    // TODO: Navigate to property comparison interface
+  }
+
+  // Handler for Upload Inspection Report
   const handleUploadInspectionReport = () => {
-    // TODO: Navigate to repair-estimator page
-    console.log('Navigate to repair-estimator page')
+    alert(
+      `Redirecting to repair estimator to upload inspection report for ${client.name}.`
+    )
+    // TODO: Navigate to repair estimator with client context
+    // window.location.pathname = '/repair-estimator'
   }
 
-  const handleEmailThreadClick = (emailThread: any) => {
-    setSelectedEmailThread(emailThread)
+  // Handler for Generate Cost Analysis
+  const handleGenerateCostAnalysis = () => {
+    if (!currentUser) {
+      alert('Please make sure you are logged in to generate cost analysis.')
+      return
+    }
+
+    if (!currentUser.displayName) {
+      alert(
+        'Agent profile is incomplete. Please update your profile before generating documents.'
+      )
+      return
+    }
+
+    // Open document generator for cost analysis
+    setShowDocumentGenerator(true)
   }
 
-  const handleCloseEmailThread = () => {
-    setSelectedEmailThread(null)
+  // Handler for Draft Repair Request
+  const handleDraftRepairRequest = () => {
+    if (!currentUser) {
+      alert('Please make sure you are logged in to draft repair requests.')
+      return
+    }
+
+    if (!currentUser.displayName) {
+      alert(
+        'Agent profile is incomplete. Please update your profile before generating documents.'
+      )
+      return
+    }
+
+    // Open document generator for repair request documents
+    setShowDocumentGenerator(true)
   }
 
+  // Handler for Suggest Thank You Gift
+  const handleSuggestThankYouGift = () => {
+    alert(
+      `AI will analyze ${client.name}'s preferences and transaction details to suggest personalized thank you gifts. This feature integrates with gift recommendation services.`
+    )
+    // TODO: Implement AI-powered gift suggestion workflow
+  }
+
+  // Handler for Start Post-Closing Follow-up
+  const handleStartPostClosingFollowup = () => {
+    alert(
+      `Starting automated post-closing follow-up sequence for ${client.name}. This includes satisfaction surveys, referral requests, and nurture campaigns.`
+    )
+    // TODO: Trigger post-closing automation workflow
+  }
+
+  // Handler for Request Referral
+  const handleRequestReferral = () => {
+    alert(
+      `Opening referral request interface for ${client.name}. This would generate personalized referral request messages and track referral outcomes.`
+    )
+    // TODO: Open referral request modal or workflow
+  }
+
+  // Handler for See Full Summary
   const handleSeeFullSummary = () => {
-    setShowFullSummary(true)
+    alert(
+      `Opening full client summary for ${client.name}. This would show a comprehensive AI-generated summary of all client interactions and data.`
+    )
+    // TODO: Navigate to full summary view
   }
 
-  const handleCloseFullSummary = () => {
-    setShowFullSummary(false)
-  }
-
+  // Handler for Download Full Summary
   const handleDownloadFullSummary = () => {
-    // TODO: Implement download functionality
-    console.log('Download full summary for client:', client.id)
+    alert(
+      `Downloading full client summary for ${client.name}. This would generate and download a PDF report of all client data.`
+    )
+    // TODO: Generate and download summary PDF
   }
 
+  // Handler for View Document
   const handleViewDocument = (document: any) => {
-    setSelectedDocument(document)
+    alert(
+      `Opening document viewer for "${document.title}". This would display the document content in a modal or new window.`
+    )
+    // TODO: Open document viewer modal
   }
 
-  const handleCloseDocument = () => {
-    setSelectedDocument(null)
-  }
-
+  // Handler for Download Document
   const handleDownloadDocument = (document: any) => {
-    // TODO: Implement document download
-    console.log('Download document:', document.id)
+    alert(
+      `Downloading "${document.title}". This would trigger the file download.`
+    )
+    // TODO: Trigger file download
   }
 
+  // Handler for Rename Document
   const handleRenameDocument = (document: any) => {
-    // TODO: Implement document rename functionality
-    console.log('Rename document:', document.id)
+    const newName = prompt(`Enter new name for "${document.title}":`, document.title)
+    if (newName && newName.trim()) {
+      alert(
+        `Renaming "${document.title}" to "${newName}". This would update the document name in the database.`
+      )
+      // TODO: Update document name in database
+    }
+  }
+
+  // Handler for Email Thread Click
+  const handleEmailThreadClick = (thread: any) => {
+    alert(
+      `Opening email thread "${thread.subject}" with ${thread.messageCount} messages. This would display the full email conversation in a modal.`
+    )
+    // TODO: Open email thread modal
+  }
+
+  // Convert client data to ClientProfile format for DocumentGenerator
+  const createClientProfile = (): ClientProfile => {
+    try {
+      // Safely parse client name
+      const nameParts = (client.name || '').trim().split(' ')
+      const firstName = nameParts[0] || 'Client'
+      const lastName = nameParts.slice(1).join(' ') || 'Name'
+
+      // Safely parse location
+      const locationParts = (client.location || '').split(',')
+      const city = locationParts[0]?.trim() || 'Unknown City'
+      const state = locationParts[1]?.trim() || 'Unknown State'
+
+      return {
+        id: client.id.toString(),
+        name: client.name || 'Unknown Client',
+        email: client.email || 'unknown@email.com',
+        phone: client.phone || 'Unknown Phone',
+        clientType: 'buyer',
+        personalInfo: {
+          firstName,
+          lastName,
+          city,
+          state,
+          zipCode: '', // Not available in current client data
+        },
+        preferences: {
+          timeframe: client.stage || 'unknown',
+          budget: client.budget || 'Not specified',
+          location: client.location || 'Not specified',
+        },
+        notes: client.notes || '',
+        createdAt: client.dateAdded || new Date().toISOString(),
+        updatedAt:
+          client.lastContact || client.dateAdded || new Date().toISOString(),
+      }
+    } catch (error) {
+      console.error('Error creating client profile:', error)
+      // Return a safe fallback profile
+      return {
+        id: client.id.toString(),
+        name: client.name || 'Unknown Client',
+        email: client.email || 'unknown@email.com',
+        phone: client.phone || 'Unknown Phone',
+        clientType: 'buyer',
+        personalInfo: {
+          firstName: 'Client',
+          lastName: 'Name',
+          city: 'Unknown City',
+          state: 'Unknown State',
+          zipCode: '',
+        },
+        preferences: {
+          timeframe: 'unknown',
+          budget: 'Not specified',
+          location: 'Not specified',
+        },
+        notes: '',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
+    }
   }
 
   const getStageActions = () => {
     switch (client.stage) {
       case 'new_leads':
         return (
-          <div className="flex flex-wrap gap-2">
-            <Button className="bg-[#A9D09E] hover:bg-[#A9D09E]/90">
+          <div className="flex gap-2">
+            <Button
+              className="bg-[#A9D09E] hover:bg-[#A9D09E]/90"
+              onClick={handleDownloadMeetingMaterials}
+            >
               <FileText className="size-4 mr-2" />
               Download Meeting Materials
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleAddClientDetails}>
               <Plus className="size-4 mr-2" />
               Add Client Details
             </Button>
@@ -195,16 +482,19 @@ export function ClientModal({ client, onClose, onArchive, onProgress, onUnarchiv
         )
       case 'active_search':
         return (
-          <div className="flex flex-wrap gap-2">
-            <Button className="bg-[#3B7097] hover:bg-[#3B7097]/90">
+          <div className="flex gap-2">
+            <Button
+              className="bg-[#3B7097] hover:bg-[#3B7097]/90"
+              onClick={handleGenerateOfferCoverLetter}
+            >
               <FileText className="size-4 mr-2" />
               Generate Offer Cover Letter
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleCompareProperties}>
               <Home className="size-4 mr-2" />
               Compare Properties
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleAddClientDetails}>
               <Plus className="size-4 mr-2" />
               Add Client Details
             </Button>
@@ -212,12 +502,19 @@ export function ClientModal({ client, onClose, onArchive, onProgress, onUnarchiv
         )
       case 'under_contract':
         return (
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline">
+          <div className="flex gap-2">
+            <Button
+              className="bg-[#3B7097] hover:bg-[#3B7097]/90"
+              onClick={handleUploadInspectionReport}
+            >
+              <FileText className="size-4 mr-2" />
+              Upload Inspection Report
+            </Button>
+            <Button variant="outline" onClick={handleGenerateCostAnalysis}>
               <Download className="size-4 mr-2" />
               Generate Cost Analysis
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleDraftRepairRequest}>
               <FileText className="size-4 mr-2" />
               Draft Repair Request
             </Button>
@@ -225,16 +522,19 @@ export function ClientModal({ client, onClose, onArchive, onProgress, onUnarchiv
         )
       case 'closed':
         return (
-          <div className="flex flex-wrap gap-2">
-            <Button className="bg-[#A9D09E] hover:bg-[#A9D09E]/90">
+          <div className="flex gap-2">
+            <Button
+              className="bg-[#A9D09E] hover:bg-[#A9D09E]/90"
+              onClick={handleSuggestThankYouGift}
+            >
               <FileText className="size-4 mr-2" />
               Suggest Thank You Gift
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleStartPostClosingFollowup}>
               <Mail className="size-4 mr-2" />
               Start Post-Closing Follow-up
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={handleRequestReferral}>
               <Phone className="size-4 mr-2" />
               Request Referral
             </Button>
@@ -251,22 +551,74 @@ export function ClientModal({ client, onClose, onArchive, onProgress, onUnarchiv
         return (
           <div className="space-y-4">
             <div className="bg-[#75BDE0]/10 p-4 rounded-lg border border-[#75BDE0]/30">
-              <h4 className="font-medium text-gray-800 mb-2">Survey Results</h4>
+              <h4 className="font-medium text-gray-800 mb-2">
+                Lead Information
+              </h4>
               <div className="space-y-2 text-sm">
-                <div><strong>Survey Status:</strong> {client.subStatus === 'awaiting_survey' ? 'Pending' : 'Completed'}</div>
-                <div><strong>Lead Source:</strong> {client.leadSource}</div>
-                <div><strong>Priority:</strong> {client.priority}</div>
-                <div><strong>Date Added:</strong> {formatDate(client.dateAdded)}</div>
+                <div>
+                  <strong>Source:</strong> {client.leadSource}
+                </div>
+                <div>
+                  <strong>Priority:</strong> {client.priority}
+                </div>
+                <div>
+                  <strong>Date Added:</strong> {formatDate(client.dateAdded)}
+                </div>
+                <div>
+                  <strong>Last Contact:</strong>{' '}
+                  {formatDate(client.lastContact)}
+                </div>
               </div>
             </div>
             <div className="bg-[#c05e51]/10 p-4 rounded-lg border border-[#c05e51]/30">
               <h4 className="font-medium text-gray-800 mb-2">AI Briefing</h4>
               <p className="text-sm text-gray-700">
-                {client.subStatus === 'to_initiate_contact' && 'Ready for initial consultation call. Client profile indicates high engagement potential.'}
-                {client.subStatus === 'awaiting_survey' && 'Survey sent to client. Follow up recommended if no response within 48 hours.'}
-                {client.subStatus === 'review_survey' && 'Survey completed. Review responses and prepare personalized buyer consultation.'}
+                {client.subStatus === 'to_initiate_contact' &&
+                  'Schedule initial consultation call'}
+                {client.subStatus === 'awaiting_survey' &&
+                  'Send buyer survey form'}
+                {client.subStatus === 'review_survey' &&
+                  'Review submitted survey and prepare briefing'}
               </p>
             </div>
+          </div>
+        )
+      case 'active_search':
+        return (
+          <div className="space-y-4">
+            <div className="bg-[#A9D09E]/10 p-4 rounded-lg border border-[#A9D09E]/30">
+              <h4 className="font-medium text-gray-800 mb-2">
+                Property Search
+              </h4>
+              <div className="space-y-2 text-sm">
+                <div>
+                  <strong>Favorited Properties:</strong>{' '}
+                  {client.favoritedProperties?.length || 0}
+                </div>
+                <div>
+                  <strong>Viewed Properties:</strong>{' '}
+                  {client.viewedProperties?.length || 0}
+                </div>
+                <div>
+                  <strong>Status:</strong> {client.subStatus.replace('_', ' ')}
+                </div>
+              </div>
+            </div>
+            {client.favoritedProperties &&
+              client.favoritedProperties.length > 0 && (
+                <div className="bg-[#F6E2BC]/50 p-4 rounded-lg border border-[#F6E2BC]">
+                  <h4 className="font-medium text-gray-800 mb-2">
+                    Favorited Properties
+                  </h4>
+                  <div className="space-y-1">
+                    {client.favoritedProperties.map((property, index) => (
+                      <div key={index} className="text-sm text-gray-700">
+                        • {property}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
           </div>
         )
       case 'under_contract':
@@ -274,13 +626,29 @@ export function ClientModal({ client, onClose, onArchive, onProgress, onUnarchiv
           <div className="space-y-4">
             {/* Transaction Timeline */}
             <div className="bg-[#c05e51]/10 p-4 rounded-lg border border-[#c05e51]/30">
-              <h4 className="font-medium text-gray-800 mb-2">Transaction Timeline</h4>
+              <h4 className="font-medium text-gray-800 mb-2">
+                Contract Details
+              </h4>
               <div className="space-y-2 text-sm">
-                <div><strong>Property:</strong> {client.contractProperty}</div>
-                <div><strong>Contract Date:</strong> {formatDate(client.contractDate)}</div>
-                <div><strong>Inspection Date:</strong> {formatDate(client.inspectionDate)}</div>
-                <div><strong>Appraisal Date:</strong> {formatDate(client.appraisalDate)}</div>
-                <div><strong>Closing Date:</strong> {formatDate(client.closingDate)}</div>
+                <div>
+                  <strong>Property:</strong> {client.contractProperty}
+                </div>
+                <div>
+                  <strong>Contract Date:</strong>{' '}
+                  {formatDate(client.contractDate)}
+                </div>
+                <div>
+                  <strong>Inspection Date:</strong>{' '}
+                  {formatDate(client.inspectionDate)}
+                </div>
+                <div>
+                  <strong>Appraisal Date:</strong>{' '}
+                  {formatDate(client.appraisalDate)}
+                </div>
+                <div>
+                  <strong>Closing Date:</strong>{' '}
+                  {formatDate(client.closingDate)}
+                </div>
               </div>
             </div>
 
@@ -478,6 +846,35 @@ export function ClientModal({ client, onClose, onArchive, onProgress, onUnarchiv
               <h3 className="font-medium text-gray-800 mb-3">Transaction Contingencies</h3>
               <p className="text-sm text-gray-600 mb-4">
                 Track and manage all major contingencies for this transaction.
+              </p>
+              <h4 className="font-medium text-gray-800 mb-2">
+                Closed Transaction
+              </h4>
+              <div className="space-y-2 text-sm">
+                <div>
+                  <strong>Property:</strong> {client.contractProperty}
+                </div>
+                <div>
+                  <strong>Sale Price:</strong> {client.soldPrice}
+                </div>
+                <div>
+                  <strong>Closing Date:</strong>{' '}
+                  {formatDate(client.closingDate)}
+                </div>
+                <div>
+                  <strong>Status:</strong> {client.subStatus.replace('_', ' ')}
+                </div>
+              </div>
+            </div>
+            <div className="bg-[#A9D09E]/10 p-4 rounded-lg border border-[#A9D09E]/30">
+              <h4 className="font-medium text-gray-800 mb-2">
+                Post-Closing Tasks
+              </h4>
+              <p className="text-sm text-gray-700">
+                {client.subStatus === 'post_closing_checklist' &&
+                  'Complete post-closing checklist and schedule follow-up'}
+                {client.subStatus === 'nurture_campaign_active' &&
+                  'Client in nurture campaign, potential referral source'}
               </p>
             </div>
             <div className="space-y-4">
@@ -787,352 +1184,175 @@ export function ClientModal({ client, onClose, onArchive, onProgress, onUnarchiv
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-[85vw] h-[85vh] mx-4 flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-800">{client.name}</h2>
-            <p className="text-sm text-gray-500">{client.stage.replace('_', ' ').toUpperCase()}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            <X className="size-6" />
-          </button>
-        </div>
-
-        {/* Client Vitals */}
-        <div className="p-6 border-b border-gray-200 bg-gray-50 flex-shrink-0">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="flex items-center">
-              <Phone className="size-4 text-gray-400 mr-2" />
-              <span className="text-sm">{client.phone}</span>
-            </div>
-            <div className="flex items-center">
-              <Mail className="size-4 text-gray-400 mr-2" />
-              <span className="text-sm">{client.email}</span>
-            </div>
-            <div className="flex items-center">
-              <DollarSign className="size-4 text-gray-400 mr-2" />
-              <span className="text-sm">{client.budget}</span>
-            </div>
-            <div className="flex items-center">
-              <MapPin className="size-4 text-gray-400 mr-2" />
-              <span className="text-sm">{client.location}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="border-b border-gray-200 flex-shrink-0">
-          <nav className="flex space-x-1 px-6 overflow-x-auto">
-            {visibleTabs.map((tab) => (
+      {showDocumentGenerator && currentUser ? (
+        <div className="bg-white rounded-lg max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">
+                Generate Documents for {client.name}
+              </h2>
               <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`py-4 px-3 text-sm font-medium border-b-2 whitespace-nowrap flex items-center ${
-                  activeTab === tab.id
+                onClick={handleCancelDocumentGeneration}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="size-6" />
+              </button>
+            </div>
+            <DocumentGenerator
+              agentProfile={createAgentProfileAdapter()}
+              clientProfile={createClientProfile()}
+              onDocumentGenerated={handleDocumentGenerated}
+              onCancel={handleCancelDocumentGeneration}
+            />
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-800">
+                {client.name}
+              </h2>
+              <p className="text-sm text-gray-500">
+                {client.stage.replace('_', ' ').toUpperCase()}
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <X className="size-6" />
+            </button>
+          </div>
+
+          {/* Client Vitals */}
+          <div className="p-6 border-b border-gray-200 bg-gray-50">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="flex items-center">
+                <Phone className="size-4 text-gray-400 mr-2" />
+                <span className="text-sm">{client.phone}</span>
+              </div>
+              <div className="flex items-center">
+                <Mail className="size-4 text-gray-400 mr-2" />
+                <span className="text-sm">{client.email}</span>
+              </div>
+              <div className="flex items-center">
+                <DollarSign className="size-4 text-gray-400 mr-2" />
+                <span className="text-sm">{client.budget}</span>
+              </div>
+              <div className="flex items-center">
+                <MapPin className="size-4 text-gray-400 mr-2" />
+                <span className="text-sm">{client.location}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="border-b border-gray-200">
+            <nav className="flex space-x-8 px-6">
+              <button
+                onClick={() => setActiveTab('summary')}
+                className={`py-4 px-1 text-sm font-medium border-b-2 ${
+                  activeTab === 'summary'
                     ? 'border-[#3B7097] text-[#3B7097]'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
-                {tab.icon && <tab.icon className="size-4 mr-2" />}
-                {tab.label}
+                Client Summary
               </button>
-            ))}
-          </nav>
-        </div>
-
-        {/* Content - Scrollable */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {renderTabContent()}
-        </div>
-
-        {/* Actions - Fixed at bottom */}
-        <div className="p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
-          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4">
-            {/* Stage-specific actions */}
-            <div className="flex-1">
-              <div className="flex flex-wrap gap-2">
-                {/* Original stage actions */}
-                {getStageActions()}
-                
-                {/* Additional workflow buttons based on stage */}
-                {client.stage === 'new_leads' && (
-                  <Button 
-                    onClick={handleSendSurvey}
-                    className="bg-[#3B7097] hover:bg-[#3B7097]/90"
-                  >
-                    <Mail className="size-4 mr-2" />
-                    {client.subStatus === 'awaiting_survey' ? 'Resend Survey' : 'Send Survey'}
-                  </Button>
-                )}
-                
-                {client.stage === 'active_search' && (
-                  <Button 
-                    onClick={handleUploadOffer}
-                    className="bg-[#A9D09E] hover:bg-[#A9D09E]/90"
-                  >
-                    <Upload className="size-4 mr-2" />
-                    Upload Offer
-                  </Button>
-                )}
-                
-                {client.stage === 'closed' && (
-                  <Button 
-                    onClick={handleGenerateClosingPacket}
-                    className="bg-[#3B7097] hover:bg-[#3B7097]/90"
-                  >
-                    <FileText className="size-4 mr-2" />
-                    Generate Closing Packet
-                  </Button>
-                )}
-              </div>
-            </div>
-            
-            {/* Archive/Progress buttons or Unarchive button */}
-            <div className="flex flex-wrap gap-2">
-              {isArchiveMode ? (
-                // Archive mode: Show only Unarchive button
-                <Button
-                  onClick={handleUnarchive}
-                  className="bg-[#A9D09E] hover:bg-[#A9D09E]/90 text-white"
-                >
-                  <RotateCcw className="size-4 mr-2" />
-                  Unarchive
-                </Button>
-              ) : (
-                // Normal mode: Show Archive and Progress buttons
-                <>
-                  {shouldShowProgressButton(client.stage) && (
-                    <Button
-                      onClick={handleProgress}
-                      className="bg-[#3B7097] hover:bg-[#3B7097]/90 text-white"
-                    >
-                      <ArrowRight className="size-4 mr-2" />
-                      {getProgressButtonText(client.stage)}
-                    </Button>
-                  )}
-                  
-                  {/* Return to Previous Stage Button (all stages except New Leads) */}
-                  {client.stage !== 'new_leads' && (
-                    <Button
-                      onClick={handleReturnToPreviousStage}
-                      variant="outline"
-                      className="border-[#75BDE0] text-[#75BDE0] hover:bg-[#75BDE0]/10"
-                    >
-                      <RotateCcw className="size-4 mr-2" />
-                      {getPreviousStageText(client.stage)}
-                    </Button>
-                  )}
-                  
-                  <Button
-                    onClick={handleArchive}
-                    variant="outline"
-                    className="border-[#c05e51] text-[#c05e51] hover:bg-[#c05e51]/10"
-                  >
-                    <Archive className="size-4 mr-2" />
-                    Archive
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Email Thread Modal - Secondary Pop-up */}
-      {selectedEmailThread && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-          <div className="bg-white rounded-lg w-[70vw] h-[70vh] mx-4 flex flex-col">
-            {/* Email Thread Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-800">{selectedEmailThread.subject}</h2>
-                <p className="text-sm text-gray-500">{selectedEmailThread.messageCount} messages</p>
-              </div>
               <button
-                onClick={handleCloseEmailThread}
-                className="text-gray-500 hover:text-gray-700"
+                onClick={() => setActiveTab('details')}
+                className={`py-4 px-1 text-sm font-medium border-b-2 ${
+                  activeTab === 'details'
+                    ? 'border-[#3B7097] text-[#3B7097]'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
               >
-                <X className="size-6" />
+                Stage Details
               </button>
-            </div>
+            </nav>
+          </div>
 
-            {/* Email Thread Content - Scrollable */}
-            <div className="flex-1 overflow-y-auto p-6">
+          {/* Content */}
+          <div className="p-6">
+            {activeTab === 'summary' && (
               <div className="space-y-4">
-                {selectedEmailThread.messages.map((message: any, index: number) => (
-                  <div key={message.id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <div>
-                        <div className="font-medium text-sm">{message.sender}</div>
-                        <div className="text-xs text-gray-500">{message.senderEmail}</div>
-                      </div>
-                      <div className="text-xs text-gray-500">{message.timestamp}</div>
-                    </div>
-                    <div className="text-sm text-gray-700 whitespace-pre-wrap">{message.content}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Email Thread Actions */}
-            <div className="p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={handleCloseEmailThread}>
-                  Close
-                </Button>
-                <Button className="bg-[#3B7097] hover:bg-[#3B7097]/90">
-                  <Mail className="size-4 mr-2" />
-                  Reply
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Full Summary Modal - Secondary Pop-up */}
-      {showFullSummary && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-          <div className="bg-white rounded-lg w-[70vw] h-[70vh] mx-4 flex flex-col">
-            {/* Full Summary Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-800">Complete Client Summary</h2>
-                <p className="text-sm text-gray-500">{client.name}</p>
-              </div>
-              <button
-                onClick={handleCloseFullSummary}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <X className="size-6" />
-              </button>
-            </div>
-
-            {/* Full Summary Content - Scrollable */}
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="space-y-6">
                 <div>
-                  <h3 className="font-semibold text-gray-800 mb-3">Executive Summary</h3>
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    {client.name} is a {client.priority.toLowerCase()} priority buyer lead from {client.leadSource} with a budget of {client.budget} looking for properties in {client.location}. Currently in the {getStageName(client.stage)} stage with strong engagement indicators.
+                  <h3 className="font-medium text-gray-800 mb-2">
+                    Client Notes
+                  </h3>
+                  <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                    {client.notes || 'No notes available'}
                   </p>
                 </div>
-
                 <div>
-                  <h3 className="font-semibold text-gray-800 mb-3">Communication Analysis</h3>
-                  <ul className="space-y-2 text-sm text-gray-700">
-                    <li>• Preferred communication method: Email and phone calls</li>
-                    <li>• Response time: Typically within 2-4 hours during business days</li>
-                    <li>• Engagement level: High - actively participating in property searches</li>
-                    <li>• Last meaningful interaction: {formatDate(client.lastContact)}</li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold text-gray-800 mb-3">Property Preferences</h3>
-                  <ul className="space-y-2 text-sm text-gray-700">
-                    <li>• Budget range: {client.budget}</li>
-                    <li>• Preferred areas: {client.location}</li>
-                    <li>• Property type: Single-family homes preferred</li>
-                    <li>• Key requirements: Updated kitchen, good school district, parking</li>
-                    {client.favoritedProperties && client.favoritedProperties.length > 0 && (
-                      <li>• Properties favorited: {client.favoritedProperties.length} listings</li>
-                    )}
-                  </ul>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold text-gray-800 mb-3">Timeline & Urgency</h3>
-                  <ul className="space-y-2 text-sm text-gray-700">
-                    <li>• Target move-in date: Within 3-6 months</li>
-                    <li>• Financing: Pre-approved with ABC Bank</li>
-                    <li>• Availability for showings: Flexible, prefers weekends</li>
-                    <li>• Decision timeline: Ready to make offers on suitable properties</li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold text-gray-800 mb-3">Recommendations</h3>
-                  <ul className="space-y-2 text-sm text-gray-700">
-                    <li>• Schedule regular check-ins every 3-5 days</li>
-                    <li>• Focus on properties with updated kitchens and good schools</li>
-                    <li>• Prepare market analysis for preferred neighborhoods</li>
-                    <li>• Consider expanding search radius if inventory is limited</li>
-                  </ul>
+                  <h3 className="font-medium text-gray-800 mb-2">
+                    Client Details
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <strong>Lead Source:</strong> {client.leadSource}
+                    </div>
+                    <div>
+                      <strong>Priority:</strong> {client.priority}
+                    </div>
+                    <div>
+                      <strong>Date Added:</strong>{' '}
+                      {formatDate(client.dateAdded)}
+                    </div>
+                    <div>
+                      <strong>Last Contact:</strong>{' '}
+                      {formatDate(client.lastContact)}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Full Summary Actions */}
-            <div className="p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={handleCloseFullSummary}>
-                  Close
-                </Button>
-                <Button 
-                  onClick={handleDownloadFullSummary}
-                  className="bg-[#3B7097] hover:bg-[#3B7097]/90"
-                >
-                  <Download className="size-4 mr-2" />
-                  Download Summary
-                </Button>
-              </div>
-            </div>
+            {activeTab === 'details' && getStageSpecificContent()}
           </div>
-        </div>
-      )}
 
-      {/* Document View Modal - Secondary Pop-up */}
-      {selectedDocument && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-          <div className="bg-white rounded-lg w-[70vw] h-[70vh] mx-4 flex flex-col">
-            {/* Document Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-800">{selectedDocument.title}</h2>
-                <p className="text-sm text-gray-500">Uploaded {selectedDocument.uploadedDate}</p>
-              </div>
-              <button
-                onClick={handleCloseDocument}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <X className="size-6" />
-              </button>
-            </div>
+          {/* Actions */}
+          <div className="p-6 border-t border-gray-200 bg-gray-50">
+            <div className="flex justify-between items-start">
+              {/* Stage-specific actions */}
+              <div className="flex-1">{getStageActions()}</div>
 
-            {/* Document Content - Scrollable */}
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <div className="text-sm text-gray-700 whitespace-pre-wrap">
-                  {selectedDocument.content}
-                </div>
-              </div>
-            </div>
+              {/* Archive/Progress buttons or Unarchive button */}
+              <div className="flex gap-2 ml-4">
+                {isArchiveMode ? (
+                  // Archive mode: Show only Unarchive button
+                  <Button
+                    onClick={handleUnarchive}
+                    className="bg-[#A9D09E] hover:bg-[#A9D09E]/90 text-white"
+                  >
+                    <RotateCcw className="size-4 mr-2" />
+                    Unarchive
+                  </Button>
+                ) : (
+                  // Normal mode: Show Archive and Progress buttons
+                  <>
+                    {shouldShowProgressButton(client.stage) && (
+                      <Button
+                        onClick={handleProgress}
+                        className="bg-[#3B7097] hover:bg-[#3B7097]/90 text-white"
+                      >
+                        <ArrowRight className="size-4 mr-2" />
+                        {getProgressButtonText(client.stage)}
+                      </Button>
+                    )}
 
-            {/* Document Actions */}
-            <div className="p-6 border-t border-gray-200 bg-gray-50 flex-shrink-0">
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={handleCloseDocument}>
-                  Close
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => handleDownloadDocument(selectedDocument)}
-                >
-                  <Download className="size-4 mr-2" />
-                  Download
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => handleRenameDocument(selectedDocument)}
-                >
-                  <Edit className="size-4 mr-2" />
-                  Rename
-                </Button>
+                    <Button
+                      onClick={handleArchive}
+                      variant="outline"
+                      className="border-[#c05e51] text-[#c05e51] hover:bg-[#c05e51]/10"
+                    >
+                      <Archive className="size-4 mr-2" />
+                      Archive
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -1140,4 +1360,4 @@ export function ClientModal({ client, onClose, onArchive, onProgress, onUnarchiv
       )}
     </div>
   )
-} 
+}

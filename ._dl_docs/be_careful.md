@@ -1,0 +1,1 @@
+If you make any changes to UI element (like a button) with linked functionlaity, like  say a langchain automation or that trigger an action, please make sure to correctly and diligently edit the relevant code affected to be move / linked with the new / relocated button. This is a big project, be sure to be careful with your implementation. 

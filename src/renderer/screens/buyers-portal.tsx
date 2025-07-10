@@ -8,7 +8,7 @@ import { KanbanColumn } from '../components/buyers-portal/kanban-column'
 import { ClientModal } from '../components/buyers-portal/client-modal'
 import { ClientCommunicationFeed } from '../components/buyers-portal/client-communication-feed'
 import { Button } from '../components/ui/button'
-import { Archive, FileText, Users, DollarSign, Plus } from 'lucide-react'
+import { Archive, FileText, Users, DollarSign, Plus, X, Upload } from 'lucide-react'
 import { dummyData } from '../data/dummy-data'
 
 import type { AgentProfile, ClientProfile } from '../../shared/types'
@@ -37,6 +37,15 @@ export function BuyersPortalScreen({
   >('kanban')
   const [showOfferForm, setShowOfferForm] = useState(false)
   const [selectedOffer, setSelectedOffer] = useState<any>(null)
+  const [showNewLeadModal, setShowNewLeadModal] = useState(false)
+  const [newLeadForm, setNewLeadForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    leadSource: '',
+    notes: '',
+    documents: [] as File[]
+  })
 
   const handleClientClick = (client: any) => {
     setSelectedClient(client)
@@ -133,6 +142,93 @@ export function BuyersPortalScreen({
 
   const handleCreateNegotiation = () => {
     // Handle creating new negotiation
+  }
+
+  const handleNewLeadClick = () => {
+    setShowNewLeadModal(true)
+  }
+
+  const handleCloseNewLeadModal = () => {
+    setShowNewLeadModal(false)
+    setNewLeadForm({
+      name: '',
+      email: '',
+      phone: '',
+      leadSource: '',
+      notes: '',
+      documents: []
+    })
+  }
+
+  const handleNewLeadFormChange = (field: string, value: string) => {
+    setNewLeadForm(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
+  const handleDocumentUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files
+    if (files) {
+      setNewLeadForm(prev => ({
+        ...prev,
+        documents: [...prev.documents, ...Array.from(files)]
+      }))
+    }
+  }
+
+  const handleRemoveDocument = (index: number) => {
+    setNewLeadForm(prev => ({
+      ...prev,
+      documents: prev.documents.filter((_, i) => i !== index)
+    }))
+  }
+
+  const handleSubmitNewLead = () => {
+    // Validate required fields
+    if (!newLeadForm.name || !newLeadForm.email || !newLeadForm.phone) {
+      alert('Please fill in all required fields (Name, Email, Phone)')
+      return
+    }
+
+    // Generate new client ID
+    const newClientId = Math.max(...buyerClients.map(c => c.id)) + 1
+
+    // Create new client object
+    const newClient = {
+      id: newClientId,
+      name: newLeadForm.name,
+      email: newLeadForm.email,
+      phone: newLeadForm.phone,
+      stage: 'new_leads',
+      subStatus: 'to_initiate_contact',
+      budget: 'TBD',
+      location: 'TBD',
+      leadSource: newLeadForm.leadSource || 'Manual Entry',
+      priority: 'Medium',
+      dateAdded: new Date().toISOString(),
+      lastContact: null,
+      notes: newLeadForm.notes || 'Manually added lead',
+      favoritedProperties: [],
+      viewedProperties: [],
+      // Documents would be stored in the Content tab in a real application
+      uploadedDocuments: newLeadForm.documents.map((file, index) => ({
+        id: index + 1,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        uploadDate: new Date().toISOString()
+      }))
+    }
+
+    // Add to buyer clients
+    setBuyerClients(prev => [...prev, newClient])
+
+    // Close modal and reset form
+    handleCloseNewLeadModal()
+
+    // Show success message
+    alert(`New lead "${newLeadForm.name}" has been added to the New Leads column!`)
   }
 
   const kanbanStages = [
@@ -266,6 +362,18 @@ export function BuyersPortalScreen({
         {/* Sidebar */}
         <div className="w-80 p-6 border-l border-gray-200 flex flex-col">
           <div className="flex-1">
+            {/* Add New Buyer Lead Button */}
+            <div className="mb-6">
+              <Button
+                onClick={handleNewLeadClick}
+                variant="outline"
+                className="w-full border-[#3B7097] text-[#3B7097] hover:bg-[#3B7097]/10"
+              >
+                <Plus className="size-4 mr-2" />
+                Add New Buyer Lead
+              </Button>
+            </div>
+
             <ClientCommunicationFeed />
           </div>
 
@@ -291,6 +399,164 @@ export function BuyersPortalScreen({
           onArchive={handleArchive}
           onProgress={handleProgress}
         />
+      )}
+
+      {/* New Lead Modal */}
+      {showNewLeadModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold">Add New Buyer Lead</h2>
+                <button
+                  onClick={handleCloseNewLeadModal}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="size-6" />
+                </button>
+              </div>
+
+              {/* Form */}
+              <div className="space-y-4">
+                {/* Required Fields */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={newLeadForm.name}
+                    onChange={(e) => handleNewLeadFormChange('name', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
+                    placeholder="Enter client name"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={newLeadForm.email}
+                    onChange={(e) => handleNewLeadFormChange('email', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
+                    placeholder="Enter email address"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Phone Number <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    value={newLeadForm.phone}
+                    onChange={(e) => handleNewLeadFormChange('phone', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
+                    placeholder="Enter phone number"
+                  />
+                </div>
+
+                {/* Optional Fields */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Lead Source
+                  </label>
+                  <select
+                    value={newLeadForm.leadSource}
+                    onChange={(e) => handleNewLeadFormChange('leadSource', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
+                  >
+                    <option value="">Select lead source</option>
+                    <option value="Referral">Referral</option>
+                    <option value="Website">Website</option>
+                    <option value="Social Media">Social Media</option>
+                    <option value="Open House">Open House</option>
+                    <option value="Cold Call">Cold Call</option>
+                    <option value="Email Campaign">Email Campaign</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Notes
+                  </label>
+                  <textarea
+                    value={newLeadForm.notes}
+                    onChange={(e) => handleNewLeadFormChange('notes', e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
+                    placeholder="Add any additional notes about this lead..."
+                  />
+                </div>
+
+                {/* Document Upload */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Initial Documents
+                  </label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                    <div className="text-center">
+                      <Upload className="size-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600 mb-2">
+                        Drag and drop files here, or click to browse
+                      </p>
+                      <input
+                        type="file"
+                        multiple
+                        onChange={handleDocumentUpload}
+                        className="hidden"
+                        id="document-upload"
+                      />
+                      <label
+                        htmlFor="document-upload"
+                        className="cursor-pointer bg-[#3B7097] text-white px-4 py-2 rounded-md text-sm hover:bg-[#3B7097]/90"
+                      >
+                        Choose Files
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Uploaded Documents List */}
+                  {newLeadForm.documents.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {newLeadForm.documents.map((file, index) => (
+                        <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
+                          <span className="text-sm text-gray-700">{file.name}</span>
+                          <button
+                            onClick={() => handleRemoveDocument(index)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <X className="size-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                <Button
+                  variant="outline"
+                  onClick={handleCloseNewLeadModal}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSubmitNewLead}
+                  className="bg-[#3B7097] hover:bg-[#3B7097]/90"
+                >
+                  Add Lead
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Offer Form Modal */}

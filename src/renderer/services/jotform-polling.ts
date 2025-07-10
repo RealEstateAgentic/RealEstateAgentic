@@ -1,6 +1,6 @@
 import { firebaseCollections } from './firebase/collections';
 import { getBuyerAndSellerForms } from './jotform-api';
-import { BuyerQualificationAgent, SellerQualificationAgent } from '../../../RealEstateAgentic/src/services/langchain/agents';
+import { BuyerQualificationAgent, SellerQualificationAgent } from '../../services/langchain/agents';
 import { googleSheetsService } from './google-sheets';
 
 const JOTFORM_API_KEY = process.env.JOTFORM_API_KEY || '';
@@ -33,6 +33,18 @@ class JotFormPollingService {
 
   async initialize() {
     console.log('🚀 Initializing JotForm polling service...');
+    
+    // Check API key availability
+    console.log('🔑 API Key status:', {
+      hasKey: !!JOTFORM_API_KEY,
+      keyLength: JOTFORM_API_KEY?.length || 0,
+      keyPreview: JOTFORM_API_KEY ? `${JOTFORM_API_KEY.substring(0, 8)}...` : 'NO KEY'
+    });
+    
+    if (!JOTFORM_API_KEY) {
+      console.error('❌ JOTFORM_API_KEY not found in environment variables');
+      throw new Error('JOTFORM_API_KEY is required for polling service');
+    }
     
     // Initialize AI agents and Google Sheets service
     try {
@@ -110,17 +122,23 @@ class JotFormPollingService {
 
   private async pollFormSubmissions(formId: string, formType: 'buyer' | 'seller') {
     try {
-      const response = await fetch(
-        `${JOTFORM_API_BASE}/form/${formId}/submissions?apiKey=${JOTFORM_API_KEY}&limit=10&orderby=created_at`
-      );
+      console.log(`🔍 Polling ${formType} form ${formId} with API key: ${JOTFORM_API_KEY ? 'PRESENT' : 'MISSING'}`);
+      
+      const apiUrl = `${JOTFORM_API_BASE}/form/${formId}/submissions?apiKey=${JOTFORM_API_KEY}&limit=10&orderby=created_at`;
+      console.log(`🌐 Request URL: ${apiUrl.replace(JOTFORM_API_KEY, 'HIDDEN_KEY')}`);
+      
+      const response = await fetch(apiUrl);
       
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorText = await response.text();
+        console.error(`❌ HTTP ${response.status} error:`, errorText);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
       
       const data: JotFormResponse = await response.json();
       
       if (data.responseCode !== 200) {
+        console.error(`❌ JotForm API error:`, data);
         throw new Error(`JotForm API error: ${data.message}`);
       }
       

@@ -1,19 +1,4 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+// Re-export Firebase services from the main config to ensure consistency
+export { db, storage, auth } from '../../../lib/firebase/config'
 
-const firebaseConfig = {
-  apiKey: process.env.VITE_FIREBASE_API_KEY || '',
-  authDomain: "recursor-56f01.firebaseapp.com", 
-  projectId: "recursor-56f01",
-  storageBucket: "recursor-56f01.firebasestorage.app",
-  messagingSenderId: "985037255869",
-  appId: "1:985037255869:web:2dd373e7c334840672b3d4"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-
-// Initialize Firestore
-export const db = getFirestore(app);
-
-console.log('🔥 Firebase initialized successfully');
+console.log('🔥 Firebase services imported from main config successfully')

@@ -404,9 +404,24 @@ export const dummyData = {
       lastContact: "2024-01-13",
       notes: "Veteran buyer, VA loan pre-approved"
     },
-    // Active Search
     {
       id: 4,
+      name: "Damon Bodine",
+      email: "damonbodine@gmail.com",
+      phone: "(555) 987-6543",
+      stage: "new_leads",
+      subStatus: "to_initiate_contact",
+      budget: "$500,000 - $650,000",
+      location: "Austin area",
+      leadSource: "Website Form",
+      priority: "high",
+      dateAdded: "2024-01-15",
+      lastContact: null,
+      notes: "Software developer, interested in modern condos"
+    },
+    // Active Search
+    {
+      id: 5,
       name: "Sarah Johnson",
       email: "s.johnson@email.com",
       phone: "(555) 567-8901",
@@ -423,7 +438,7 @@ export const dummyData = {
       viewedProperties: ["789 Pine Rd", "321 Elm St"]
     },
     {
-      id: 5,
+      id: 6,
       name: "David Thompson",
       email: "d.thompson@email.com",
       phone: "(555) 678-9012",
@@ -440,7 +455,7 @@ export const dummyData = {
       viewedProperties: ["567 Broadway", "890 First Ave", "345 Second St"]
     },
     {
-      id: 6,
+      id: 7,
       name: "Lisa Brown",
       email: "l.brown@email.com",
       phone: "(555) 789-0123",
@@ -458,7 +473,7 @@ export const dummyData = {
     },
     // Under Contract
     {
-      id: 7,
+      id: 8,
       name: "Miller Family",
       email: "miller.family@email.com",
       phone: "(555) 890-1234",
@@ -478,7 +493,7 @@ export const dummyData = {
       closingDate: "2024-02-15"
     },
     {
-      id: 8,
+      id: 9,
       name: "Davis Family",
       email: "davis.family@email.com",
       phone: "(555) 901-2345",
@@ -498,7 +513,7 @@ export const dummyData = {
       closingDate: "2024-02-12"
     },
     {
-      id: 9,
+      id: 10,
       name: "Wilson Family",
       email: "wilson.family@email.com",
       phone: "(555) 012-3456",
@@ -519,7 +534,7 @@ export const dummyData = {
     },
     // Closed
     {
-      id: 10,
+      id: 11,
       name: "Anderson Family",
       email: "anderson.family@email.com",
       phone: "(555) 123-4567",
@@ -538,7 +553,7 @@ export const dummyData = {
       soldPrice: "$420,000"
     },
     {
-      id: 11,
+      id: 12,
       name: "Garcia Family",
       email: "garcia.family@email.com",
       phone: "(555) 234-5678",

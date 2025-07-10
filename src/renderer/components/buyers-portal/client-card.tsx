@@ -1,4 +1,4 @@
-import { Phone, Mail, MapPin, Calendar, DollarSign, Send, Loader2 } from 'lucide-react'
+import { Phone, Mail, MapPin, Calendar, DollarSign, Send, Loader2, TestTube } from 'lucide-react'
 import { useState } from 'react'
 
 interface ClientCardProps {
@@ -28,6 +28,7 @@ interface ClientCardProps {
 
 export function ClientCard({ client, onClick }: ClientCardProps) {
   const [isSending, setIsSending] = useState(false)
+  const [isTestingForm, setIsTestingForm] = useState(false)
   
   const handleSendSurvey = async (e: React.MouseEvent) => {
     e.stopPropagation() // Prevent card click event
@@ -60,6 +61,37 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
       alert(`❌ Failed to send survey to ${client.name}.\n\nError: ${error.message}`)
     } finally {
       setIsSending(false)
+    }
+  }
+
+  const handleTestFormSubmission = async (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent card click event
+    
+    if (isTestingForm) return // Prevent multiple clicks
+    
+    setIsTestingForm(true)
+    
+    try {
+      console.log('Creating test form submission for:', client.name, client.email)
+      
+      // Import and use the form submission service
+      const { createTestFormSubmission } = await import('../../services/form-submission-listener')
+      
+      const submissionId = await createTestFormSubmission(client.email, client.name, 'buyer')
+      
+      // Manually trigger processing since listener might not be working
+      console.log('🔄 Manually triggering form processing...')
+      const { processTestSubmission } = await import('../../services/form-submission-listener')
+      await processTestSubmission(client.email, client.name)
+      
+      alert(`✅ Test form submission created and processed!\n\nSubmission ID: ${submissionId}\nCheck console for processing logs.`)
+      console.log('Test form submission created:', submissionId)
+      
+    } catch (error) {
+      console.error('Error creating test form submission:', error)
+      alert(`❌ Failed to create test form submission.\n\nError: ${error.message}`)
+    } finally {
+      setIsTestingForm(false)
     }
   }
 
@@ -121,11 +153,11 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
 
       {/* Send Survey Button for New Leads */}
       {client.stage === 'new_leads' && (
-        <div className="mb-3">
+        <div className="mb-3 space-y-2">
           <button
             onClick={handleSendSurvey}
             disabled={isSending}
-            className="flex items-center gap-2 px-3 py-2 bg-[#3B7097] hover:bg-[#3B7097]/90 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm rounded-md transition-colors"
+            className="flex items-center gap-2 px-3 py-2 bg-[#3B7097] hover:bg-[#3B7097]/90 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm rounded-md transition-colors w-full"
           >
             {isSending ? (
               <>
@@ -136,6 +168,23 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
               <>
                 <Send className="size-4" />
                 Send Survey
+              </>
+            )}
+          </button>
+          <button
+            onClick={handleTestFormSubmission}
+            disabled={isTestingForm}
+            className="flex items-center gap-2 px-3 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white text-sm rounded-md transition-colors w-full"
+          >
+            {isTestingForm ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                Testing...
+              </>
+            ) : (
+              <>
+                <TestTube className="size-4" />
+                Test Form Submission
               </>
             )}
           </button>

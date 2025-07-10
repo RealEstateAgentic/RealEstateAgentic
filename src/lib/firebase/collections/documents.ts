@@ -131,9 +131,14 @@ export const createDocument = async (
       updatedAt: now,
     }
 
+    // Clean the document object to remove undefined values before saving to Firestore
+    const cleanDocument = Object.fromEntries(
+      Object.entries(document).filter(([_, value]) => value !== undefined)
+    )
+
     // Save to Firestore
     await setDoc(doc(db, DOCUMENTS_COLLECTION, documentId), {
-      ...document,
+      ...cleanDocument,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     })

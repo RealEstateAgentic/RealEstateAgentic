@@ -14,6 +14,7 @@ import { Check, AlertCircle, Clock, FileText, Download } from 'lucide-react'
 import { DocumentOrchestrationService } from '../../../lib/openai/services/document-orchestrator'
 import { createDocument } from '../../../lib/firebase/collections/documents'
 import { getCurrentUserProfile } from '../../../lib/firebase/auth'
+import { MarkdownRenderer } from '../estimator/markdown-renderer'
 import type {
   DocumentPackageResult,
   DocumentPackageRequest,
@@ -339,9 +340,7 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
             </div>
 
             <div className="prose prose-sm max-w-none">
-              <div className="whitespace-pre-wrap text-gray-900 leading-relaxed">
-                {selectedDocument.content}
-              </div>
+              <MarkdownRenderer content={selectedDocument.content} />
             </div>
 
             {selectedDocument.quality.suggestions.length > 0 && (
@@ -458,7 +457,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
             category: 'client_communications',
             content: document.content,
             relatedId: packageResult.packageId,
-            relatedType: 'other',
+            relatedType: 'client',
             generationParams: {
               aiModel: 'gpt-4',
               temperature: 0.7,

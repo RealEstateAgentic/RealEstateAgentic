@@ -7,12 +7,8 @@ const API = {
 
   // PDF Generation API
   pdf: {
-    generate: (htmlContent: string, fileName: string, options?: any) =>
-      ipcRenderer.invoke(IPC_CHANNELS.GENERATE_PDF_FROM_HTML, {
-        htmlContent,
-        fileName,
-        options,
-      }),
+    generate: (payload: any) =>
+      ipcRenderer.invoke(IPC_CHANNELS.GENERATE_PDF_FROM_HTML, payload),
 
     generateDocument: (
       content: any,

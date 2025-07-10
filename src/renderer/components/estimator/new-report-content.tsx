@@ -188,7 +188,9 @@ export function NewReportContent({ className = '' }: NewReportContentProps) {
   }
 
   return (
-    <div className={`w-full max-w-4xl mx-auto p-8 bg-white ${className}`}>
+    <div
+      className={`w-full max-w-4xl mx-auto p-8 bg-white ${className} flex flex-col overflow-y-scroll`}
+    >
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-4">
@@ -197,7 +199,7 @@ export function NewReportContent({ className = '' }: NewReportContentProps) {
           </div>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              Create Inspection Report
+              Create Repair Estimate
             </h1>
             <p className="text-gray-600 mt-1">
               Upload property inspection documents to generate a comprehensive
@@ -207,70 +209,72 @@ export function NewReportContent({ className = '' }: NewReportContentProps) {
         </div>
       </div>
 
-      {finalMarkdown ? (
-        <MarkdownRenderer
-          markdownContent={finalMarkdown}
-          onBack={() => setFinalMarkdown(null)}
-        />
-      ) : isGenerating || (reportId && !finalMarkdown) ? (
-        <ReportStatusLogger messages={progressMessages} />
-      ) : (
-        <div className="space-y-8">
-          {/* File Upload Section */}
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Upload className="size-5 text-[#3B7097]" />
-              Upload Inspection Documents
-            </h2>
-            <FileUpload
-              title="Upload Inspection Files"
-              subtitle="Drag and drop your inspection documents, photos, or reports here"
-              acceptedTypes="image/*,.pdf,.doc,.docx"
-              files={files}
-              onAddFiles={onAddFiles}
-              onRemoveFile={onRemoveFile}
-            />
-          </div>
+      <div className="flex-grow overflow-y-scroll pr-4 -mr-4">
+        {finalMarkdown ? (
+          <MarkdownRenderer
+            markdownContent={finalMarkdown}
+            onBack={() => setFinalMarkdown(null)}
+          />
+        ) : isGenerating || (reportId && !finalMarkdown) ? (
+          <ReportStatusLogger messages={progressMessages} />
+        ) : (
+          <div className="space-y-8">
+            {/* File Upload Section */}
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Upload className="size-5 text-[#3B7097]" />
+                Upload Inspection Documents
+              </h2>
+              <FileUpload
+                title="Upload Inspection Files"
+                subtitle="Drag and drop your inspection documents, photos, or reports here"
+                acceptedTypes="image/*,.pdf,.doc,.docx"
+                files={files}
+                onAddFiles={onAddFiles}
+                onRemoveFile={onRemoveFile}
+              />
+            </div>
 
-          {/* Generate Report Section */}
-          {files.length > 0 && (
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Zap className="size-5 text-[#3B7097]" />
-                Generate Report
+            {/* Generate Report Section */}
+            {files.length > 0 && (
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <Zap className="size-5 text-[#3B7097]" />
+                  Generate Report
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Ready to analyze {files.length} file
+                  {files.length !== 1 ? 's' : ''} and generate your inspection
+                  report with repair estimates.
+                </p>
+                <Button
+                  onClick={handleGenerateReport}
+                  disabled={files.some(f => f.status !== 'completed')}
+                  className="w-full bg-[#3B7097] hover:bg-[#3B7097]/90 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <Zap className="size-4" />
+                    Generate Inspection Report
+                  </div>
+                </Button>
+              </div>
+            )}
+
+            {/* Info Section */}
+            <div className="bg-[#F6E2BC]/30 border border-[#F6E2BC] rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                How it works
               </h3>
-              <p className="text-gray-600 mb-6">
-                Ready to analyze {files.length} file
-                {files.length !== 1 ? 's' : ''} and generate your inspection
-                report with repair estimates.
-              </p>
-              <Button
-                onClick={handleGenerateReport}
-                disabled={files.some(f => f.status !== 'completed')}
-                className="w-full bg-[#3B7097] hover:bg-[#3B7097]/90 text-white font-medium py-3 px-6 rounded-lg transition-colors"
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <Zap className="size-4" />
-                  Generate Inspection Report
-                </div>
-              </Button>
-            </div>
-          )}
-
-          {/* Info Section */}
-          <div className="bg-[#F6E2BC]/30 border border-[#F6E2BC] rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">
-              How it works
-            </h3>
-            <div className="space-y-2 text-gray-700">
-              <p>• Upload inspection photos, documents, or reports</p>
-              <p>• AI analyzes the content to identify repair needs</p>
-              <p>• Get a comprehensive report with cost estimates</p>
-              <p>• Download or share your professional inspection report</p>
+              <div className="space-y-2 text-gray-700">
+                <p>• Upload inspection photos, documents, or reports</p>
+                <p>• AI analyzes the content to identify repair needs</p>
+                <p>• Get a comprehensive report with cost estimates</p>
+                <p>• Download or share your professional inspection report</p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   )
 }

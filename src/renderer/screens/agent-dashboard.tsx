@@ -451,6 +451,12 @@ export function AgentDashboardScreen({
               <Button
                 variant="outline"
                 className="flex flex-col items-center p-4 h-auto"
+                onClick={() => {
+                  alert(
+                    'Opening document generation interface. This would provide access to all AI-powered document creation tools including cover letters, analysis reports, and negotiation strategies.'
+                  )
+                  // TODO: Navigate to documents interface or open modal
+                }}
               >
                 <FileText className="w-6 h-6 mb-2 text-purple-600" />
                 <span className="text-sm">Generate Document</span>
@@ -458,6 +464,12 @@ export function AgentDashboardScreen({
               <Button
                 variant="outline"
                 className="flex flex-col items-center p-4 h-auto"
+                onClick={() => {
+                  alert(
+                    'Opening market analysis dashboard. This would display AI-generated market insights, trends, and comparative market analysis for your area.'
+                  )
+                  // TODO: Navigate to market analysis interface
+                }}
               >
                 <TrendingUp className="w-6 h-6 mb-2 text-orange-600" />
                 <span className="text-sm">Market Analysis</span>

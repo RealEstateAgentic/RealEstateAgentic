@@ -6,26 +6,45 @@
  * with the OpenAI orchestration service.
  */
 
-import React, { useState, useEffect } from 'react'
+import { type FC, useState, useEffect } from 'react'
+import { X, FileText, Download, CheckCircle, AlertCircle } from 'lucide-react'
 import { Button } from '../ui/button'
-import { Alert } from '../ui/alert'
+import { Card } from '../ui/card'
+import { Progress } from '../ui/progress'
 import {
   DocumentOrchestrator,
   type DocumentPackageRequest,
   type DocumentPackageResult,
-  type DocumentType,
   type DocumentPackageType,
 } from '../../../lib/openai/services/document-orchestrator'
-import type { Offer } from '../../../shared/types/offers'
+import type { AgentProfile } from '../../../shared/types'
 import type { Negotiation } from '../../../shared/types/negotiations'
-import type { AgentProfile, ClientProfile } from '../../../shared/types'
+import type { DocumentType } from '../../../shared/types/document-types'
 
 // ========== DOCUMENT GENERATION TYPES ==========
 
 interface DocumentGeneratorProps {
   agentProfile: AgentProfile
-  clientProfile: ClientProfile
-  offer?: Offer
+  clientProfile: {
+    personalInfo: {
+      firstName: string
+      lastName: string
+      city: string
+      state: string
+      zipCode: string
+    }
+    clientType: string
+    preferences: {
+      timeframe: string
+    }
+  }
+  offer?: {
+    propertyDetails: {
+      address: string
+      listPrice: number
+      propertyType: string
+    }
+  }
   negotiation?: Negotiation
   onDocumentGenerated: (result: DocumentPackageResult) => void
   onCancel: () => void
@@ -420,6 +439,10 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
     })
 
     try {
+      console.log('Starting document generation...')
+      console.log('Client Profile:', clientProfile)
+      console.log('Agent Profile:', agentProfile)
+
       // Create context for document generation
       const context = {
         offer,
@@ -448,12 +471,12 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
           timeline: clientProfile.preferences.timeframe,
         },
         agent: {
-          name: `${agentProfile.personalInfo.firstName} ${agentProfile.personalInfo.lastName}`,
-          brokerage: agentProfile.licenseInfo.brokerageName,
-          experience: `${agentProfile.licenseInfo.yearsExperience} years`,
-          credentials: agentProfile.licenseInfo.licenseNumber,
+          name: agentProfile.displayName || 'Agent',
+          brokerage: agentProfile.brokerage,
+          experience: `${agentProfile.yearsExperience} years`,
+          credentials: agentProfile.licenseNumber,
           contact: {
-            phone: agentProfile.personalInfo.phone,
+            phone: agentProfile.phoneNumber,
             email: agentProfile.email,
           },
         },
@@ -470,6 +493,8 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
         competingOffers: [],
         customData: {},
       }
+
+      console.log('Generated context:', context)
 
       // Create request
       const request: DocumentPackageRequest = {
@@ -497,6 +522,8 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
         },
       }
 
+      console.log('Generated request:', request)
+
       // Simulate progress updates
       const progressInterval = setInterval(() => {
         setProgress(prev => {
@@ -515,8 +542,11 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
       }, 1000)
 
       // Generate documents
+      console.log('Calling DocumentOrchestrator.generateDocumentPackage...')
       const packageResult =
         await DocumentOrchestrator.generateDocumentPackage(request)
+
+      console.log('Document generation result:', packageResult)
 
       clearInterval(progressInterval)
 
@@ -534,6 +564,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
       }
       onDocumentGenerated(packageResult)
     } catch (err) {
+      console.error('Document generation error:', err)
       setError(
         err instanceof Error ? err.message : 'Document generation failed'
       )

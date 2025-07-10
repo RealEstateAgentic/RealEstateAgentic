@@ -11,14 +11,14 @@ import { Button } from '../components/ui/button'
 import { Archive, FileText, Users, DollarSign, Plus } from 'lucide-react'
 import { dummyData } from '../data/dummy-data'
 
-import type { AgentProfile, ClientProfile } from '../../shared/types'
+import type { AgentProfile } from '../../shared/types'
 import { OfferForm } from '../components/offers/OfferForm'
 import { NegotiationDashboard } from '../components/negotiations/NegotiationDashboard'
 import { DocumentGenerator } from '../components/documents/DocumentGenerator'
 
 interface BuyersPortalScreenProps {
   navigate?: (path: string) => void
-  currentUser?: AgentProfile | ClientProfile | null
+  currentUser?: AgentProfile | null
   userType?: 'agent' | 'buyer' | 'seller' | null
 }
 
@@ -290,6 +290,7 @@ export function BuyersPortalScreen({
           onClose={handleCloseModal}
           onArchive={handleArchive}
           onProgress={handleProgress}
+          currentUser={currentUser}
         />
       )}
 

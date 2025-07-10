@@ -5,6 +5,7 @@ import { makeAppSetup } from 'lib/electron-app/factories/app/setup'
 import { MainWindow } from './windows/main'
 import { setupPDFHandlers, removePDFHandlers } from './ipc/pdf-handlers'
 import { initializeFromEnv } from '../lib/openai/client'
+import { registerReportHandlers } from './ipc/report-handlers'
 
 makeAppWithSingleInstanceLock(async () => {
   await app.whenReady()
@@ -20,6 +21,7 @@ makeAppWithSingleInstanceLock(async () => {
 
   // Setup IPC handlers
   setupPDFHandlers()
+  registerReportHandlers()
 
   await makeAppSetup(MainWindow)
 })

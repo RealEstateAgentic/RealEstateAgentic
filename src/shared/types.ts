@@ -100,10 +100,19 @@ export interface UploadedFile {
 }
 
 export interface InspectionReport {
-  id?: string
+  id: string
   userId: string
   name: string
-  files: UploadedFile[]
+  files: Array<{
+    fileName: string
+    downloadURL: string
+    storagePath: string
+    size: number
+    contentType: string
+  }>
+  status: 'pending' | 'generating' | 'completed' | 'error'
+  progressLog: string[]
+  markdownContent?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -205,6 +214,13 @@ export interface AppAPI {
     generate(data: PDFGenerateData): Promise<PDFGenerateResult>
     openFile(filePath: string): Promise<PDFFileResult>
     showInFolder(filePath: string): Promise<PDFFileResult>
+  }
+  report: {
+    generate(
+      filePaths: string[],
+      reportId: string
+    ): Promise<{ success: boolean; reportId?: string; error?: string }>
+    onProgress(callback: (message: string) => void): () => void
   }
 }
 

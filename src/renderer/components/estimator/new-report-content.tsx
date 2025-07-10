@@ -14,6 +14,7 @@ import { storage } from '~/src/lib/firebase/config'
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage'
 import { getCurrentUser } from '~/src/lib/firebase/auth'
 import { createInspectionReport } from '~/src/lib/firebase/firestore'
+import { ReportStatusLogger } from './report-status-logger'
 
 interface NewReportContentProps {
   className?: string
@@ -103,18 +104,17 @@ export function NewReportContent({ className = '' }: NewReportContentProps) {
       return
     }
 
-    if (files.length === 0) return
-
     const successfulUploads = files.filter(f => f.status === 'completed')
-    if (successfulUploads.length !== files.length) {
-      alert('Please wait for all files to finish uploading.')
+    if (successfulUploads.length === 0 || successfulUploads.length !== files.length) {
+      alert('Please wait for all files to finish uploading before generating a report.')
       return
     }
 
     setIsGenerating(true)
 
     try {
-      const newReport = {
+      // Create the initial report document in Firestore
+      const newReportData = {
         name: `Inspection Report - ${new Date().toLocaleString()}`,
         files: successfulUploads.map(f => ({
           fileName: f.file.name,
@@ -123,22 +123,25 @@ export function NewReportContent({ className = '' }: NewReportContentProps) {
           size: f.file.size,
           contentType: f.file.type
         })),
+        status: 'generating' as const,
+        progressLog: ['Report generation initiated...']
       }
+      const newReportId = await createInspectionReport(newReportData)
 
-      const newReportId = await createInspectionReport(newReport)
+      // TODO: Get the actual file path on the user's system to pass to the main process
+      // For now, we'll use a placeholder. This needs to be resolved.
+      const filePaths = successfulUploads.map(f => f.file.path || 'path/to/file')
 
-      alert(
-        `Successfully created new inspection report with ID: ${newReportId}`
-      )
-      
-      // Clear the form
-      setFiles([])
+      // Trigger the agent in the main process
+      const result = await window.App.report.generate(filePaths, newReportId)
 
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to start agent.')
+      }
     } catch (error) {
-      console.error('Error creating inspection report:', error)
-      alert('Failed to create inspection report. Please try again.')
-    } finally {
-      setIsGenerating(false)
+      console.error('Error generating report:', error)
+      alert(`An error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      setIsGenerating(false) // Reset state on error
     }
   }
 
@@ -162,69 +165,65 @@ export function NewReportContent({ className = '' }: NewReportContentProps) {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="space-y-8">
-        {/* File Upload Section */}
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
-            <Upload className="size-5 text-[#3B7097]" />
-            Upload Inspection Documents
-          </h2>
-          <FileUpload
-            title="Upload Inspection Files"
-            subtitle="Drag and drop your inspection documents, photos, or reports here"
-            acceptedTypes="image/*,.pdf,.doc,.docx"
-            files={files}
-            onAddFiles={onAddFiles}
-            onRemoveFile={onRemoveFile}
-          />
-        </div>
+      {isGenerating ? (
+        <ReportStatusLogger />
+      ) : (
+        <div className="space-y-8">
+          {/* File Upload Section */}
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Upload className="size-5 text-[#3B7097]" />
+              Upload Inspection Documents
+            </h2>
+            <FileUpload
+              title="Upload Inspection Files"
+              subtitle="Drag and drop your inspection documents, photos, or reports here"
+              acceptedTypes="image/*,.pdf,.doc,.docx"
+              files={files}
+              onAddFiles={onAddFiles}
+              onRemoveFile={onRemoveFile}
+            />
+          </div>
 
-        {/* Generate Report Section */}
-        {files.length > 0 && (
-          <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Zap className="size-5 text-[#3B7097]" />
-              Generate Report
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Ready to analyze {files.length} file
-              {files.length !== 1 ? 's' : ''} and generate your inspection
-              report with repair estimates.
-            </p>
-            <Button
-              onClick={handleGenerateReport}
-              disabled={isGenerating || files.some(f => f.status === 'uploading')}
-              className="w-full bg-[#3B7097] hover:bg-[#3B7097]/90 text-white font-medium py-3 px-6 rounded-lg transition-colors"
-            >
-              {isGenerating ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Generating Report...
-                </div>
-              ) : (
+          {/* Generate Report Section */}
+          {files.length > 0 && (
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Zap className="size-5 text-[#3B7097]" />
+                Generate Report
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Ready to analyze {files.length} file
+                {files.length !== 1 ? 's' : ''} and generate your inspection
+                report with repair estimates.
+              </p>
+              <Button
+                onClick={handleGenerateReport}
+                disabled={files.some(f => f.status !== 'completed')}
+                className="w-full bg-[#3B7097] hover:bg-[#3B7097]/90 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+              >
                 <div className="flex items-center justify-center gap-2">
                   <Zap className="size-4" />
                   Generate Inspection Report
                 </div>
-              )}
-            </Button>
-          </div>
-        )}
+              </Button>
+            </div>
+          )}
 
-        {/* Info Section */}
-        <div className="bg-[#F6E2BC]/30 border border-[#F6E2BC] rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">
-            How it works
-          </h3>
-          <div className="space-y-2 text-gray-700">
-            <p>• Upload inspection photos, documents, or reports</p>
-            <p>• AI analyzes the content to identify repair needs</p>
-            <p>• Get a comprehensive report with cost estimates</p>
-            <p>• Download or share your professional inspection report</p>
+          {/* Info Section */}
+          <div className="bg-[#F6E2BC]/30 border border-[#F6E2BC] rounded-xl p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">
+              How it works
+            </h3>
+            <div className="space-y-2 text-gray-700">
+              <p>• Upload inspection photos, documents, or reports</p>
+              <p>• AI analyzes the content to identify repair needs</p>
+              <p>• Get a comprehensive report with cost estimates</p>
+              <p>• Download or share your professional inspection report</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 } 

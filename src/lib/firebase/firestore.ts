@@ -19,7 +19,7 @@ import {
 } from 'firebase/firestore'
 import { db } from './config'
 import { getCurrentUser } from './auth'
-import type { Property, RepairEstimate, } from '../../shared/types'
+import type { Property, RepairEstimate, InspectionReport } from '../../shared/types'
 
 /**
  * Collection names
@@ -28,6 +28,7 @@ const COLLECTIONS = {
   PROPERTIES: 'properties',
   REPAIR_ESTIMATES: 'repairEstimates',
   USERS: 'users',
+  INSPECTION_REPORTS: 'inspectionReports'
 } as const
 
 /**
@@ -162,6 +163,36 @@ export const deleteProperty = async (propertyId: string): Promise<void> => {
     throw new Error(`Failed to delete property: ${error}`)
   }
 }
+
+// ========== INSPECTION REPORT OPERATIONS ==========
+
+/**
+ * Create a new inspection report
+ */
+export const createInspectionReport = async (
+  reportData: Omit<InspectionReport, 'id' | 'userId' | 'createdAt' | 'updatedAt'>
+): Promise<string> => {
+  try {
+    const userId = getCurrentUserId()
+    const now = serverTimestamp()
+
+    const report: Omit<InspectionReport, 'id'> = {
+      ...reportData,
+      userId,
+      createdAt: now as any,
+      updatedAt: now as any,
+    }
+
+    const docRef = await addDoc(
+      collection(db, COLLECTIONS.INSPECTION_REPORTS),
+      report
+    )
+    return docRef.id
+  } catch (error) {
+    throw new Error(`Failed to create inspection report: ${error}`)
+  }
+}
+
 
 // ========== REPAIR ESTIMATE OPERATIONS ==========
 

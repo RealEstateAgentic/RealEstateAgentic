@@ -193,6 +193,24 @@ export const createInspectionReport = async (
   }
 }
 
+/**
+ * Retrieves a single inspection report by its ID.
+ * @param reportId The ID of the report to fetch.
+ * @returns The inspection report data, or null if not found.
+ */
+export const getInspectionReport = async (
+  reportId: string
+): Promise<InspectionReport | null> => {
+  const reportRef = doc(db, COLLECTIONS.INSPECTION_REPORTS, reportId)
+  const reportSnap = await getDoc(reportRef)
+
+  if (!reportSnap.exists()) {
+    return null
+  }
+
+  return { id: reportSnap.id, ...reportSnap.data() } as InspectionReport
+}
+
 
 // ========== REPAIR ESTIMATE OPERATIONS ==========
 

@@ -5,40 +5,30 @@
 import { useEffect, useState } from 'react'
 import { CheckCircle, Loader, AlertTriangle, Info } from 'lucide-react'
 
-// Mock progress updates for now
-const mockProgress = [
-  'Initializing report generation...',
-  'Parsing PDF document...',
-  'Identified 23 potential issues.',
-  "Researching cost for: 'foundation cracks'...",
-  "Finding local contractors for: 'foundation cracks'...",
-  "Researching cost for: 'leaky pipe under sink'...",
-  "Finding local contractors for: 'leaky pipe under sink'...",
-  'Compiling final report...',
-  'Report generation complete!'
-]
-
-export function ReportStatusLogger() {
-  const [progress, setProgress] = useState<string[]>(['Initializing...'])
-  const [currentIndex, setCurrentIndex] = useState(0)
+export function ReportStatusLogger({ reportId }: { reportId: string }) {
+  const [messages, setMessages] = useState<string[]>([])
+  const [isComplete, setIsComplete] = useState(false)
 
   useEffect(() => {
-    // This will be replaced with real IPC listeners
-    const interval = setInterval(() => {
-      if (currentIndex < mockProgress.length) {
-        setProgress(prev => [...prev, mockProgress[currentIndex]])
-        setCurrentIndex(prev => prev + 1)
-      } else {
-        clearInterval(interval)
+    const unsubscribe = window.App.report.onProgress(
+      (message: string) => {
+        console.log('Received progress message in renderer:', message)
+        setMessages(prev => [...prev, message])
+        if (message.toLowerCase().includes('complete')) {
+          setIsComplete(true)
+        }
       }
-    }, 1500)
+    )
 
-    return () => clearInterval(interval)
-  }, [currentIndex])
+    // Cleanup subscription on component unmount
+    return () => {
+      unsubscribe()
+    }
+  }, [reportId])
 
   const getIcon = (message: string, isLast: boolean) => {
     const lowerCaseMessage = message.toLowerCase()
-    if (isLast && lowerCaseMessage.includes('complete')) {
+    if (lowerCaseMessage.includes('complete')) {
       return <CheckCircle className="size-5 text-green-500" />
     }
     if (lowerCaseMessage.includes('error')) {
@@ -51,31 +41,17 @@ export function ReportStatusLogger() {
   }
 
   return (
-    <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-        Generating Your Report
-      </h2>
-      <p className="text-gray-600 mb-6">
-        The AI agent is at work. You can see its progress below. This may take a
-        few minutes.
-      </p>
-      <div className="space-y-4 font-mono text-sm">
-        {progress.map((log, index) => (
-          <div key={index} className="flex items-center gap-3">
-            <div className="flex-shrink-0">
-              {getIcon(log, index === progress.length - 1)}
-            </div>
-            <span
-              className={`${
-                index === progress.length - 1
-                  ? 'text-gray-800 font-medium'
-                  : 'text-gray-500'
-              }`}
-            >
-              {log}
-            </span>
-          </div>
-        ))}
+    <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 h-full flex flex-col">
+      <h3 className="text-lg font-semibold mb-2">Generation Status</h3>
+      <div className="flex-grow overflow-y-auto pr-2">
+        <ul className="space-y-2">
+          {messages.map((msg, index) => (
+            <li key={index} className="text-sm">
+              <span className="text-muted-foreground mr-2">{`[${index + 1}]`}</span>
+              {msg}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   )

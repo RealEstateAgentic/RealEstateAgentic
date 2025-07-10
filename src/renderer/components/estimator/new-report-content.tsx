@@ -166,7 +166,7 @@ export function NewReportContent({ className = '' }: NewReportContentProps) {
       </div>
 
       {isGenerating ? (
-        <ReportStatusLogger />
+        <ReportStatusLogger reportId={reportId} />
       ) : (
         <div className="space-y-8">
           {/* File Upload Section */}

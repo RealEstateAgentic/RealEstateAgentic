@@ -133,8 +133,8 @@ const API = {
 
   // Report Generation API
   report: {
-    generate: (filePaths: string[], reportId: string) =>
-      ipcRenderer.invoke('reports:generate', filePaths, reportId),
+    generate: (fileArrayBuffers: ArrayBuffer[], reportId: string) =>
+      ipcRenderer.invoke('reports:generate', fileArrayBuffers, reportId),
     onProgress: (callback: (message: string) => void) => {
       const handler = (_event: Electron.IpcRendererEvent, message: string) =>
         callback(message)

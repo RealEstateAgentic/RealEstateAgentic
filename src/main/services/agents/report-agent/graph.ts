@@ -325,36 +325,51 @@ function compileFinalReport(
   const { propertyAddress, inspectionDate, issueResearch, identifiedIssues } =
     state
 
-  let report = `# Home Inspection Report Summary\n\n`
-  report += `**Property Address:** ${propertyAddress}\n`
-  report += `**Inspection Date:** ${inspectionDate}\n\n`
-  report += `## Summary of Findings\n\nThis report summarizes ${identifiedIssues.length} key issues identified during the inspection. Each issue has been analyzed for potential cost and required contractor type based on automated web research.\n\n---\n\n`
+  let markdown = `# Home Inspection Report Summary\n\n`
+  markdown += `**Property Address:** ${propertyAddress}\n`
+  markdown += `**Inspection Date:** ${inspectionDate}\n\n`
+  markdown += `## Summary of Findings\n\nThis report summarizes ${identifiedIssues.length} key issues identified during the inspection. Each issue has been analyzed for potential cost and required contractor type based on automated web research.\n\n---\n\n`
 
   for (const issue of identifiedIssues) {
     const research = issueResearch[issue.issueId]
     if (research) {
-      report += `### Issue: ${issue.description}\n\n`
-      report += `**Summary & Analysis:**\n${research.summary}\n\n`
-      report += `**Estimated Cost Range:** ${research.estimatedCost}\n`
-      report += `**Confidence:** ${research.confidence}\n`
-      report += `**Required Contractor:** ${research.contractorType}\n\n`
-      report += `**Potential Local Contractors (based on web search):**\n`
-      research.localContractors?.forEach(c => {
-        report += `- ${c.name}`
-        if (c.phone) report += ` (${c.phone})`
-        if (c.url) report += ` - [Website](${c.url})`
-        report += `\n`
-      })
-      report += `\n**Information Sources:**\n`
-      research.sources.forEach(s => {
-        if (s) report += `- ${s}\n`
-      })
-      report += `\n---\n\n`
+      markdown += `### Issue: ${issue.description}\n\n`
+      markdown += `**Summary & Analysis:**\n${research.summary}\n\n`
+      markdown += `**Estimated Cost Range:** ${research.estimatedCost}\n`
+      markdown += `**Confidence:** ${research.confidence}\n`
+      markdown += `- **Required Contractor:** ${research?.contractorType}\n\n`
+
+      if (research?.localContractors && research.localContractors.length > 0) {
+        markdown += `**Potential Local Contractors (Brave Search):**\n`
+        markdown += `| Name | Phone | Website |\n`
+        markdown += `|:---|:---|:---|\n`
+        for (const contractor of research.localContractors) {
+          const phone = contractor.phone || ''
+          const website = contractor.url ? `[Website](${contractor.url})` : ''
+          markdown += `| ${contractor.name || 'N/A'} | ${phone} | ${website} |\n`
+        }
+        markdown += `\n`
+      }
     }
   }
 
+  markdown += `\n\n---\n\n*Disclaimer: This is an AI-generated report. All findings, especially cost estimates, should be independently verified with qualified professionals.*`
+
+  markdown +=
+    `\n---\n\n` +
+    `**Information Sources:**\n` +
+    `| Issue ID | Sources |\n` +
+    `|:---|:---|\n`
+  for (const issue of identifiedIssues) {
+    const research = issueResearch[issue.issueId]
+    if (research) {
+      markdown += `| ${issue.issueId} | ${research.sources.join(', ')} |\n`
+    }
+  }
+  markdown += `\n`
+
   return {
-    finalReport: report,
+    finalReport: markdown,
     progressLog: [...state.progressLog, 'Final report compiled.'],
   }
 }

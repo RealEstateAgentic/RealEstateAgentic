@@ -22,7 +22,6 @@ import { type ReportAgentState } from './schema'
 import { db } from '~/src/lib/firebase/config'
 import { doc, updateDoc } from 'firebase/firestore'
 import { logger } from 'main/utils/logger'
-import { DynamicTool } from '@langchain/core/tools'
 import { BraveSearch } from '@langchain/community/tools/brave_search'
 
 /**
@@ -229,7 +228,7 @@ async function researchAllIssues(
     try {
       const statusMessage = `Researching issue: ${issue.description}...`
       progressLog = [...progressLog, statusMessage]
-      event.sender.send('reports:progress', statusMessage)
+      event.sender.send('reports:progress', { message: statusMessage })
 
       const searchQuery = `cost to repair ${issue.description} in ${propertyAddress}`
       // eslint-disable-next-line no-await-in-loop
@@ -287,16 +286,15 @@ ${researchSummary.substring(0, 8000)}
 
       const completedMessage = `Completed research for ${issue.description}.`
       progressLog = [...progressLog, completedMessage]
-      event.sender.send('reports:progress', completedMessage)
+      event.sender.send('reports:progress', { message: completedMessage })
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error'
       const failedMessage = `Failed to research issue ${issue.issueId}: ${errorMessage}`
       progressLog = [...progressLog, failedMessage]
-      event.sender.send('reports:progress', failedMessage)
+      event.sender.send('reports:progress', { message: failedMessage })
     }
   }
-
   return { issueResearch, progressLog }
 }
 
@@ -455,28 +453,30 @@ export const generateReport = async (
   logger.info(
     `[ReportAgent] Starting report generation for threadId: ${threadId}`,
   )
-  const sendProgress = (message: string) => {
+  const sendProgress = (
+    message: string,
+    isComplete = false,
+    finalReport = '',
+  ) => {
     logger.info(`[ReportAgent] Sending progress for ${threadId}: "${message}"`)
-    event.sender.send('reports:progress', message)
+    event.sender.send('reports:progress', { message, isComplete, finalReport })
   }
 
   // Use the first file path for now
   const pdfBuffer = fileBuffers[0]
 
   const initialState: ReportAgentState = {
-    pdfBuffer,
+    pdfBuffer: pdfBuffer,
     pdfText: '',
     propertyAddress: '',
     inspectionDate: '',
     identifiedIssues: [],
     issueResearch: {},
     finalReport: '',
-    progressLog: ['Workflow initiated.'],
+    progressLog: [],
     messages: [],
-    event,
+    event: event,
   }
-
-  const reportAgentGraph = workflow.compile()
 
   try {
     const stream = await reportAgentGraph.stream(initialState, {
@@ -521,7 +521,7 @@ export const generateReport = async (
       sendProgress('Could not generate final report.')
     }
 
-    sendProgress('Report generation complete')
+    sendProgress('Report generation complete', true, finalReport || '')
   } catch (e) {
     logger.error(
       `[ReportAgent] Error during generation for threadId: ${threadId}`,
@@ -529,6 +529,7 @@ export const generateReport = async (
     )
     sendProgress(
       `An error occurred: ${e instanceof Error ? e.message : 'Unknown error'}`,
+      true,
     )
   }
 } 

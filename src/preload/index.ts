@@ -130,6 +130,20 @@ const API = {
     trackDocumentDownload: (documentId: string, metadata: any) =>
       Promise.resolve(),
   },
+
+  // Report Generation API
+  report: {
+    generate: (filePaths: string[], reportId: string) =>
+      ipcRenderer.invoke('reports:generate', filePaths, reportId),
+    onProgress: (callback: (message: string) => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, message: string) =>
+        callback(message)
+      ipcRenderer.on('reports:progress', handler)
+      return () => {
+        ipcRenderer.removeListener('reports:progress', handler)
+      }
+    },
+  },
 }
 
 contextBridge.exposeInMainWorld('App', API)

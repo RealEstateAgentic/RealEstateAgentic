@@ -6,12 +6,13 @@
 
 import { useState, useEffect } from 'react'
 import { marked } from 'marked'
-import { FileText, Eye, Download } from 'lucide-react'
+import { FileText, Eye, Download, ArrowLeft } from 'lucide-react'
 
 interface MarkdownRendererProps {
-  content?: string
+  markdownContent?: string
   className?: string
   showPreview?: boolean
+  onBack?: () => void
 }
 
 /**
@@ -65,9 +66,10 @@ This document provides a comprehensive breakdown of estimated repair costs for t
  * Uses marked library for parsing and rendering
  */
 export function MarkdownRenderer({ 
-  content = defaultMarkdownContent, 
+  markdownContent = defaultMarkdownContent, 
   className = '',
-  showPreview = true 
+  showPreview = true,
+  onBack
 }: MarkdownRendererProps) {
   const [htmlContent, setHtmlContent] = useState<string>('')
   const [isLoading, setIsLoading] = useState(false)
@@ -81,11 +83,11 @@ export function MarkdownRenderer({
   }, [])
   useEffect(() => {
     const processMarkdown = async () => {
-      if (!content) return
+      if (!markdownContent) return
       
       setIsLoading(true)
       try {
-        const html = await marked.parse(content)
+        const html = await marked.parse(markdownContent)
         setHtmlContent(html)
       } catch (error) {
         console.error('Error parsing markdown:', error)
@@ -96,7 +98,7 @@ export function MarkdownRenderer({
     }
 
     processMarkdown()
-  }, [content])
+  }, [markdownContent])
 
   /**
    * Export current markdown content as PDF using IPC
@@ -153,10 +155,19 @@ export function MarkdownRenderer({
     <div className={`w-full ${className}`}>
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
         {/* Header */}
-        <div className="flex items-center gap-3 px-6 py-4 bg-gray-50 border-b border-gray-200">
+        <div className="flex items-center gap-4 px-6 py-4 bg-gray-50 border-b border-gray-200">
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="p-2 rounded-full hover:bg-gray-200 transition-colors"
+              aria-label="Go back"
+            >
+              <ArrowLeft className="size-5 text-gray-600" />
+            </button>
+          )}
           <div className="flex items-center gap-2">
             <FileText className="size-5 text-[#3B7097]" />
-            <h3 className="text-lg font-semibold text-gray-900">Markdown Preview</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Generated Report</h3>
           </div>
           <div className="ml-auto flex items-center gap-4">
             <div className="flex items-center gap-2">

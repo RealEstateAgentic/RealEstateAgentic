@@ -93,7 +93,7 @@ async function extractTextFromPdf(
       pdfText: data.text,
       progressLog: [
         ...state.progressLog,
-        'Successfully extracted text from PDF.',
+        'Extracting text from file and scanning for issues (this may take a few minutes)...',
       ],
     }
   } catch (error) {

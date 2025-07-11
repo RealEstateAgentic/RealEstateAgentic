@@ -1,36 +1,36 @@
 import { createRoot } from 'react-dom/client'
-import { initializeOpenAI } from '../lib/openai/client'
+import { initializeGroq } from '../lib/groq/client'
 import { App } from './routes'
 import './globals.css'
 
 console.log('Renderer process starting...')
 console.log('Environment check:')
 console.log('- NODE_ENV:', process.env.NODE_ENV)
-console.log('- OPENAI_API_KEY present:', !!process.env.OPENAI_API_KEY)
-console.log('- OPENAI_API_KEY length:', process.env.OPENAI_API_KEY?.length || 0)
+console.log('- GROQ_API_KEY present:', !!process.env.GROQ_API_KEY)
+console.log('- GROQ_API_KEY length:', process.env.GROQ_API_KEY?.length || 0)
 
-// Initialize OpenAI client for the renderer process
+// Initialize Groq client for the renderer process
 try {
-  const apiKey = process.env.OPENAI_API_KEY
+  const apiKey = process.env.GROQ_API_KEY
   if (apiKey && apiKey.length > 0 && apiKey !== 'undefined') {
-    const client = initializeOpenAI({
+    const client = initializeGroq({
       apiKey,
       timeout: 30000,
       maxRetries: 3,
-      defaultModel: 'gpt-4-turbo-preview',
+      defaultModel: 'llama-3.1-70b-versatile',
       temperature: 0.7,
       maxTokens: 4000,
     })
-    console.log('✅ OpenAI client initialized successfully')
+    console.log('✅ Groq client initialized successfully')
     console.log('- Client created:', !!client)
   } else {
     console.warn(
-      '⚠️  OPENAI_API_KEY not found or empty. Document generation will use fallback content.'
+      '⚠️  GROQ_API_KEY not found or empty. Document generation will use fallback content.'
     )
     console.warn('- API Key value:', apiKey || 'undefined')
   }
 } catch (error) {
-  console.warn('❌ Failed to initialize OpenAI client:', error)
+  console.warn('❌ Failed to initialize Groq client:', error)
   console.warn('Document generation will use fallback content.')
 }
 

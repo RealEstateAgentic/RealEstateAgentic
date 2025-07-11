@@ -181,6 +181,7 @@ export function NewReportContent({ className = '' }: NewReportContentProps) {
     try {
       // Create the initial report document in Firestore
       const newReportData = {
+        userId: user.uid,
         name: `Inspection Report - ${new Date().toLocaleString()}`,
         files: successfulUploads.map(f => ({
           fileName: f.file.name,

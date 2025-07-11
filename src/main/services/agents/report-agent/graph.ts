@@ -325,7 +325,7 @@ function compileFinalReport(
   const { propertyAddress, inspectionDate, issueResearch, identifiedIssues } =
     state
 
-  let markdown = `# Home Inspection Report Summary\n\n`
+  let markdown = `# Repair Estimate Summary\n\n`
   markdown += `**Property Address:** ${propertyAddress}\n`
   markdown += `**Inspection Date:** ${inspectionDate}\n\n`
   markdown += `## Summary of Findings\n\nThis report summarizes ${identifiedIssues.length} key issues identified during the inspection. Each issue has been analyzed for potential cost and required contractor type based on automated web research.\n\n---\n\n`
@@ -501,31 +501,30 @@ export const generateReport = async (
     let finalState: Partial<ReportAgentState> = {}
 
     for await (const chunk of stream) {
-      const nodeName = Object.keys(
-        chunk,
-      )[0] as keyof typeof chunk
-      const stateUpdate = chunk[nodeName]
+      const [nodeName, stateUpdate] = Object.entries(chunk)[0]
 
       // Merge the latest updates into the final state
       finalState = { ...finalState, ...stateUpdate }
 
-      if (stateUpdate.progressLog) {
+      if (stateUpdate.progressLog && stateUpdate.progressLog.length > 0) {
         // Send the latest progress message
         const latestMessage = stateUpdate.progressLog.slice(-1)[0]
         sendProgress(latestMessage)
       }
     }
     logger.info(`[ReportAgent] Stream finished for threadId: ${threadId}.`)
-    sendProgress('Agent workflow finished.')
 
-    const finalReport = finalState.finalReport
+    const { finalReport, propertyAddress, inspectionDate } = finalState
     logger.info('[ReportAgent] Final report content to be saved:', finalReport)
 
     if (finalReport) {
       const reportRef = doc(db, COLLECTIONS.INSPECTION_REPORTS, threadId)
       await updateDoc(reportRef, {
         markdownContent: finalReport,
+        propertyAddress: propertyAddress,
+        inspectionDate: inspectionDate,
         status: 'completed',
+        updatedAt: new Date(),
       })
       logger.info(`[ReportAgent] Firestore updated for threadId: ${threadId}.`)
       sendProgress('Report saved successfully.')

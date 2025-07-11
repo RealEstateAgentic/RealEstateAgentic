@@ -2,80 +2,50 @@
  * Report Status Logger Component
  * Displays real-time progress updates for the report generation process.
  */
-import { useEffect, useState } from 'react'
-import { CheckCircle, Loader, AlertTriangle, Info } from 'lucide-react'
+import { useEffect, useRef } from 'react'
+import { CheckCircle, Loader, AlertTriangle } from 'lucide-react'
 
-// Mock progress updates for now
-const mockProgress = [
-  'Initializing report generation...',
-  'Parsing PDF document...',
-  'Identified 23 potential issues.',
-  "Researching cost for: 'foundation cracks'...",
-  "Finding local contractors for: 'foundation cracks'...",
-  "Researching cost for: 'leaky pipe under sink'...",
-  "Finding local contractors for: 'leaky pipe under sink'...",
-  'Compiling final report...',
-  'Report generation complete!'
-]
+export function ReportStatusLogger({ messages }: { messages: string[] }) {
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const isComplete = messages.some(msg => msg.toLowerCase().includes('complete'))
 
-export function ReportStatusLogger() {
-  const [progress, setProgress] = useState<string[]>(['Initializing...'])
-  const [currentIndex, setCurrentIndex] = useState(0)
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
 
   useEffect(() => {
-    // This will be replaced with real IPC listeners
-    const interval = setInterval(() => {
-      if (currentIndex < mockProgress.length) {
-        setProgress(prev => [...prev, mockProgress[currentIndex]])
-        setCurrentIndex(prev => prev + 1)
-      } else {
-        clearInterval(interval)
-      }
-    }, 1500)
-
-    return () => clearInterval(interval)
-  }, [currentIndex])
+    scrollToBottom()
+  }, [messages])
 
   const getIcon = (message: string, isLast: boolean) => {
     const lowerCaseMessage = message.toLowerCase()
-    if (isLast && lowerCaseMessage.includes('complete')) {
+    if (lowerCaseMessage.includes('complete')) {
       return <CheckCircle className="size-5 text-green-500" />
     }
     if (lowerCaseMessage.includes('error')) {
       return <AlertTriangle className="size-5 text-red-500" />
     }
-    if (!isLast) {
+    if (!isLast || isComplete) {
       return <CheckCircle className="size-5 text-blue-500" />
     }
     return <Loader className="size-5 animate-spin text-gray-500" />
   }
 
   return (
-    <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-        Generating Your Report
-      </h2>
-      <p className="text-gray-600 mb-6">
-        The AI agent is at work. You can see its progress below. This may take a
-        few minutes.
-      </p>
-      <div className="space-y-4 font-mono text-sm">
-        {progress.map((log, index) => (
-          <div key={index} className="flex items-center gap-3">
-            <div className="flex-shrink-0">
-              {getIcon(log, index === progress.length - 1)}
-            </div>
-            <span
-              className={`${
-                index === progress.length - 1
-                  ? 'text-gray-800 font-medium'
-                  : 'text-gray-500'
-              }`}
-            >
-              {log}
-            </span>
-          </div>
-        ))}
+    <div className="rounded-lg border bg-card text-card-foreground shadow-sm p-4 h-96 flex flex-col">
+      <h3 className="text-lg font-semibold mb-2">Generation Status</h3>
+      <div className="flex-grow overflow-y-auto pr-2">
+        <ul className="space-y-2">
+          {messages.map((msg, index) => (
+            <li key={index} className="flex items-start text-sm">
+              <span className="mr-2 pt-0.5">
+                {getIcon(msg, index === messages.length - 1)}
+              </span>
+              <span>{msg}</span>
+            </li>
+          ))}
+          <div ref={messagesEndRef} />
+        </ul>
       </div>
     </div>
   )

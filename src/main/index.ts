@@ -1,4 +1,5 @@
 import { app } from 'electron'
+import dotenv from 'dotenv'
 
 import { makeAppWithSingleInstanceLock } from 'lib/electron-app/factories/app/instance'
 import { makeAppSetup } from 'lib/electron-app/factories/app/setup'
@@ -8,6 +9,20 @@ import { initializeFromEnv } from '../lib/groq/client'
 import { registerReportHandlers } from './ipc/report-handlers'
 import { setupEmailHandler } from './email-handler'
 import { setupWebhookHandler } from './webhook-handler'
+
+// Load environment variables from .env file
+console.log(`[dotenv] Current working directory: ${process.cwd()}`)
+const dotenvResult = dotenv.config()
+if (dotenvResult.error) {
+  console.error('[dotenv] Error loading .env file:', dotenvResult.error)
+} else {
+  console.log('[dotenv] .env file loaded successfully.')
+}
+console.log(
+  `[dotenv] OPENAI_API_KEY is ${
+    process.env.OPENAI_API_KEY ? 'set' : 'NOT SET'
+  }`
+)
 
 makeAppWithSingleInstanceLock(async () => {
   console.log('🚀 App starting...')

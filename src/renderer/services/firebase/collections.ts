@@ -322,6 +322,33 @@ export const firebaseCollections = {
     }
   },
 
+  async getGPTAnalysisBySubmissionId(submissionId: string) {
+    console.log('💾 Checking if submission already processed:', submissionId);
+    
+    try {
+      const analysesCollection = collection(db, 'gpt-analysis');
+      const q = query(analysesCollection, where('submissionId', '==', submissionId));
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        console.log('✅ Submission not processed yet:', submissionId);
+        return null;
+      }
+      
+      const doc = querySnapshot.docs[0];
+      const analysis = {
+        id: doc.id,
+        ...doc.data()
+      };
+      
+      console.log('⚠️ Submission already processed:', submissionId);
+      return analysis;
+    } catch (error) {
+      console.error('❌ Error checking submission:', error);
+      throw error;
+    }
+  },
+
   async updateDocument(collection: string, documentId: string, updates: any) {
     console.log('💾 Updating document in Firebase:', collection, documentId);
     
@@ -330,5 +357,64 @@ export const firebaseCollections = {
     
     console.log('✅ Document updated:', documentId);
     return { id: documentId, ...updates };
+  },
+
+  async getPollingState(formId: string) {
+    console.log('💾 Getting polling state for form:', formId);
+    
+    try {
+      const stateCollection = collection(db, 'polling-state');
+      const q = query(stateCollection, where('formId', '==', formId));
+      const querySnapshot = await getDocs(q);
+      
+      if (querySnapshot.empty) {
+        console.log('✅ No polling state found for form:', formId);
+        return null;
+      }
+      
+      const doc = querySnapshot.docs[0];
+      const state = {
+        id: doc.id,
+        ...doc.data()
+      };
+      
+      console.log('✅ Retrieved polling state for form:', formId);
+      return state;
+    } catch (error) {
+      console.error('❌ Error getting polling state:', error);
+      throw error;
+    }
+  },
+
+  async updatePollingState(formId: string, lastProcessedTime: string) {
+    console.log('💾 Updating polling state for form:', formId);
+    
+    try {
+      const stateCollection = collection(db, 'polling-state');
+      const q = query(stateCollection, where('formId', '==', formId));
+      const querySnapshot = await getDocs(q);
+      
+      const stateData = {
+        formId,
+        lastProcessedTime,
+        updatedAt: new Date().toISOString()
+      };
+      
+      if (querySnapshot.empty) {
+        // Create new state document
+        const docRef = await addDoc(stateCollection, stateData);
+        console.log('✅ Created new polling state:', docRef.id);
+        return { id: docRef.id };
+      } else {
+        // Update existing state document
+        const docRef = querySnapshot.docs[0].ref;
+        await updateDoc(docRef, stateData);
+        console.log('✅ Updated polling state:', docRef.id);
+        return { id: docRef.id };
+      }
+    } catch (error) {
+      console.error('❌ Error updating polling state:', error);
+      throw error;
+    }
   }
 };

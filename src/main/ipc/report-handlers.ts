@@ -5,6 +5,7 @@
  */
 
 import { BrowserWindow, ipcMain } from 'electron'
+import { getOpenAIClient } from '../../lib/openai/client'
 import { generateReport } from '../services/agents/report-agent/graph'
 
 /**
@@ -16,9 +17,17 @@ export function registerReportHandlers() {
     'reports:generate',
     async (
       event,
-      filePaths: string[],
+      fileArrayBuffers: ArrayBuffer[],
       reportId: string
     ): Promise<{ success: boolean; error?: string }> => {
+      // First, check if the OpenAI client is available.
+      if (!getOpenAIClient()) {
+        const errorMsg =
+          'OpenAI client is not initialized. Please ensure the API key is set correctly in the environment.'
+        console.error(errorMsg)
+        return { success: false, error: errorMsg }
+      }
+
       // Get the window that sent the request
       const mainWindow = BrowserWindow.fromWebContents(event.sender)
       if (!mainWindow) {
@@ -30,7 +39,8 @@ export function registerReportHandlers() {
       try {
         // We start the generation but don't wait for it.
         // The function will send progress updates on its own.
-        generateReport(filePaths[0], reportId, mainWindow)
+        const fileBuffers = fileArrayBuffers.map(ab => Buffer.from(ab))
+        generateReport(event, fileBuffers, reportId)
         
         console.log('Report generation started for ID:', reportId)
         return { success: true }

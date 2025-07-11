@@ -7,12 +7,8 @@ const API = {
 
   // PDF Generation API
   pdf: {
-    generate: (htmlContent: string, fileName: string, options?: any) =>
-      ipcRenderer.invoke(IPC_CHANNELS.GENERATE_PDF_FROM_HTML, {
-        htmlContent,
-        fileName,
-        options,
-      }),
+    generate: (payload: any) =>
+      ipcRenderer.invoke(IPC_CHANNELS.GENERATE_PDF_FROM_HTML, payload),
 
     generateDocument: (
       content: any,
@@ -133,11 +129,19 @@ const API = {
 
   // Report Generation API
   report: {
-    generate: (filePaths: string[], reportId: string) =>
-      ipcRenderer.invoke('reports:generate', filePaths, reportId),
-    onProgress: (callback: (message: string) => void) => {
-      const handler = (_event: Electron.IpcRendererEvent, message: string) =>
-        callback(message)
+    generate: (fileArrayBuffers: ArrayBuffer[], reportId: string) =>
+      ipcRenderer.invoke('reports:generate', fileArrayBuffers, reportId),
+    onProgress: (
+      callback: (payload: {
+        message: string
+        isComplete: boolean
+        finalReport: string
+      }) => void,
+    ) => {
+      const handler = (
+        _event: Electron.IpcRendererEvent,
+        payload: { message: string; isComplete: boolean; finalReport: string },
+      ) => callback(payload)
       ipcRenderer.on('reports:progress', handler)
       return () => {
         ipcRenderer.removeListener('reports:progress', handler)

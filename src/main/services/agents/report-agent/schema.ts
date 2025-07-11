@@ -43,9 +43,9 @@ export interface ReportAgentState {
       estimatedCost: string
       confidence: 'High' | 'Medium' | 'Low'
       contractorType: string
+      severity: 'High' | 'Medium' | 'Low' | 'Unknown'
       localContractors?: Array<{
         name: string
-        phone?: string
         url?: string
       }>
       sources: string[]

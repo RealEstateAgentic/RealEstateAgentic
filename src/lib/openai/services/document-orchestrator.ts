@@ -1773,63 +1773,63 @@ This fallback content allows you to test the document workflow and user interfac
   ): Promise<{ content: string; title: string }> {
     const client = getGroqClient()
 
-    const prompt = `Generate a comprehensive client summary based on the following context:
+    const prompt = `Write a friendly, conversational summary about this client that feels like you're introducing them to a colleague over coffee. Skip the formal business language and talk about them as a real person.
 
-Property:
-- Address: ${context.property.address}
-- Price: ${context.property.price}
-- Type: ${context.property.type}
-- Features: ${context.property.features?.join(', ')}
-- Condition: ${context.property.condition}
-- Days on Market: ${context.property.daysOnMarket || 'N/A'}
+Here's what I know about them:
 
-Client:
-- Name: ${context.client.name}
-- Role: ${context.client.role}
-- Experience Level: ${context.client.experienceLevel}
-- Goals: ${context.client.goals?.join(', ')}
-- Concerns: ${context.client.concerns?.join(', ')}
-- Timeline: ${context.client.timeline || 'Flexible'}
+Property they're interested in:
+- ${context.property.address}
+- $${context.property.price.toLocaleString()}
+- ${context.property.type}
+- Features: ${context.property.features?.join(', ') || 'Standard features'}
+- Condition: ${context.property.condition || 'Good condition'}
+- ${context.property.daysOnMarket ? `Been on the market for ${context.property.daysOnMarket} days` : 'Recently listed'}
 
-Agent:
-- Name: ${context.agent.name}
-- Brokerage: ${context.agent.brokerage || 'N/A'}
-- Experience: ${context.agent.experience || 'N/A'}
+About ${context.client.name}:
+- They're a ${context.client.role}
+- Experience level: ${context.client.experienceLevel}
+- What they're hoping to achieve: ${context.client.goals?.join(', ') || 'Standard home purchase goals'}
+- Main concerns: ${context.client.concerns?.join(', ') || 'Typical buyer concerns'}
+- Timeline: ${context.client.timeline || 'Pretty flexible'}
 
-Market:
-- Trend: ${context.market?.trend || 'N/A'}
-- Inventory: ${context.market?.inventory || 'N/A'}
-- Competition: ${context.market?.competition || 'N/A'}
-- Location: ${context.market?.location?.city || 'N/A'}, ${context.market?.location?.state || 'N/A'}
+Working with agent ${context.agent.name}:
+- ${context.agent.brokerage ? `From ${context.agent.brokerage}` : 'Independent agent'}
+- ${context.agent.experience ? `${context.agent.experience} years of experience` : 'Experienced professional'}
 
-Please provide a detailed summary of the client's background, their motivation for the transaction, and their expectations for the property.
+Market situation:
+- Market trend: ${context.market?.trend || 'Stable'}
+- Inventory levels: ${context.market?.inventory || 'Normal'}
+- Competition: ${context.market?.competition || 'Moderate'}
+- Location: ${context.market?.location?.city || 'Local area'}, ${context.market?.location?.state || 'State'}
 
-Format the summary as a single paragraph, approximately 150-200 words.
+Write this like you're telling a colleague about a client you're working with. Keep it warm, natural, and focus on what makes them unique as a person. About 150-200 words, conversational tone.
 
-Title: "Client Summary"`
+Don't use formal phrases like "qualified purchaser" or "market analysis indicates." Just talk like a person about a person.`
 
     try {
       const summary = await client.generateText(prompt, AI_MODELS.SUMMARY, {
         systemPrompt:
-          'You are an expert in real estate client summaries. Generate a comprehensive, professional summary based on the provided context.',
+          "You are a friendly real estate agent sharing insights about a client with a colleague. Write in a warm, conversational tone like you're having coffee together. Focus on the human side of the story, not just the business details.",
         temperature: 0.7,
-        maxTokens: 200,
+        maxTokens: 250,
       })
       return { content: summary, title: 'Client Summary' }
     } catch (error) {
       console.warn('Client summary generation failed, using fallback:', error)
       return {
-        content: `Client Summary for ${context.client.name}
+        content: `So here's the scoop on ${context.client.name}...
 
-${context.client.role} with ${context.client.experienceLevel} experience.
+They're a ${context.client.experienceLevel} ${context.client.role} looking at that ${context.property.type} on ${context.property.address}. You know how it is - they've got the usual hopes and concerns that come with ${context.client.role === 'buyer' ? 'buying' : 'selling'} a home.
 
-Motivation: ${context.client.goals?.join(', ')}
-Concerns: ${context.client.concerns?.join(', ')}
-Timeline: ${context.client.timeline || 'Flexible'}
+${context.client.goals?.length ? `What they really want: ${context.client.goals.join(', ')}.` : 'They have pretty standard goals for this type of transaction.'}
 
-Expectations: ${context.property.type} property at ${context.property.price}.
+${context.client.concerns?.length ? `What's keeping them up at night: ${context.client.concerns.join(', ')}.` : 'Nothing too unusual in terms of concerns.'}
 
-This summary is generated using a fallback system. For a more personalized and detailed summary, please enable AI generation.`,
+${context.client.timeline ? `Timeline-wise, they're ${context.client.timeline}.` : 'They seem pretty flexible on timing.'}
+
+The property is priced at $${context.property.price.toLocaleString()} and honestly, ${context.property.condition === 'excellent' ? "it's in great shape" : context.property.condition === 'good' ? "it's in decent condition" : 'it needs some work'}. ${context.property.daysOnMarket ? `It's been sitting for ${context.property.daysOnMarket} days` : 'Just came on the market'}.
+
+Working with ${context.agent.name} on this one. ${context.agent.experience ? `They've got ${context.agent.experience} years under their belt` : 'Solid agent'}, so should be a smooth process.`,
         title: 'Client Summary',
       }
     }

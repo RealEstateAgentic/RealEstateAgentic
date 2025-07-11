@@ -1,13 +1,14 @@
-import { type BaseMessage } from '@langchain/core/messages'
+import { BaseMessage } from '@langchain/core/messages'
+import { IpcMainInvokeEvent } from 'electron'
 
 /**
  * The main state graph for the agent.
  */
 export interface ReportAgentState {
   /**
-   * The original PDF file path for the inspection report.
+   * The original PDF file as a buffer.
    */
-  pdfPath: string
+  pdfBuffer: Buffer
 
   /**
    * The extracted text content from the PDF.
@@ -30,8 +31,26 @@ export interface ReportAgentState {
   identifiedIssues: Array<{
     issueId: string
     description: string
-    // Potentially add more structured fields here later
+    context?: string
   }>
+
+  /**
+   * A map to store the detailed research findings for each issue.
+   */
+  issueResearch: {
+    [issueId: string]: {
+      summary: string
+      estimatedCost: string
+      confidence: 'High' | 'Medium' | 'Low'
+      contractorType: string
+      localContractors?: Array<{
+        name: string
+        phone?: string
+        url?: string
+      }>
+      sources: string[]
+    }
+  }
 
   /**
    * The final compiled Markdown report.
@@ -48,4 +67,5 @@ export interface ReportAgentState {
    * This is used to manage the flow of the agent.
    */
   messages: BaseMessage[]
+  event?: IpcMainInvokeEvent
 } 

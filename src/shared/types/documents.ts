@@ -3,6 +3,8 @@
  * Used across the document generation and management system
  */
 
+import { type Timestamp } from 'firebase/firestore'
+
 export interface Document {
   id: string
   agentId: string
@@ -576,3 +578,23 @@ export const DOCUMENT_STATUSES = {
   SENT: 'sent',
   ARCHIVED: 'archived',
 } as const
+
+export interface InspectionReport {
+  id: string
+  name: string
+  userId: string
+  status: 'generating' | 'completed' | 'failed'
+  files: Array<{
+    fileName: string
+    downloadURL: string
+    storagePath: string
+    size: number
+    contentType: string
+  }>
+  progressLog: string[]
+  propertyAddress?: string
+  inspectionDate?: string
+  markdownContent?: string
+  createdAt: Timestamp
+  updatedAt?: Timestamp
+}

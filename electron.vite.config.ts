@@ -54,6 +54,8 @@ export default defineConfig({
       'process.env.JOTFORM_API_KEY': JSON.stringify(
         process.env.JOTFORM_API_KEY
       ),
+      'process.env.GOOGLE_CLIENT_ID': JSON.stringify(process.env.GOOGLE_CLIENT_ID),
+      'process.env.GOOGLE_CLIENT_SECRET': JSON.stringify(process.env.GOOGLE_CLIENT_SECRET),
       'process.platform': JSON.stringify(process.platform),
     },
 
@@ -85,6 +87,8 @@ export default defineConfig({
             OPENAI_API_KEY: process.env.OPENAI_API_KEY,
             GROQ_API_KEY: process.env.GROQ_API_KEY,
             JOTFORM_API_KEY: process.env.JOTFORM_API_KEY,
+            GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+            GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
             platform: process.platform,
           }),
         ],

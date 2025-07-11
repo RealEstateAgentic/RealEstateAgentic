@@ -1,5 +1,6 @@
-import { Phone, Mail, MapPin, Calendar, DollarSign, Send, Loader2 } from 'lucide-react'
+import { Phone, Mail, MapPin, Calendar, DollarSign, Send, Loader2, Shield, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
+import { gmailAuth } from '../../services/gmail-auth'
 
 interface ClientCardProps {
   client: {
@@ -28,6 +29,7 @@ interface ClientCardProps {
 
 export function ClientCard({ client, onClick }: ClientCardProps) {
   const [isSending, setIsSending] = useState(false)
+  const [isGmailConnected, setIsGmailConnected] = useState(gmailAuth.isAuthenticated())
   
   const handleSendSurvey = async (e: React.MouseEvent) => {
     e.stopPropagation() // Prevent card click event
@@ -39,18 +41,33 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
     try {
       console.log('Sending survey to:', client.name, client.email)
       
-      // Import and use the automation service
-      const { startBuyerWorkflow } = await import('../../services/automation')
+      // Check if Gmail is authenticated
+      if (!gmailAuth.isAuthenticated()) {
+        console.log('🔑 Gmail not authenticated, starting OAuth flow...')
+        
+        const authResult = await gmailAuth.authenticate()
+        
+        if (!authResult.success) {
+          throw new Error(`Gmail authentication failed: ${authResult.error}`)
+        }
+        
+        setIsGmailConnected(true)
+        console.log('✅ Gmail authenticated:', authResult.userEmail)
+      }
       
-      const result = await startBuyerWorkflow({
+      // Import and use the automation service with Gmail API
+      const { startBuyerWorkflowWithGmail } = await import('../../services/automation')
+      
+      const result = await startBuyerWorkflowWithGmail({
         agentId: 'agent-1', // TODO: Get actual agent ID
         buyerEmail: client.email,
         buyerName: client.name,
-        buyerPhone: client.phone
+        buyerPhone: client.phone,
+        senderEmail: gmailAuth.getUserEmail()
       })
       
       if (result.success) {
-        alert(`✅ Survey sent successfully to ${client.name}!\n\nForm URL: ${result.formUrl}`)
+        alert(`✅ Survey sent successfully to ${client.name} from your Gmail account!\n\nForm URL: ${result.formUrl}`)
         console.log('Survey sent successfully:', result)
       } else {
         throw new Error('Failed to send survey')
@@ -131,15 +148,25 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
             {isSending ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                Sending...
+                {isGmailConnected ? 'Sending...' : 'Connecting Gmail...'}
               </>
             ) : (
               <>
-                <Send className="size-4" />
-                Send Survey
+                {isGmailConnected ? (
+                  <ShieldCheck className="size-4" />
+                ) : (
+                  <Shield className="size-4" />
+                )}
+                Send Survey {isGmailConnected ? 'via Gmail' : '(Connect Gmail)'}
               </>
             )}
           </button>
+          {isGmailConnected && gmailAuth.getUserEmail() && (
+            <div className="text-xs text-gray-600 flex items-center gap-1">
+              <Mail className="size-3" />
+              Connected: {gmailAuth.getUserEmail()}
+            </div>
+          )}
         </div>
       )}
 

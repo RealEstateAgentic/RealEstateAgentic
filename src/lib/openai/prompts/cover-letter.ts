@@ -7,10 +7,10 @@
  */
 
 import {
-  getOpenAIClient,
+  getGroqClient,
   AI_MODELS,
   createRealEstateSystemPrompt,
-} from '../client'
+} from '../../groq/client'
 import type { Offer } from '../../../shared/types/offers'
 import type { MarketData } from '../../../shared/types/market-data'
 import type { UserProfile } from '../../../shared/types'
@@ -405,7 +405,7 @@ export const generateBuyerOfferLetter = async (
     emphasizeStrengths: true,
   }
 ): Promise<CoverLetterResult> => {
-  const client = getOpenAIClient()
+  const client = getGroqClient()
 
   const systemPrompt = `${createRealEstateSystemPrompt(
     'buyer',
@@ -439,7 +439,7 @@ export const generateSellerCounterLetter = async (
     emphasizeStrengths: false,
   }
 ): Promise<CoverLetterResult> => {
-  const client = getOpenAIClient()
+  const client = getGroqClient()
 
   const systemPrompt = `${createRealEstateSystemPrompt(
     'seller',
@@ -473,7 +473,7 @@ export const generateMultipleOfferLetter = async (
     emphasizeStrengths: true,
   }
 ): Promise<CoverLetterResult> => {
-  const client = getOpenAIClient()
+  const client = getGroqClient()
 
   const systemPrompt = `${createRealEstateSystemPrompt(
     'buyer',
@@ -507,7 +507,7 @@ export const generateMarketAnalysisLetter = async (
     emphasizeStrengths: false,
   }
 ): Promise<CoverLetterResult> => {
-  const client = getOpenAIClient()
+  const client = getGroqClient()
 
   const systemPrompt = `${createRealEstateSystemPrompt(
     'agent',

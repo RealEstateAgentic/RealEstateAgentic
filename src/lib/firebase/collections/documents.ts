@@ -110,8 +110,11 @@ export const createDocument = async (
     // Create document
     const document: Document = {
       id: documentId,
-      agentId: userProfile.role === 'agent' ? userProfile.uid : '',
-      clientId: userProfile.role !== 'agent' ? userProfile.uid : '',
+      agentId: userProfile.uid, // Always treat as agent in agent-only mode
+      clientId:
+        request.relatedId && request.relatedType === 'client'
+          ? request.relatedId
+          : '',
       relatedId: request.relatedId,
       relatedType: request.relatedType,
       title: request.title,

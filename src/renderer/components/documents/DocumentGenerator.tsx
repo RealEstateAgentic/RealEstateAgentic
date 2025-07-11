@@ -23,6 +23,7 @@ import type {
   DocumentGenerationOptions,
   DocumentRequirements,
   DocumentType,
+  DocumentGenerationProgress,
 } from '../../../lib/openai/services/document-orchestrator'
 import type { AgentProfile } from '../../../shared/types'
 import type { Negotiation } from '../../../shared/types/negotiations'
@@ -57,12 +58,20 @@ interface DocumentGeneratorProps {
 }
 
 interface GenerationProgress {
-  status: 'idle' | 'generating' | 'completed' | 'error'
+  status:
+    | 'idle'
+    | 'initializing'
+    | 'generating'
+    | 'analyzing'
+    | 'completed'
+    | 'error'
   currentStep: string
   progress: number
   timeRemaining?: number
   documentsGenerated: number
   totalDocuments: number
+  currentDocument?: string
+  timeElapsed?: number
 }
 
 interface DocumentTypeSelection {
@@ -638,18 +647,23 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
           qualityLevel: 'review',
           fallbackOptions: true,
         },
+        onProgress: (progressUpdate: DocumentGenerationProgress) => {
+          setProgress({
+            status: progressUpdate.status,
+            currentStep: progressUpdate.currentStep,
+            progress: progressUpdate.progress,
+            timeRemaining: progressUpdate.estimatedTimeRemaining,
+            documentsGenerated: progressUpdate.documentsCompleted,
+            totalDocuments: progressUpdate.totalDocuments,
+            currentDocument: progressUpdate.currentDocument,
+            timeElapsed: progressUpdate.timeElapsed,
+          })
+        },
       }
 
       console.log('Generated request:', request)
 
-      // Update progress to show document generation starting
-      setProgress(prev => ({
-        ...prev,
-        currentStep: 'Generating documents...',
-        progress: 5,
-      }))
-
-      // Generate documents
+      // Generate documents with real-time progress tracking
       console.log(
         'Calling DocumentOrchestrationService.generateDocumentPackage...'
       )
@@ -658,29 +672,10 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
 
       console.log('Document generation result:', packageResult)
 
-      // Update progress to completion
-      setProgress({
-        status: 'completed',
-        currentStep: 'Generation complete!',
-        progress: 100,
-        documentsGenerated: packageResult.documents.length,
-        totalDocuments: packageResult.documents.length,
-      })
-
       // Save documents to Firebase if generation was successful
       if (packageResult.documents && packageResult.documents.length > 0) {
-        setProgress(prev => ({
-          ...prev,
-          currentStep: 'Saving documents to Firebase...',
-        }))
-
         console.log('Saving documents to Firebase...')
         await saveDocumentsToFirebase(packageResult)
-
-        setProgress(prev => ({
-          ...prev,
-          currentStep: 'Documents saved successfully!',
-        }))
       }
 
       setResult(packageResult)

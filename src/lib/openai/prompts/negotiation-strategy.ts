@@ -8,10 +8,10 @@
  */
 
 import {
-  getOpenAIClient,
+  getGroqClient,
   AI_MODELS,
   createRealEstateSystemPrompt,
-} from '../client'
+} from '../../groq/client'
 import type { Offer } from '../../../shared/types/offers'
 import type {
   Negotiation,
@@ -577,7 +577,7 @@ export const generateInitialOfferStrategy = async (
     includeFallbacks: true,
   }
 ): Promise<NegotiationStrategyResult> => {
-  const client = getOpenAIClient()
+  const client = getGroqClient()
 
   const systemPrompt = `${createRealEstateSystemPrompt(
     context.client.role,
@@ -611,7 +611,7 @@ export const generateCounterOfferStrategy = async (
     includeFallbacks: true,
   }
 ): Promise<NegotiationStrategyResult> => {
-  const client = getOpenAIClient()
+  const client = getGroqClient()
 
   const systemPrompt = `${createRealEstateSystemPrompt(
     context.client.role,
@@ -645,7 +645,7 @@ export const generateMultipleOffersStrategy = async (
     includeFallbacks: true,
   }
 ): Promise<NegotiationStrategyResult> => {
-  const client = getOpenAIClient()
+  const client = getGroqClient()
 
   const systemPrompt = `${createRealEstateSystemPrompt(
     context.client.role,
@@ -679,7 +679,7 @@ export const generateDeadlinePressureStrategy = async (
     includeFallbacks: true,
   }
 ): Promise<NegotiationStrategyResult> => {
-  const client = getOpenAIClient()
+  const client = getGroqClient()
 
   const systemPrompt = `${createRealEstateSystemPrompt(
     context.client.role,
@@ -713,7 +713,7 @@ export const generateAppraisalGapStrategy = async (
     includeFallbacks: true,
   }
 ): Promise<NegotiationStrategyResult> => {
-  const client = getOpenAIClient()
+  const client = getGroqClient()
 
   const systemPrompt = `${createRealEstateSystemPrompt(
     context.client.role,
@@ -747,7 +747,7 @@ export const generateInspectionNegotiationStrategy = async (
     includeFallbacks: true,
   }
 ): Promise<NegotiationStrategyResult> => {
-  const client = getOpenAIClient()
+  const client = getGroqClient()
 
   const systemPrompt = `${createRealEstateSystemPrompt(
     context.client.role,

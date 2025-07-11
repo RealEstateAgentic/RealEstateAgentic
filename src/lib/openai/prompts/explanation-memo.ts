@@ -8,10 +8,10 @@
  */
 
 import {
-  getOpenAIClient,
+  getGroqClient,
   AI_MODELS,
   createRealEstateSystemPrompt,
-} from '../client'
+} from '../../groq/client'
 import type { Offer } from '../../../shared/types/offers'
 import type { Negotiation } from '../../../shared/types/negotiations'
 import type { MarketData } from '../../../shared/types/market-data'
@@ -458,7 +458,7 @@ export const generateOfferTermsExplanation = async (
     includeQuestions: true,
   }
 ): Promise<ExplanationMemoResult> => {
-  const client = getOpenAIClient()
+  const client = getGroqClient()
 
   const systemPrompt = `${createRealEstateSystemPrompt(
     context.client.role,
@@ -491,7 +491,7 @@ export const generateMarketAnalysisExplanation = async (
     includeQuestions: false,
   }
 ): Promise<ExplanationMemoResult> => {
-  const client = getOpenAIClient()
+  const client = getGroqClient()
 
   const systemPrompt = `${createRealEstateSystemPrompt(
     context.client.role,
@@ -522,7 +522,7 @@ export const generateNegotiationStrategyExplanation = async (
     includeQuestions: true,
   }
 ): Promise<ExplanationMemoResult> => {
-  const client = getOpenAIClient()
+  const client = getGroqClient()
 
   const systemPrompt = `${createRealEstateSystemPrompt(
     context.client.role,
@@ -555,7 +555,7 @@ export const generateFinancingOptionsExplanation = async (
     includeQuestions: true,
   }
 ): Promise<ExplanationMemoResult> => {
-  const client = getOpenAIClient()
+  const client = getGroqClient()
 
   const systemPrompt = `${createRealEstateSystemPrompt(
     context.client.role,
@@ -588,7 +588,7 @@ export const generateContingenciesExplanation = async (
     includeQuestions: true,
   }
 ): Promise<ExplanationMemoResult> => {
-  const client = getOpenAIClient()
+  const client = getGroqClient()
 
   const systemPrompt = `${createRealEstateSystemPrompt(
     context.client.role,
@@ -621,7 +621,7 @@ export const generateClosingProcessExplanation = async (
     includeQuestions: false,
   }
 ): Promise<ExplanationMemoResult> => {
-  const client = getOpenAIClient()
+  const client = getGroqClient()
 
   const systemPrompt = `${createRealEstateSystemPrompt(
     context.client.role,

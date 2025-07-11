@@ -29,7 +29,7 @@ try {
       apiKey,
       timeout: 30000,
       maxRetries: 3,
-      defaultModel: 'llama-3.1-70b-versatile',
+      defaultModel: 'llama-3.3-70b-versatile',
       temperature: 0.7,
       maxTokens: 4000,
     })

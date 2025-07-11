@@ -36,7 +36,7 @@ export interface AIModelConfig {
 export const AI_MODELS: Record<string, AIModelConfig> = {
   // Document generation - balanced creativity and structure
   DOCUMENT_GENERATION: {
-    name: 'llama-3.1-70b-versatile',
+    name: 'llama-3.3-70b-versatile',
     maxTokens: 4000,
     temperature: 0.7,
     topP: 0.9,
@@ -46,7 +46,7 @@ export const AI_MODELS: Record<string, AIModelConfig> = {
 
   // Analysis and strategy - focused on accuracy
   ANALYSIS: {
-    name: 'llama-3.1-70b-versatile',
+    name: 'llama-3.3-70b-versatile',
     maxTokens: 2000,
     temperature: 0.3,
     topP: 0.8,
@@ -56,7 +56,7 @@ export const AI_MODELS: Record<string, AIModelConfig> = {
 
   // Review and improvement - detail-oriented
   REVIEW: {
-    name: 'llama-3.1-70b-versatile',
+    name: 'llama-3.3-70b-versatile',
     maxTokens: 3000,
     temperature: 0.4,
     topP: 0.85,
@@ -76,9 +76,9 @@ export const AI_MODELS: Record<string, AIModelConfig> = {
 
   // Complex reasoning - maximum capability
   COMPLEX_REASONING: {
-    name: 'llama-3.1-70b-versatile',
+    name: 'deepseek-r1-distill-llama-70b',
     maxTokens: 4000,
-    temperature: 0.2,
+    temperature: 0.6,
     topP: 0.8,
     frequencyPenalty: 0.0,
     presencePenalty: 0.0,
@@ -95,7 +95,7 @@ class GroqClient {
     this.config = {
       timeout: 30000,
       maxRetries: 3,
-      defaultModel: 'llama-3.1-70b-versatile',
+      defaultModel: 'llama-3.3-70b-versatile',
       temperature: 0.7,
       maxTokens: 4000,
       ...config,
@@ -300,7 +300,7 @@ export const initializeFromEnv = (): GroqClient => {
     maxRetries: process.env.GROQ_MAX_RETRIES
       ? Number.parseInt(process.env.GROQ_MAX_RETRIES, 10)
       : 3,
-    defaultModel: process.env.GROQ_DEFAULT_MODEL || 'llama-3.1-70b-versatile',
+    defaultModel: process.env.GROQ_DEFAULT_MODEL || 'llama-3.3-70b-versatile',
     temperature: process.env.GROQ_TEMPERATURE
       ? Number.parseFloat(process.env.GROQ_TEMPERATURE)
       : 0.7,

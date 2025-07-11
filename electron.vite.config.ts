@@ -1,7 +1,7 @@
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import { codeInspectorPlugin } from 'code-inspector-plugin'
 import { resolve, normalize, dirname } from 'node:path'
-// import tailwindcss from '@tailwindcss/vite'
+import tailwindcss from '@tailwindcss/vite'
 import { config } from 'dotenv'
 
 import injectProcessEnvPlugin from 'rollup-plugin-inject-process-env'
@@ -63,7 +63,7 @@ export default defineConfig({
 
     plugins: [
       tsconfigPaths,
-      // tailwindcss(),
+      tailwindcss(),
       reactPlugin(),
 
       codeInspectorPlugin({

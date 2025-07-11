@@ -154,6 +154,24 @@ const API = {
 const emailAPI = {
   sendEmail: async (emailData: any) => {
     return await ipcRenderer.invoke('send-email', emailData)
+  },
+  
+  // OAuth methods
+  openOAuthWindow: async (authUrl: string) => {
+    return await ipcRenderer.invoke('open-oauth-window', authUrl)
+  },
+  
+  getLastOAuthCode: async () => {
+    return await ipcRenderer.invoke('get-last-oauth-code')
+  },
+  
+  // Secure token exchange (keeps client secret in main process)
+  exchangeOAuthTokens: async (authCode: string) => {
+    return await ipcRenderer.invoke('exchange-oauth-tokens', authCode)
+  },
+  
+  refreshOAuthTokens: async (refreshToken: string) => {
+    return await ipcRenderer.invoke('refresh-oauth-tokens', refreshToken)
   }
 }
 

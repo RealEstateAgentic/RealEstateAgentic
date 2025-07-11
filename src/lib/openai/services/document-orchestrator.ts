@@ -897,8 +897,34 @@ Format as JSON with specific fields for each analysis point.`
         }
       )
 
-      return analysis
+      // Ensure all required properties exist with proper defaults
+      const sanitizedAnalysis: DocumentInsights = {
+        keyThemes: Array.isArray(analysis.keyThemes)
+          ? analysis.keyThemes
+          : ['Professional presentation', 'Market alignment', 'Client focus'],
+        consistencyScore:
+          typeof analysis.consistencyScore === 'number'
+            ? analysis.consistencyScore
+            : 85,
+        recommendedActions: Array.isArray(analysis.recommendedActions)
+          ? analysis.recommendedActions
+          : ['Review for consistency', 'Validate market data'],
+        marketAlignment:
+          typeof analysis.marketAlignment === 'string'
+            ? analysis.marketAlignment
+            : 'Well aligned with current market conditions',
+        strategicPosition:
+          typeof analysis.strategicPosition === 'string'
+            ? analysis.strategicPosition
+            : 'Strong positioning for negotiation',
+        riskFactors: Array.isArray(analysis.riskFactors)
+          ? analysis.riskFactors
+          : ['Market volatility', 'Timeline constraints'],
+      }
+
+      return sanitizedAnalysis
     } catch (error) {
+      console.warn('Document analysis failed, using fallback:', error)
       return {
         keyThemes: [
           'Professional presentation',
@@ -925,7 +951,7 @@ Format as JSON with specific fields for each analysis point.`
     const recommendations: string[] = []
 
     // Quality-based recommendations
-    const lowQualityDocs = documents.filter(doc => doc.quality.score < 70)
+    const lowQualityDocs = documents.filter(doc => doc.quality?.score < 70)
     if (lowQualityDocs.length > 0) {
       recommendations.push(
         `Review and improve quality of: ${lowQualityDocs.map(d => d.type).join(', ')}`
@@ -933,28 +959,40 @@ Format as JSON with specific fields for each analysis point.`
     }
 
     // Consistency recommendations
-    if (insights.consistencyScore < 80) {
+    if (insights.consistencyScore && insights.consistencyScore < 80) {
       recommendations.push(
         'Review documents for consistency in tone and messaging'
       )
     }
 
-    // Content recommendations
-    if (insights.riskFactors.length > 3) {
+    // Content recommendations - add null check for riskFactors
+    if (
+      insights.riskFactors &&
+      Array.isArray(insights.riskFactors) &&
+      insights.riskFactors.length > 3
+    ) {
       recommendations.push(
         'Consider addressing identified risk factors in client communication'
       )
     }
 
-    // Market alignment recommendations
-    if (insights.marketAlignment.includes('misaligned')) {
+    // Market alignment recommendations - add null check for marketAlignment
+    if (
+      insights.marketAlignment &&
+      insights.marketAlignment.includes('misaligned')
+    ) {
       recommendations.push(
         'Update market data and realign strategy with current conditions'
       )
     }
 
-    // Add strategic recommendations
-    recommendations.push(...insights.recommendedActions.slice(0, 3))
+    // Add strategic recommendations - add null check for recommendedActions
+    if (
+      insights.recommendedActions &&
+      Array.isArray(insights.recommendedActions)
+    ) {
+      recommendations.push(...insights.recommendedActions.slice(0, 3))
+    }
 
     return recommendations
   }

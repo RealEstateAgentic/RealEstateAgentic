@@ -559,6 +559,11 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
   const [loadingExisting, setLoadingExisting] = useState(false)
   const [showExisting, setShowExisting] = useState(true)
 
+  // State for editing existing documents
+  const [isEditingExisting, setIsEditingExisting] = useState(false)
+  const [editedExistingTitle, setEditedExistingTitle] = useState('')
+  const [editedExistingContent, setEditedExistingContent] = useState('')
+
   // Ref for scrolling to existing document viewer
   const existingDocumentViewerRef = useRef<HTMLDivElement>(null)
 
@@ -571,6 +576,15 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
   useEffect(() => {
     if (selectedDocument && !result && existingDocumentViewerRef.current) {
       existingDocumentViewerRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [selectedDocument, result])
+
+  // Initialize editing state when viewing an existing document
+  useEffect(() => {
+    if (selectedDocument && !result) {
+      setEditedExistingTitle(selectedDocument.title || '')
+      setEditedExistingContent(selectedDocument.content || '')
+      setIsEditingExisting(false)
     }
   }, [selectedDocument, result])
 
@@ -844,6 +858,59 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
         })
       }
     }
+  }
+
+  // Handlers for editing existing documents
+  const handleEditExisting = () => {
+    setIsEditingExisting(true)
+  }
+
+  const handleSaveExisting = () => {
+    if (selectedDocument) {
+      // Update the selected document
+      setSelectedDocument({
+        ...selectedDocument,
+        title: editedExistingTitle,
+        content: editedExistingContent,
+        metadata: {
+          ...selectedDocument.metadata,
+          wordCount: editedExistingContent.split(' ').length,
+          readingTime: Math.ceil(editedExistingContent.split(' ').length / 200),
+        },
+      })
+
+      // Update the document in the existing documents list
+      setExistingDocuments(prev =>
+        prev.map(doc =>
+          doc.id === selectedDocument.id
+            ? {
+                ...doc,
+                title: editedExistingTitle,
+                content: editedExistingContent,
+                metadata: {
+                  ...doc.metadata,
+                  wordCount: editedExistingContent.split(' ').length,
+                  readingTime: Math.ceil(
+                    editedExistingContent.split(' ').length / 200
+                  ),
+                },
+              }
+            : doc
+        )
+      )
+
+      console.log(
+        '✅ Existing document updated successfully:',
+        editedExistingTitle
+      )
+    }
+    setIsEditingExisting(false)
+  }
+
+  const handleCancelExisting = () => {
+    setEditedExistingTitle(selectedDocument?.title || '')
+    setEditedExistingContent(selectedDocument?.content || '')
+    setIsEditingExisting(false)
   }
 
   const generateDocuments = async () => {
@@ -1402,14 +1469,38 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
 
                 <div className="bg-white rounded-lg border border-gray-200 p-6">
                   <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {selectedDocument.title}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        {selectedDocument.metadata?.wordCount || 0} words •{' '}
-                        {selectedDocument.metadata?.readingTime || 0} min read
-                      </p>
+                    <div className="flex-1 mr-4">
+                      {isEditingExisting ? (
+                        <div className="space-y-2">
+                          <input
+                            type="text"
+                            value={editedExistingTitle}
+                            onChange={e =>
+                              setEditedExistingTitle(e.target.value)
+                            }
+                            className="w-full text-lg font-semibold text-gray-900 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            placeholder="Document title"
+                          />
+                          <p className="text-sm text-gray-600">
+                            {editedExistingContent.split(' ').length} words •{' '}
+                            {Math.ceil(
+                              editedExistingContent.split(' ').length / 200
+                            )}{' '}
+                            min read
+                          </p>
+                        </div>
+                      ) : (
+                        <div>
+                          <h3 className="text-lg font-semibold text-gray-900">
+                            {selectedDocument.title}
+                          </h3>
+                          <p className="text-sm text-gray-600">
+                            {selectedDocument.metadata?.wordCount || 0} words •{' '}
+                            {selectedDocument.metadata?.readingTime || 0} min
+                            read
+                          </p>
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center space-x-2">
                       <span
@@ -1423,29 +1514,91 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
                       >
                         {selectedDocument.status}
                       </span>
-                      <Button
-                        onClick={() => setSelectedDocument(null)}
-                        size="sm"
-                        variant="outline"
-                      >
-                        Close
-                      </Button>
+                      {isEditingExisting ? (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={handleSaveExisting}
+                          >
+                            <Save className="w-4 h-4 mr-1" />
+                            Save
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={handleCancelExisting}
+                          >
+                            <X className="w-4 h-4 mr-1" />
+                            Cancel
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={handleEditExisting}
+                          >
+                            <Edit className="w-4 h-4 mr-1" />
+                            Edit
+                          </Button>
+                          <Button
+                            onClick={() => setSelectedDocument(null)}
+                            size="sm"
+                            variant="outline"
+                          >
+                            Close
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
 
                   <div className="prose prose-sm max-w-none border-t border-gray-200 pt-4">
-                    {selectedDocument.content ? (
-                      <MarkdownRenderer
-                        markdownContent={selectedDocument.content}
-                      />
-                    ) : (
-                      <div className="text-center py-8 text-gray-500">
-                        <p>No content available for this document.</p>
-                        <p className="text-sm mt-2">
-                          Debug info: Document ID: {selectedDocument.id}, Type:{' '}
-                          {selectedDocument.type}
-                        </p>
+                    {isEditingExisting ? (
+                      <div className="space-y-4">
+                        <div>
+                          <label
+                            htmlFor="existing-document-content"
+                            className="block text-sm font-medium text-gray-700 mb-2"
+                          >
+                            Document Content
+                          </label>
+                          <textarea
+                            id="existing-document-content"
+                            value={editedExistingContent}
+                            onChange={e =>
+                              setEditedExistingContent(e.target.value)
+                            }
+                            className="w-full h-96 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                            placeholder="Enter document content..."
+                          />
+                        </div>
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                          <p className="text-sm text-blue-800">
+                            <strong>Tip:</strong> You can use Markdown
+                            formatting in your content. Preview will be shown
+                            after saving.
+                          </p>
+                        </div>
                       </div>
+                    ) : (
+                      <>
+                        {selectedDocument.content ? (
+                          <MarkdownRenderer
+                            markdownContent={selectedDocument.content}
+                          />
+                        ) : (
+                          <div className="text-center py-8 text-gray-500">
+                            <p>No content available for this document.</p>
+                            <p className="text-sm mt-2">
+                              Debug info: Document ID: {selectedDocument.id},
+                              Type: {selectedDocument.type}
+                            </p>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

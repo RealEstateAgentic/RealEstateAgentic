@@ -9,6 +9,7 @@ import { initializeFromEnv } from '../lib/groq/client'
 import { registerReportHandlers } from './ipc/report-handlers'
 import { setupEmailHandler } from './email-handler'
 import { setupWebhookHandler } from './webhook-handler'
+import { setupOAuthHandler } from './oauth-handler'
 
 // Load environment variables from .env file
 console.log(`[dotenv] Current working directory: ${process.cwd()}`)
@@ -45,6 +46,7 @@ makeAppWithSingleInstanceLock(async () => {
 
   setupEmailHandler()
   setupWebhookHandler()
+  setupOAuthHandler()
   console.log('✅ IPC handlers setup complete')
 
   console.log('🖥️  Creating main window...')

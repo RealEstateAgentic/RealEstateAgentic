@@ -81,18 +81,15 @@ export function RepairEstimator() {
             <div className="flex-1 p-6 overflow-y-auto bg-gray-50">
               <div className="max-w-4xl mx-auto">
                 <MarkdownRenderer
-                  content={selectedReport.content}
-                  showPreview={true}
+                  markdownContent={selectedReport.content}
                 />
               </div>
             </div>
           </div>
         ) : (
           /* Creating New Report */
-          <div className="flex flex-col h-full">
-            <div className="flex-1 flex items-start justify-center bg-gray-50 p-6">
-              <NewReportContent />
-            </div>
+          <div className="flex-1 p-6 flex flex-col min-h-0">
+            <NewReportContent />
           </div>
         )}
       </div>

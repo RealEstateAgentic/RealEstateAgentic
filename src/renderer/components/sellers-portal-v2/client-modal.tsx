@@ -4,7 +4,7 @@
  * Modal occupies 85% of window height/width as specified
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
   X, Phone, Mail, MapPin, Calendar, DollarSign, FileText, Download, Plus, 
   Home, Clock, Archive, ArrowRight, RotateCcw, History, FolderOpen, 
@@ -32,6 +32,8 @@ interface ClientModalProps {
     dateAdded: string
     lastContact: string | null
     notes: string
+    initialTab?: string
+    initialDocumentId?: string
   }
   onClose: () => void
   onArchive?: (client: any) => void
@@ -48,10 +50,25 @@ export function ClientModal({
   onUnarchive, 
   isArchiveMode = false 
 }: ClientModalProps) {
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState(client.initialTab || 'overview')
   const [selectedEmailThread, setSelectedEmailThread] = useState<any>(null)
   const [showFullSummary, setShowFullSummary] = useState(false)
   const [selectedDocument, setSelectedDocument] = useState<any>(null)
+
+  // Handle initial document opening
+  useEffect(() => {
+    if (client.initialDocumentId && activeTab === 'content') {
+      // Find and open the document
+      const mockDocument = {
+        id: client.initialDocumentId,
+        title: `Document ${client.initialDocumentId}`,
+        type: "pdf",
+        uploadedDate: "Recently",
+        content: "This document was opened from search results."
+      }
+      setSelectedDocument(mockDocument)
+    }
+  }, [client.initialDocumentId, activeTab])
 
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return 'Not set'
@@ -805,6 +822,30 @@ export function ClientModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      {selectedDocument && (
+        <div className="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center z-60">
+          <div className="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">
+                  {selectedDocument.title}
+                </h2>
+                <button
+                  onClick={() => setSelectedDocument(null)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="size-6" />
+                </button>
+              </div>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-gray-700 whitespace-pre-wrap">
+                  {selectedDocument.content}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Modal - 85% of viewport */}
       <div className="bg-white rounded-lg w-[85vw] h-[85vh] flex flex-col">
         {/* Header */}

@@ -12,8 +12,7 @@ import { BuyersArchiveScreen } from './screens/buyers-archive'
 import { SellersPortalScreen } from './screens/sellers-portal'
 import { SellersPortalV2Screen } from './screens/sellers-portal-v2'
 import { SellersArchiveScreen } from './screens/sellers-archive'
-import { LearnPortalScreen } from './screens/learn-portal'
-import { MarketingPortalScreen } from './screens/marketing-portal'
+import { SearchResultsScreen } from './screens/search-results'
 import { AgentDashboardScreen } from './screens/agent-dashboard'
 import { AgentAuthWrapper } from './components/auth/AgentAuth'
 import type { AgentProfile } from '../shared/types'
@@ -195,14 +194,12 @@ export function App() {
           </div>
         )
 
-      case '/learn-portal':
-        return <LearnPortalScreen {...navigationProps} />
-      case '/marketing-portal':
-        return <MarketingPortalScreen {...navigationProps} />
       case '/repair-estimator':
         return <RepairEstimator />
+      case '/search':
+        return <SearchResultsScreen navigate={navigate} currentUser={currentUser} userType={userType} />
       default:
-        return <MainScreen />
+        return <MainScreen navigate={navigate} />
     }
   }
 

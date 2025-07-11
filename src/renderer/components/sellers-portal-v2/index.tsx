@@ -3,7 +3,7 @@
  * Implements the Kanban-style board with five stages as specified in the requirements
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { KanbanColumn } from './kanban-column'
 import { ClientModal } from './client-modal'
 import { ClientCommunicationFeed } from './client-communication-feed'
@@ -129,6 +129,29 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
     notes: '',
     documents: [] as File[]
   })
+
+  // Handle URL parameters for direct client access and new lead action
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const clientId = params.get('clientId')
+    const tab = params.get('tab')
+    const documentId = params.get('documentId')
+    const action = params.get('action')
+    
+    if (clientId) {
+      const client = sellerClients.find(c => c.id === parseInt(clientId))
+      if (client) {
+        setSelectedClient({ ...client, initialTab: tab, initialDocumentId: documentId })
+      }
+    }
+    
+    // Handle new lead action from dashboard
+    if (action === 'newLead') {
+      setShowNewLeadModal(true)
+      // Clear the URL parameter to avoid reopening modal on refresh
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [sellerClients])
 
   // Define the 5 stages from requirements
   const kanbanStages = [

@@ -3,7 +3,7 @@
  * Features a Kanban-style board with different stages
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { KanbanColumn } from '../components/buyers-portal/kanban-column'
 import { ClientModal } from '../components/buyers-portal/client-modal'
 import { ClientCommunicationFeed } from '../components/buyers-portal/client-communication-feed'
@@ -46,6 +46,29 @@ export function BuyersPortalScreen({
     notes: '',
     documents: [] as File[]
   })
+
+  // Handle URL parameters for direct client access and new lead action
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const clientId = params.get('clientId')
+    const tab = params.get('tab')
+    const documentId = params.get('documentId')
+    const action = params.get('action')
+    
+    if (clientId) {
+      const client = buyerClients.find(c => c.id === parseInt(clientId))
+      if (client) {
+        setSelectedClient({ ...client, initialTab: tab, initialDocumentId: documentId })
+      }
+    }
+    
+    // Handle new lead action from dashboard
+    if (action === 'newLead') {
+      setShowNewLeadModal(true)
+      // Clear the URL parameter to avoid reopening modal on refresh
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [buyerClients])
 
   const handleClientClick = (client: any) => {
     setSelectedClient(client)

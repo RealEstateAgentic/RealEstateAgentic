@@ -21,9 +21,12 @@ import {
   Eye,
   Edit,
   MessageCircle,
+  TrendingUp,
+  History,
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { DocumentGenerator } from '../documents/DocumentGenerator'
+import { LeadScoringDisplay } from '../shared/lead-scoring-display'
 import type { AgentProfile } from '../../../shared/types'
 
 // Define ClientProfile interface locally since it's not in shared types
@@ -734,6 +737,7 @@ export function ClientModal({
     const baseTabs = [
       { id: 'overview', label: 'Overview', icon: null },
       { id: 'stage_details', label: 'Stage Details', icon: null },
+      { id: 'ai_lead_scoring', label: 'AI Lead Scoring', icon: TrendingUp },
       { id: 'summary', label: 'Summary', icon: null },
     ]
 
@@ -812,6 +816,14 @@ export function ClientModal({
               </Button>
             </div>
           </div>
+        )
+      
+      case 'ai_lead_scoring':
+        return (
+          <LeadScoringDisplay
+            clientEmail={client.email}
+            clientName={client.name}
+          />
         )
       
       case 'offers':
@@ -1271,6 +1283,17 @@ export function ClientModal({
               >
                 Stage Details
               </button>
+              <button
+                onClick={() => setActiveTab('ai_lead_scoring')}
+                className={`flex items-center space-x-2 py-4 px-1 text-sm font-medium border-b-2 ${
+                  activeTab === 'ai_lead_scoring'
+                    ? 'border-[#3B7097] text-[#3B7097]'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <TrendingUp className="size-4" />
+                <span>AI Lead Scoring</span>
+              </button>
             </nav>
           </div>
 
@@ -1311,6 +1334,13 @@ export function ClientModal({
             )}
 
             {activeTab === 'details' && getStageSpecificContent()}
+            
+            {activeTab === 'ai_lead_scoring' && (
+              <LeadScoringDisplay
+                clientEmail={client.email}
+                clientName={client.name}
+              />
+            )}
           </div>
 
           {/* Actions */}

@@ -31,6 +31,7 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
   const [isSending, setIsSending] = useState(false)
   const [isGmailConnected, setIsGmailConnected] = useState(gmailAuth.isAuthenticated())
   
+
   const handleSendSurvey = async (e: React.MouseEvent) => {
     e.stopPropagation() // Prevent card click event
     
@@ -161,6 +162,7 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
               </>
             )}
           </button>
+          
           {isGmailConnected && gmailAuth.getUserEmail() && (
             <div className="text-xs text-gray-600 flex items-center gap-1">
               <Mail className="size-3" />

@@ -26,6 +26,7 @@ import { DocumentOrchestrationService } from '../../../lib/openai/services/docum
 import {
   createDocument,
   getClientDocuments,
+  updateDocument,
 } from '../../../lib/firebase/collections/documents'
 import { getCurrentUserProfile } from '../../../lib/firebase/auth'
 import { MarkdownRenderer } from '../estimator/markdown-renderer'
@@ -563,6 +564,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
   const [isEditingExisting, setIsEditingExisting] = useState(false)
   const [editedExistingTitle, setEditedExistingTitle] = useState('')
   const [editedExistingContent, setEditedExistingContent] = useState('')
+  const [isSavingExisting, setIsSavingExisting] = useState(false)
 
   // Ref for scrolling to existing document viewer
   const existingDocumentViewerRef = useRef<HTMLDivElement>(null)
@@ -865,46 +867,79 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
     setIsEditingExisting(true)
   }
 
-  const handleSaveExisting = () => {
-    if (selectedDocument) {
-      // Update the selected document
-      setSelectedDocument({
-        ...selectedDocument,
-        title: editedExistingTitle,
-        content: editedExistingContent,
-        metadata: {
-          ...selectedDocument.metadata,
-          wordCount: editedExistingContent.split(' ').length,
-          readingTime: Math.ceil(editedExistingContent.split(' ').length / 200),
-        },
-      })
+  const handleSaveExisting = async () => {
+    if (selectedDocument && !isSavingExisting) {
+      setIsSavingExisting(true)
+      setError('') // Clear any previous errors
+      try {
+        // Save changes to Firebase
+        console.log('💾 Saving changes to Firebase...')
+        const updateResult = await updateDocument({
+          documentId: selectedDocument.id,
+          updates: {
+            title: editedExistingTitle,
+            content: editedExistingContent,
+          },
+        })
 
-      // Update the document in the existing documents list
-      setExistingDocuments(prev =>
-        prev.map(doc =>
-          doc.id === selectedDocument.id
-            ? {
-                ...doc,
-                title: editedExistingTitle,
-                content: editedExistingContent,
-                metadata: {
-                  ...doc.metadata,
-                  wordCount: editedExistingContent.split(' ').length,
-                  readingTime: Math.ceil(
-                    editedExistingContent.split(' ').length / 200
-                  ),
-                },
-              }
-            : doc
-        )
-      )
+        if (updateResult.success) {
+          console.log('✅ Document saved to Firebase successfully')
 
-      console.log(
-        '✅ Existing document updated successfully:',
-        editedExistingTitle
-      )
+          // Update the selected document with the response from Firebase
+          if (updateResult.data) {
+            setSelectedDocument(updateResult.data)
+          } else {
+            // Fallback to local update if no data returned
+            setSelectedDocument({
+              ...selectedDocument,
+              title: editedExistingTitle,
+              content: editedExistingContent,
+              metadata: {
+                ...selectedDocument.metadata,
+                wordCount: editedExistingContent.split(' ').length,
+                readingTime: Math.ceil(
+                  editedExistingContent.split(' ').length / 200
+                ),
+              },
+            })
+          }
+
+          // Update the document in the existing documents list
+          setExistingDocuments(prev =>
+            prev.map(doc =>
+              doc.id === selectedDocument.id
+                ? {
+                    ...doc,
+                    title: editedExistingTitle,
+                    content: editedExistingContent,
+                    metadata: {
+                      ...doc.metadata,
+                      wordCount: editedExistingContent.split(' ').length,
+                      readingTime: Math.ceil(
+                        editedExistingContent.split(' ').length / 200
+                      ),
+                    },
+                  }
+                : doc
+            )
+          )
+
+          console.log(
+            '✅ Existing document updated successfully:',
+            editedExistingTitle
+          )
+          setIsEditingExisting(false)
+        } else {
+          console.error('❌ Failed to save to Firebase:', updateResult.error)
+          setError(`Failed to save changes: ${updateResult.error}`)
+        }
+      } catch (error) {
+        console.error('💥 Error saving to Firebase:', error)
+        setError(`Error saving changes: ${error}`)
+      } finally {
+        setIsSavingExisting(false)
+      }
     }
-    setIsEditingExisting(false)
   }
 
   const handleCancelExisting = () => {
@@ -1520,14 +1555,25 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
                             size="sm"
                             variant="outline"
                             onClick={handleSaveExisting}
+                            disabled={isSavingExisting}
                           >
-                            <Save className="w-4 h-4 mr-1" />
-                            Save
+                            {isSavingExisting ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-1" />
+                                Saving...
+                              </>
+                            ) : (
+                              <>
+                                <Save className="w-4 h-4 mr-1" />
+                                Save
+                              </>
+                            )}
                           </Button>
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={handleCancelExisting}
+                            disabled={isSavingExisting}
                           >
                             <X className="w-4 h-4 mr-1" />
                             Cancel

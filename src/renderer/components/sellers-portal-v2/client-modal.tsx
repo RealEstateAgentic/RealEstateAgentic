@@ -12,6 +12,7 @@ import {
   CheckCircle, AlertCircle, Settings, Star, TrendingUp, Users
 } from 'lucide-react'
 import { Button } from '../ui/button'
+import { LeadScoringDisplay } from '../shared/lead-scoring-display'
 
 interface ClientModalProps {
   client: {
@@ -142,6 +143,7 @@ export function ClientModal({
     const baseTabs = [
       { id: 'overview', label: 'Overview', icon: null },
       { id: 'stage_details', label: 'Stage Details', icon: null },
+      { id: 'ai_lead_scoring', label: 'AI Lead Scoring', icon: TrendingUp },
       { id: 'summary', label: 'Summary', icon: null },
     ]
 
@@ -595,6 +597,13 @@ export function ClientModal({
               </div>
             </div>
           </div>
+        )
+      case 'ai_lead_scoring':
+        return (
+          <LeadScoringDisplay
+            clientEmail={client.email}
+            clientName={client.name}
+          />
         )
       case 'offers':
         return (

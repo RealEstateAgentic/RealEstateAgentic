@@ -11,8 +11,20 @@ console.log('- GROQ_API_KEY length:', process.env.GROQ_API_KEY?.length || 0)
 
 // Initialize Groq client for the renderer process
 try {
+  console.log('🔧 Attempting to initialize Groq client...')
+  console.log('- Environment variables available:')
+  console.log('  - NODE_ENV:', process.env.NODE_ENV)
+  console.log('  - GROQ_API_KEY present:', !!process.env.GROQ_API_KEY)
+  console.log('  - GROQ_API_KEY type:', typeof process.env.GROQ_API_KEY)
+
   const apiKey = process.env.GROQ_API_KEY
-  if (apiKey && apiKey.length > 0 && apiKey !== 'undefined') {
+  if (
+    apiKey &&
+    apiKey.length > 0 &&
+    apiKey !== 'undefined' &&
+    apiKey !== 'null'
+  ) {
+    console.log('🔑 GROQ_API_KEY found, initializing client...')
     const client = initializeGroq({
       apiKey,
       timeout: 30000,
@@ -27,10 +39,15 @@ try {
     console.warn(
       '⚠️  GROQ_API_KEY not found or empty. Document generation will use fallback content.'
     )
-    console.warn('- API Key value:', apiKey || 'undefined')
+    console.warn('- API Key value type:', typeof apiKey)
+    console.warn('- API Key value:', apiKey ? 'PRESENT' : 'MISSING')
   }
 } catch (error) {
   console.warn('❌ Failed to initialize Groq client:', error)
+  console.warn(
+    '- Error details:',
+    error instanceof Error ? error.message : 'Unknown error'
+  )
   console.warn('Document generation will use fallback content.')
 }
 

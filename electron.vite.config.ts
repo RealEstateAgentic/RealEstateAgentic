@@ -1,7 +1,7 @@
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import { codeInspectorPlugin } from 'code-inspector-plugin'
 import { resolve, normalize, dirname } from 'node:path'
-import tailwindcss from '@tailwindcss/vite'
+// import tailwindcss from '@tailwindcss/vite'
 import { config } from 'dotenv'
 
 import injectProcessEnvPlugin from 'rollup-plugin-inject-process-env'
@@ -50,7 +50,10 @@ export default defineConfig({
     define: {
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
       'process.env.OPENAI_API_KEY': JSON.stringify(process.env.OPENAI_API_KEY),
-      'process.env.JOTFORM_API_KEY': JSON.stringify(process.env.JOTFORM_API_KEY),
+      'process.env.GROQ_API_KEY': JSON.stringify(process.env.GROQ_API_KEY),
+      'process.env.JOTFORM_API_KEY': JSON.stringify(
+        process.env.JOTFORM_API_KEY
+      ),
       'process.platform': JSON.stringify(process.platform),
     },
 
@@ -60,7 +63,7 @@ export default defineConfig({
 
     plugins: [
       tsconfigPaths,
-      tailwindcss(),
+      // tailwindcss(),
       reactPlugin(),
 
       codeInspectorPlugin({
@@ -80,6 +83,7 @@ export default defineConfig({
           injectProcessEnvPlugin({
             NODE_ENV: 'production',
             OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+            GROQ_API_KEY: process.env.GROQ_API_KEY,
             JOTFORM_API_KEY: process.env.JOTFORM_API_KEY,
             platform: process.platform,
           }),

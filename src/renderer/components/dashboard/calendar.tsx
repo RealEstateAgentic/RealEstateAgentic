@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, MapPin, Clock, Calendar as CalendarIcon, Tag, Plus } from 'lucide-react'
+import { X, MapPin, Clock, Calendar as CalendarIcon, Tag, Plus, AlertCircle, CheckCircle, Edit } from 'lucide-react'
 import { Button } from '../ui/button'
 import { dummyData } from '../../data/dummy-data'
 
@@ -8,13 +8,16 @@ export function Calendar() {
   const [selectedEvent, setSelectedEvent] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
     date: '',
     time: '',
     description: '',
     clientType: '',
-    clientId: ''
+    clientId: '',
+    priority: 'low',
+    eventType: 'custom'
   })
   
   // Generate 7 days starting from today
@@ -43,14 +46,28 @@ export function Calendar() {
     return date.toDateString() === today.toDateString()
   }
 
-  const getEventTypeColor = (type: string) => {
+  // Updated color coding system as per requirements
+  const getEventTypeColor = (type: string, priority?: string, clientType?: string) => {
+    // Priority-based coloring for deadlines
+    if (type === 'deadline') {
+      return priority === 'high' ? 'bg-red-500 text-white' : 'bg-yellow-500 text-white'
+    }
+    
+    // Client-based coloring for events
+    if (clientType === 'buyer') {
+      return 'bg-blue-500 text-white' // Blue: Buyer Events
+    } else if (clientType === 'seller') {
+      return 'bg-green-500 text-white' // Green: Seller Events
+    }
+    
+    // Legacy types for backward compatibility
     switch (type) {
-      case 'showing': return 'bg-[#75BDE0] text-white'
-      case 'consultation': return 'bg-[#A9D09E] text-white'
-      case 'closing': return 'bg-[#c05e51] text-white'
-      case 'inspection': return 'bg-[#F6E2BC] text-gray-800'
-      case 'listing': return 'bg-[#A9D09E]/30 text-gray-800'
-      case 'custom': return 'bg-[#3B7097] text-white'
+      case 'showing': return 'bg-blue-500 text-white' // Default to buyer events
+      case 'consultation': return 'bg-green-500 text-white' // Default to seller events
+      case 'closing': return 'bg-red-500 text-white' // High priority deadline
+      case 'inspection': return 'bg-yellow-500 text-white' // Low priority deadline
+      case 'listing': return 'bg-green-500 text-white' // Seller events
+      case 'custom': return 'bg-gray-500 text-white'
       default: return 'bg-gray-100 text-gray-800'
     }
   }
@@ -62,6 +79,7 @@ export function Calendar() {
       case 'closing': return 'Property Closing'
       case 'inspection': return 'Property Inspection'
       case 'listing': return 'Listing Activity'
+      case 'deadline': return 'Deadline'
       case 'custom': return 'Custom Event'
       default: return 'Event'
     }
@@ -72,9 +90,39 @@ export function Calendar() {
     setIsModalOpen(true)
   }
 
+  const handleEditEvent = (event: any) => {
+    setSelectedEvent(event)
+    setFormData({
+      title: event.title,
+      date: event.date,
+      time: event.time.replace(/[APM\s]/g, ''), // Convert to 24-hour format
+      description: event.location || '',
+      clientType: event.clientType || '',
+      clientId: event.clientId || '',
+      priority: event.priority || 'low',
+      eventType: event.type || 'custom'
+    })
+    setIsEditModalOpen(true)
+  }
+
   const closeModal = () => {
     setIsModalOpen(false)
     setSelectedEvent(null)
+  }
+
+  const closeEditModal = () => {
+    setIsEditModalOpen(false)
+    setSelectedEvent(null)
+    setFormData({
+      title: '',
+      date: '',
+      time: '',
+      description: '',
+      clientType: '',
+      clientId: '',
+      priority: 'low',
+      eventType: 'custom'
+    })
   }
 
   const handleAddEvent = () => {
@@ -89,7 +137,9 @@ export function Calendar() {
       time: '',
       description: '',
       clientType: '',
-      clientId: ''
+      clientId: '',
+      priority: 'low',
+      eventType: 'custom'
     })
   }
 
@@ -120,10 +170,11 @@ export function Calendar() {
       title: formData.title,
       date: formData.date,
       time: formatTime(formData.time),
-      type: 'custom',
+      type: formData.eventType,
       location: formData.description || 'TBD',
       clientType: formData.clientType || null,
-      clientId: formData.clientId || null
+      clientId: formData.clientId || null,
+      priority: formData.priority
     }
 
     setEvents([...events, newEvent])
@@ -132,6 +183,47 @@ export function Calendar() {
     dummyData.calendarEvents.push(newEvent)
     
     closeCreateModal()
+  }
+
+  const handleUpdateEvent = () => {
+    if (!formData.title || !formData.date || !formData.time || !selectedEvent) {
+      alert('Please fill in all required fields')
+      return
+    }
+
+    // Convert 24-hour time to 12-hour format for display
+    const formatTime = (timeStr: string) => {
+      const [hours, minutes] = timeStr.split(':')
+      const hour = parseInt(hours)
+      const ampm = hour >= 12 ? 'PM' : 'AM'
+      const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+      return `${displayHour}:${minutes} ${ampm}`
+    }
+
+    const updatedEvent = {
+      ...selectedEvent,
+      title: formData.title,
+      date: formData.date,
+      time: formatTime(formData.time),
+      type: formData.eventType,
+      location: formData.description || 'TBD',
+      clientType: formData.clientType || null,
+      clientId: formData.clientId || null,
+      priority: formData.priority
+    }
+
+    // Update in local state
+    setEvents(events.map(event => 
+      event.id === selectedEvent.id ? updatedEvent : event
+    ))
+    
+    // Update in dummy data for persistence
+    const index = dummyData.calendarEvents.findIndex(e => e.id === selectedEvent.id)
+    if (index !== -1) {
+      dummyData.calendarEvents[index] = updatedEvent
+    }
+    
+    closeEditModal()
   }
 
   const getClientOptions = () => {
@@ -158,6 +250,154 @@ export function Calendar() {
       day: 'numeric' 
     })
   }
+
+  const renderEventForm = (isEdit = false) => (
+    <div className="space-y-4">
+      {/* Event Title */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Event Title *
+        </label>
+        <input
+          type="text"
+          value={formData.title}
+          onChange={(e) => handleFormChange('title', e.target.value)}
+          placeholder="e.g., Final Walkthrough"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
+        />
+      </div>
+
+      {/* Event Type */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Event Type
+        </label>
+        <select
+          value={formData.eventType}
+          onChange={(e) => handleFormChange('eventType', e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
+        >
+          <option value="custom">Custom Event</option>
+          <option value="showing">Property Showing</option>
+          <option value="consultation">Client Consultation</option>
+          <option value="closing">Property Closing</option>
+          <option value="inspection">Property Inspection</option>
+          <option value="listing">Listing Activity</option>
+          <option value="deadline">Deadline</option>
+        </select>
+      </div>
+
+      {/* Priority */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Priority *
+        </label>
+        <select
+          value={formData.priority}
+          onChange={(e) => handleFormChange('priority', e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
+        >
+          <option value="low">Low Priority</option>
+          <option value="high">High Priority</option>
+        </select>
+      </div>
+
+      {/* Date & Time */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Date *
+          </label>
+          <input
+            type="date"
+            value={formData.date}
+            onChange={(e) => handleFormChange('date', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Time *
+          </label>
+          <input
+            type="time"
+            value={formData.time}
+            onChange={(e) => handleFormChange('time', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
+          />
+        </div>
+      </div>
+
+      {/* Description */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Description
+        </label>
+        <textarea
+          value={formData.description}
+          onChange={(e) => handleFormChange('description', e.target.value)}
+          placeholder="Add detailed notes, location information, or context..."
+          rows={3}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
+        />
+      </div>
+
+      {/* Client Association */}
+      <div className="space-y-3">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Client Type
+          </label>
+          <select
+            value={formData.clientType}
+            onChange={(e) => handleFormChange('clientType', e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
+          >
+            <option value="">No client association</option>
+            <option value="buyer">Buyer Client</option>
+            <option value="seller">Seller Client</option>
+          </select>
+        </div>
+
+        {formData.clientType && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Select Client
+            </label>
+            <select
+              value={formData.clientId}
+              onChange={(e) => handleFormChange('clientId', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
+            >
+              <option value="">Choose a client...</option>
+              {getClientOptions().map(client => (
+                <option key={client.id} value={client.id}>
+                  {client.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex space-x-3 pt-4">
+        <Button
+          onClick={isEdit ? closeEditModal : closeCreateModal}
+          variant="outline"
+          className="flex-1"
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={isEdit ? handleUpdateEvent : handleSaveEvent}
+          className="flex-1 bg-[#3B7097] hover:bg-[#3B7097]/90"
+        >
+          {isEdit ? 'Update Event' : 'Save Event'}
+        </Button>
+      </div>
+    </div>
+  )
 
   return (
     <>
@@ -196,9 +436,14 @@ export function Calendar() {
                       <div 
                         key={event.id}
                         onClick={() => handleEventClick(event)}
-                        className={`p-2 rounded text-xs ${getEventTypeColor(event.type)} mb-1 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity`}
+                        className={`p-2 rounded text-xs ${getEventTypeColor(event.type, event.priority, event.clientType)} mb-1 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity`}
                       >
-                        <div className="font-medium">{event.time}</div>
+                        <div className="font-medium flex items-center justify-between">
+                          <span>{event.time}</span>
+                          {event.priority === 'high' && (
+                            <AlertCircle className="size-3" />
+                          )}
+                        </div>
                         <div className="truncate leading-tight">{event.title}</div>
                       </div>
                     ))
@@ -216,12 +461,20 @@ export function Calendar() {
           <div className="bg-white rounded-lg max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto">
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h2 className="text-xl font-semibold text-gray-800">Event Details</h2>
-              <button
-                onClick={closeModal}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <X className="size-6" />
-              </button>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => handleEditEvent(selectedEvent)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <Edit className="size-5" />
+                </button>
+                <button
+                  onClick={closeModal}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="size-6" />
+                </button>
+              </div>
             </div>
             
             <div className="p-6 space-y-4">
@@ -235,9 +488,14 @@ export function Calendar() {
               {/* Event Type Badge */}
               <div className="flex items-center space-x-2">
                 <Tag className="size-4 text-gray-500" />
-                <span className={`px-3 py-1 rounded text-sm font-medium ${getEventTypeColor(selectedEvent.type)}`}>
+                <span className={`px-3 py-1 rounded text-sm font-medium ${getEventTypeColor(selectedEvent.type, selectedEvent.priority, selectedEvent.clientType)}`}>
                   {getEventTypeLabel(selectedEvent.type)}
                 </span>
+                {selectedEvent.priority === 'high' && (
+                  <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded font-medium">
+                    High Priority
+                  </span>
+                )}
               </div>
 
               {/* Date and Time */}
@@ -255,45 +513,24 @@ export function Calendar() {
               </div>
 
               {/* Location */}
-              <div className="flex items-start space-x-3">
-                <MapPin className="size-4 text-gray-500 mt-0.5" />
+              <div className="flex items-center space-x-3">
+                <MapPin className="size-4 text-gray-500" />
                 <div>
-                  <div className="font-medium text-gray-700 mb-1">Location</div>
+                  <div className="font-medium text-gray-900">Location</div>
                   <div className="text-sm text-gray-600">{selectedEvent.location}</div>
                 </div>
               </div>
 
-              {/* Additional Details */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-800 mb-2">Event Notes</h4>
-                <p className="text-sm text-gray-600">
-                  {selectedEvent.type === 'showing' && "Property showing appointment with potential buyers. Ensure property is prepared and all utilities are working."}
-                  {selectedEvent.type === 'consultation' && "Client consultation meeting. Prepare client files and relevant market data for discussion."}
-                  {selectedEvent.type === 'closing' && "Property closing ceremony. Ensure all documents are prepared and parties are notified."}
-                  {selectedEvent.type === 'inspection' && "Property inspection appointment. Coordinate with inspector and ensure property access."}
-                  {selectedEvent.type === 'listing' && "Listing-related activity. Prepare marketing materials and property information."}
-                  {selectedEvent.type === 'custom' && "Custom event created by user."}
-                </p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex space-x-3 pt-4">
-                <button 
-                  onClick={closeModal}
-                  className="flex-1 bg-[#3B7097] hover:bg-[#3B7097]/90 text-white py-2 px-4 rounded-md font-medium transition-colors"
-                >
-                  Close
-                </button>
-                <button 
-                  onClick={() => {
-                    console.log('Edit event:', selectedEvent.id)
-                    closeModal()
-                  }}
-                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 px-4 rounded-md font-medium transition-colors"
-                >
-                  Edit Event
-                </button>
-              </div>
+              {/* Client Information */}
+              {selectedEvent.clientType && (
+                <div className="flex items-center space-x-3">
+                  <Tag className="size-4 text-gray-500" />
+                  <div>
+                    <div className="font-medium text-gray-900">Client</div>
+                    <div className="text-sm text-gray-600 capitalize">{selectedEvent.clientType} Client</div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -313,131 +550,29 @@ export function Calendar() {
               </button>
             </div>
             
-            <div className="p-6 space-y-4">
-              {/* Event Title */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Event Title *
-                </label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => handleFormChange('title', e.target.value)}
-                  placeholder="e.g., Final Walkthrough"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
-                />
-              </div>
+            <div className="p-6">
+              {renderEventForm(false)}
+            </div>
+          </div>
+        </div>
+      )}
 
-              {/* Date & Time */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Date *
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => handleFormChange('date', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Time *
-                  </label>
-                  <input
-                    type="time"
-                    value={formData.time}
-                    onChange={(e) => handleFormChange('time', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => handleFormChange('description', e.target.value)}
-                  placeholder="Add detailed notes, location information, or context..."
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
-                />
-              </div>
-
-              {/* Client Association */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Client Association (Optional)
-                </label>
-                
-                {/* Client Type Radio Buttons */}
-                <div className="flex space-x-6 mb-3">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="clientType"
-                      value="buyer"
-                      checked={formData.clientType === 'buyer'}
-                      onChange={(e) => handleFormChange('clientType', e.target.value)}
-                      className="mr-2 text-[#3B7097] focus:ring-[#3B7097]"
-                    />
-                    <span className="text-sm text-gray-700">Buyer</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="clientType"
-                      value="seller"
-                      checked={formData.clientType === 'seller'}
-                      onChange={(e) => handleFormChange('clientType', e.target.value)}
-                      className="mr-2 text-[#3B7097] focus:ring-[#3B7097]"
-                    />
-                    <span className="text-sm text-gray-700">Seller</span>
-                  </label>
-                </div>
-
-                {/* Conditional Client Dropdown */}
-                {formData.clientType && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Select Client
-                    </label>
-                    <select
-                      value={formData.clientId}
-                      onChange={(e) => handleFormChange('clientId', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
-                    >
-                      <option value="">Choose a client...</option>
-                      {getClientOptions().map(client => (
-                        <option key={client.id} value={client.id}>
-                          {client.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex space-x-3 pt-4">
-                <Button
-                  onClick={closeCreateModal}
-                  variant="outline"
-                  className="flex-1"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleSaveEvent}
-                  className="flex-1 bg-[#3B7097] hover:bg-[#3B7097]/90"
-                >
-                  Save Event
-                </Button>
-              </div>
+      {/* Edit Event Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-800">Edit Event</h2>
+              <button
+                onClick={closeEditModal}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X className="size-6" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              {renderEventForm(true)}
             </div>
           </div>
         </div>

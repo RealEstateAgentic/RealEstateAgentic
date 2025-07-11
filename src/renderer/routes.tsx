@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react'
 import { Layout } from './components/layout'
 import { MainScreen } from './screens/main'
+import { MarketingLanding } from './screens/marketing-landing'
 import { RepairEstimator } from './screens/repair-estimator'
 import { BuyersPortalScreen } from './screens/buyers-portal'
 import { BuyersArchiveScreen } from './screens/buyers-archive'
@@ -47,7 +48,7 @@ export function App() {
     setCurrentUser(profile)
     setUserType('agent')
     setIsAuthenticated(true)
-    navigate('/agent-dashboard')
+    navigate('/')
   }
 
   const handleLogout = () => {
@@ -199,8 +200,20 @@ export function App() {
       case '/search':
         return <SearchResultsScreen navigate={navigate} currentUser={currentUser} userType={userType} />
       default:
-        return <MainScreen navigate={navigate} />
+        // Root route - show marketing landing page for unauthenticated users, Home Dashboard for authenticated users
+        if (isAuthenticated && userType === 'agent') {
+          return <MainScreen navigate={navigate} />
+        } else {
+          return <MarketingLanding navigate={navigate} />
+        }
     }
+  }
+
+  // Check if we should show the marketing landing page without layout
+  const shouldShowMarketingLanding = currentRoute === '/' && !isAuthenticated
+  
+  if (shouldShowMarketingLanding) {
+    return renderCurrentScreen()
   }
 
   return (

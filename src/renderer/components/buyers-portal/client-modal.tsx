@@ -25,6 +25,7 @@ import {
 import { Button } from '../ui/button'
 import { DocumentGenerator } from '../documents/DocumentGenerator'
 import type { AgentProfile } from '../../../shared/types'
+import { dummyData } from '../../data/dummy-data'
 
 // Define ClientProfile interface locally since it's not in shared types
 interface ClientProfile {
@@ -769,7 +770,7 @@ export function ClientModal({
 
     const alwaysVisibleTabs = [
       { id: 'content', label: 'Content', icon: FolderOpen },
-      { id: 'email_history', label: 'Email History', icon: History },
+      // Removed 'email_history' tab as requested
       { id: 'calendar', label: 'Calendar', icon: CalendarDays },
     ]
 
@@ -1037,136 +1038,86 @@ export function ClientModal({
           </div>
         )
       
-      case 'email_history':
-        return (
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-medium text-gray-800 mb-3">Email Correspondence</h3>
-            </div>
-            <div className="space-y-3">
-              {/* Sample email thread data */}
-              <div 
-                className="p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50"
-                onClick={() => handleEmailThreadClick({
-                  id: 1,
-                  subject: "Property Inquiry - 123 Main Street",
-                  preview: "Hi, I'm very interested in scheduling a showing for this property...",
-                  messageCount: 3,
-                  lastMessage: "2 hours ago",
-                  messages: [
-                    {
-                      id: 1,
-                      sender: client.name,
-                      senderEmail: client.email,
-                      timestamp: "2024-03-15 10:30 AM",
-                      content: "Hi, I'm very interested in scheduling a showing for this property at 123 Main Street. When would be a good time this week? I'm available Tuesday through Thursday afternoons. Looking forward to hearing from you!"
-                    },
-                    {
-                      id: 2,
-                      sender: "Agent",
-                      senderEmail: "agent@realestate.com",
-                      timestamp: "2024-03-15 11:15 AM",
-                      content: "Hi! Thanks for your interest in 123 Main Street. I'd be happy to schedule a showing for you. How about Tuesday at 2:00 PM? The property has some great features I think you'll love, including the updated kitchen and large backyard."
-                    },
-                    {
-                      id: 3,
-                      sender: client.name,
-                      senderEmail: client.email,
-                      timestamp: "2024-03-15 11:45 AM",
-                      content: "Perfect! Tuesday at 2:00 PM works great for me. Should I meet you at the property or would you prefer to meet somewhere else first? Also, is there anything specific I should prepare or bring along?"
-                    }
-                  ]
-                })}
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">Property Inquiry - 123 Main Street</div>
-                    <div className="text-sm text-gray-600 mt-1">
-                      Hi, I'm very interested in scheduling a showing for this property...
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full flex items-center">
-                      <MessageCircle className="size-3 mr-1" />
-                      3
-                    </span>
-                  </div>
-                </div>
-                <div className="text-xs text-gray-500 mt-2">Last message: 2 hours ago</div>
-              </div>
-
-              {/* Additional sample email thread */}
-              <div 
-                className="p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50"
-                onClick={() => handleEmailThreadClick({
-                  id: 2,
-                  subject: "Follow-up on Property Search",
-                  preview: "I wanted to follow up on our conversation about my property search criteria...",
-                  messageCount: 2,
-                  lastMessage: "1 day ago",
-                  messages: [
-                    {
-                      id: 1,
-                      sender: client.name,
-                      senderEmail: client.email,
-                      timestamp: "2024-03-14 3:30 PM",
-                      content: "I wanted to follow up on our conversation about my property search criteria. After thinking about it more, I'd like to expand the search area to include neighborhoods within 15 minutes of downtown. Also, I'm now open to considering properties that need minor renovations if the price is right."
-                    },
-                    {
-                      id: 2,
-                      sender: "Agent",
-                      senderEmail: "agent@realestate.com",
-                      timestamp: "2024-03-14 4:45 PM",
-                      content: "That's great to hear! Expanding the search area will definitely give us more options. I'll update your criteria in our system and send you some new listings that match your updated preferences. There are some really good opportunities in those neighborhoods."
-                    }
-                  ]
-                })}
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">Follow-up on Property Search</div>
-                    <div className="text-sm text-gray-600 mt-1">
-                      I wanted to follow up on our conversation about my property search criteria...
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full flex items-center">
-                      <MessageCircle className="size-3 mr-1" />
-                      2
-                    </span>
-                  </div>
-                </div>
-                <div className="text-xs text-gray-500 mt-2">Last message: 1 day ago</div>
-              </div>
-
-              <div className="text-sm text-gray-500 text-center py-4">
-                No additional email threads found.
-              </div>
-            </div>
-          </div>
-        )
-      
       case 'calendar':
         return (
           <div className="space-y-6">
-            <div>
-              <h3 className="font-medium text-gray-800 mb-3">Client Timeline</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-gray-800">Client Timeline</h3>
+              <Button
+                onClick={() => {
+                  // Create a new event form pre-filled with client info
+                  const event = {
+                    title: '',
+                    date: '',
+                    time: '',
+                    description: '',
+                    clientType: 'buyer',
+                    clientId: client.id.toString(),
+                    priority: 'low',
+                    eventType: 'custom'
+                  }
+                  // Open calendar event modal (would need to be implemented)
+                  console.log('Add event for buyer client:', client.name)
+                }}
+                className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-3 py-1.5 h-auto"
+              >
+                <Plus className="size-4 mr-1" />
+                Add Event
+              </Button>
             </div>
             
             {/* Coming Events */}
             <div>
               <h4 className="font-medium text-gray-700 mb-3">Coming Events</h4>
               <div className="space-y-3">
-                <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <Calendar className="size-4 text-blue-600" />
-                  <div>
-                    <div className="text-sm font-medium">Property Showing</div>
-                    <div className="text-xs text-gray-600">Tomorrow, 2:00 PM - 456 Oak Avenue</div>
-                  </div>
-                </div>
-                <div className="text-sm text-gray-500 text-center py-2">
-                  No additional upcoming events.
-                </div>
+                {/* Get events for this client from calendar data */}
+                {(() => {
+                  const clientEvents = dummyData.calendarEvents.filter(event => 
+                    event.clientType === 'buyer' && event.clientId === client.id.toString()
+                  )
+                  const today = new Date()
+                  const upcomingEvents = clientEvents.filter(event => {
+                    const eventDate = new Date(event.date)
+                    return eventDate >= today
+                  }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                  
+                  if (upcomingEvents.length === 0) {
+                    return (
+                      <div className="text-sm text-gray-500 text-center py-2">
+                        No upcoming events scheduled.
+                      </div>
+                    )
+                  }
+                  
+                  return upcomingEvents.map(event => (
+                    <div 
+                      key={event.id}
+                      onClick={() => {
+                        // Handle event click - would open edit modal
+                        console.log('Edit event:', event)
+                      }}
+                      className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200 cursor-pointer hover:bg-blue-100 transition-colors"
+                    >
+                      <Calendar className="size-4 text-blue-600" />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-800">{event.title}</div>
+                        <div className="text-xs text-gray-600">
+                          {new Date(event.date).toLocaleDateString('en-US', { 
+                            weekday: 'long', 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}, {event.time}
+                          {event.location && ` - ${event.location}`}
+                        </div>
+                      </div>
+                      {event.priority === 'high' && (
+                        <div className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
+                          High Priority
+                        </div>
+                      )}
+                    </div>
+                  ))
+                })()}
               </div>
             </div>
 
@@ -1174,16 +1125,48 @@ export function ClientModal({
             <div>
               <h4 className="font-medium text-gray-700 mb-3">Past Events</h4>
               <div className="space-y-3">
-                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <Calendar className="size-4 text-gray-400" />
-                  <div>
-                    <div className="text-sm font-medium">Initial Consultation</div>
-                    <div className="text-xs text-gray-600">March 10, 2024, 10:00 AM</div>
-                  </div>
-                </div>
-                <div className="text-sm text-gray-500 text-center py-2">
-                  No additional past events.
-                </div>
+                {(() => {
+                  const clientEvents = dummyData.calendarEvents.filter(event => 
+                    event.clientType === 'buyer' && event.clientId === client.id.toString()
+                  )
+                  const today = new Date()
+                  const pastEvents = clientEvents.filter(event => {
+                    const eventDate = new Date(event.date)
+                    return eventDate < today
+                  }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  
+                  if (pastEvents.length === 0) {
+                    return (
+                      <div className="text-sm text-gray-500 text-center py-2">
+                        No past events found.
+                      </div>
+                    )
+                  }
+                  
+                  return pastEvents.map(event => (
+                    <div 
+                      key={event.id}
+                      onClick={() => {
+                        // Handle event click - would open edit modal
+                        console.log('View past event:', event)
+                      }}
+                      className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                    >
+                      <Calendar className="size-4 text-gray-400" />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium text-gray-800">{event.title}</div>
+                        <div className="text-xs text-gray-600">
+                          {new Date(event.date).toLocaleDateString('en-US', { 
+                            weekday: 'long', 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })}, {event.time}
+                          {event.location && ` - ${event.location}`}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                })()}
               </div>
             </div>
           </div>

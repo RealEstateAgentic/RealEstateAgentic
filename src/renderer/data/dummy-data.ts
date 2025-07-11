@@ -17,7 +17,10 @@ const generateDynamicCalendarEvents = () => {
       time: "9:00 AM",
       date: getDateOffset(0),
       type: "showing",
-      location: "123 Main St, Anytown"
+      location: "123 Main St, Anytown",
+      priority: "high",
+      clientType: "buyer",
+      clientId: "1"
     },
     {
       id: 2,
@@ -25,7 +28,10 @@ const generateDynamicCalendarEvents = () => {
       time: "11:30 AM",
       date: getDateOffset(0),
       type: "consultation",
-      location: "Office"
+      location: "Office",
+      priority: "low",
+      clientType: "buyer",
+      clientId: "2"
     },
     {
       id: 3,
@@ -33,7 +39,10 @@ const generateDynamicCalendarEvents = () => {
       time: "2:00 PM",
       date: getDateOffset(0),
       type: "closing",
-      location: "Title Company"
+      location: "Title Company",
+      priority: "high",
+      clientType: "seller",
+      clientId: "1"
     },
     {
       id: 4,
@@ -41,7 +50,10 @@ const generateDynamicCalendarEvents = () => {
       time: "4:00 PM",
       date: getDateOffset(0),
       type: "consultation",
-      location: "Phone"
+      location: "Phone",
+      priority: "low",
+      clientType: "buyer",
+      clientId: "3"
     },
     
     // Tomorrow (Day 1)
@@ -51,7 +63,10 @@ const generateDynamicCalendarEvents = () => {
       time: "10:00 AM",
       date: getDateOffset(1),
       type: "inspection",
-      location: "456 Oak St, Anytown"
+      location: "456 Oak St, Anytown",
+      priority: "low",
+      clientType: "buyer",
+      clientId: "1"
     },
     {
       id: 6,
@@ -59,7 +74,10 @@ const generateDynamicCalendarEvents = () => {
       time: "1:00 PM",
       date: getDateOffset(1),
       type: "listing",
-      location: "789 Pine Ave"
+      location: "789 Pine Ave",
+      priority: "low",
+      clientType: "seller",
+      clientId: "2"
     },
     {
       id: 7,
@@ -67,7 +85,10 @@ const generateDynamicCalendarEvents = () => {
       time: "3:30 PM",
       date: getDateOffset(1),
       type: "consultation",
-      location: "Phone"
+      location: "Phone",
+      priority: "low",
+      clientType: "buyer",
+      clientId: "4"
     },
     
     // Day 2
@@ -77,7 +98,10 @@ const generateDynamicCalendarEvents = () => {
       time: "9:00 AM",
       date: getDateOffset(2),
       type: "listing",
-      location: "789 Pine Ave, Anytown"
+      location: "789 Pine Ave, Anytown",
+      priority: "high",
+      clientType: "seller",
+      clientId: "1"
     },
     {
       id: 9,
@@ -85,7 +109,10 @@ const generateDynamicCalendarEvents = () => {
       time: "11:00 AM",
       date: getDateOffset(2),
       type: "showing",
-      location: "Various locations"
+      location: "Various locations",
+      priority: "low",
+      clientType: "buyer",
+      clientId: "2"
     },
     {
       id: 10,
@@ -93,7 +120,10 @@ const generateDynamicCalendarEvents = () => {
       time: "2:00 PM",
       date: getDateOffset(2),
       type: "consultation",
-      location: "Title Company"
+      location: "Title Company",
+      priority: "high",
+      clientType: "seller",
+      clientId: "3"
     },
     
     // Day 3
@@ -103,7 +133,10 @@ const generateDynamicCalendarEvents = () => {
       time: "9:30 AM",
       date: getDateOffset(3),
       type: "inspection",
-      location: "321 Elm St"
+      location: "321 Elm St",
+      priority: "low",
+      clientType: "buyer",
+      clientId: "1"
     },
     {
       id: 12,
@@ -111,7 +144,10 @@ const generateDynamicCalendarEvents = () => {
       time: "1:00 PM",
       date: getDateOffset(3),
       type: "consultation",
-      location: "Office"
+      location: "Office",
+      priority: "high",
+      clientType: "seller",
+      clientId: "2"
     },
     {
       id: 13,
@@ -119,7 +155,10 @@ const generateDynamicCalendarEvents = () => {
       time: "3:00 PM",
       date: getDateOffset(3),
       type: "listing",
-      location: "567 Broadway"
+      location: "567 Broadway",
+      priority: "low",
+      clientType: "seller",
+      clientId: "1"
     },
     
     // Day 4
@@ -129,7 +168,10 @@ const generateDynamicCalendarEvents = () => {
       time: "10:00 AM",
       date: getDateOffset(4),
       type: "listing",
-      location: "789 Pine Ave"
+      location: "789 Pine Ave",
+      priority: "low",
+      clientType: "seller",
+      clientId: "2"
     },
     {
       id: 15,
@@ -137,7 +179,10 @@ const generateDynamicCalendarEvents = () => {
       time: "2:00 PM",
       date: getDateOffset(4),
       type: "showing",
-      location: "East Side Properties"
+      location: "East Side Properties",
+      priority: "low",
+      clientType: "buyer",
+      clientId: "3"
     },
     {
       id: 16,
@@ -145,7 +190,10 @@ const generateDynamicCalendarEvents = () => {
       time: "4:30 PM",
       date: getDateOffset(4),
       type: "consultation",
-      location: "Phone"
+      location: "Phone",
+      priority: "high",
+      clientType: "buyer",
+      clientId: "1"
     },
     
     // Day 5
@@ -155,7 +203,10 @@ const generateDynamicCalendarEvents = () => {
       time: "10:00 AM",
       date: getDateOffset(5),
       type: "showing",
-      location: "Multiple Properties"
+      location: "Multiple Properties",
+      priority: "low",
+      clientType: "buyer",
+      clientId: "2"
     },
     {
       id: 18,
@@ -163,7 +214,10 @@ const generateDynamicCalendarEvents = () => {
       time: "1:00 PM",
       date: getDateOffset(5),
       type: "listing",
-      location: "123 Main St"
+      location: "123 Main St",
+      priority: "low",
+      clientType: "seller",
+      clientId: "3"
     },
     
     // Day 6
@@ -173,7 +227,10 @@ const generateDynamicCalendarEvents = () => {
       time: "11:00 AM",
       date: getDateOffset(6),
       type: "inspection",
-      location: "456 Oak St"
+      location: "456 Oak St",
+      priority: "high",
+      clientType: "buyer",
+      clientId: "1"
     },
     {
       id: 20,
@@ -181,7 +238,10 @@ const generateDynamicCalendarEvents = () => {
       time: "2:00 PM",
       date: getDateOffset(6),
       type: "consultation",
-      location: "Office"
+      location: "Office",
+      priority: "low",
+      clientType: "seller",
+      clientId: "2"
     }
   ]
 }
@@ -320,16 +380,6 @@ export const dummyData = {
       status: "ready"
     }
   ],
-
-  // Market snapshot
-  marketSnapshot: {
-    zipCode: "12345",
-    medianSalePrice: "$485,000",
-    averageDaysOnMarket: 28,
-    newListingsThisWeek: 15,
-    priceChange: "+2.3%",
-    inventoryLevel: "Low"
-  },
 
   // Notifications
   notifications: [

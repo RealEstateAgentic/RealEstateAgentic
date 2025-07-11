@@ -299,19 +299,42 @@ const parseResponse = (response: string, type: string): CoverLetterResult => {
     response.match(/Subject:\s*(.+)/i) ||
     response.match(/Re:\s*(.+)/i) ||
     response.match(/^(.+)/m)
-  const subject = subjectMatch ? subjectMatch[1].trim() : `${type} Letter`
+
+  let subject = subjectMatch ? subjectMatch[1].trim() : `${type} Letter`
+
+  // Clean up the subject line to remove extra descriptions and markdown
+  subject = subject
+    .replace(/^(Subject|Title|Re):\s*/i, '') // Only remove specific prefixes
+    .replace(/^\*\*|\*\*$/g, '') // Remove markdown bold formatting
+    .replace(/^["']|["']$/g, '') // Remove quotes
+    .replace(/\s*-\s*.+$/, '') // Remove everything after first dash (extra descriptions)
+    .replace(/:\s*.+$/, '') // Remove everything after colon (explanatory text)
+    .replace(/\.$/, '') // Remove trailing period
+    .trim()
+
+  // Keep only first 2-3 words
+  const words = subject.split(/\s+/)
+  if (words.length > 3) {
+    subject = words.slice(0, 3).join(' ')
+  }
+
+  // Ensure it's not too long
+  if (subject.length > 30) {
+    subject = `${subject.substring(0, 27)}...`
+  }
 
   // Extract key points (look for bullet points or numbered lists)
   const keyPointsRegex = /(?:[-•*]\s*(.+)|(?:\d+\.\s*(.+)))/g
   const keyPoints: string[] = []
-  let keyPointMatch
+  let keyPointMatch: RegExpExecArray | null = keyPointsRegex.exec(response)
 
-  while ((keyPointMatch = keyPointsRegex.exec(response)) !== null) {
+  while (keyPointMatch !== null) {
     const point = keyPointMatch[1] || keyPointMatch[2]
     if (point && point.length > 10) {
       // Filter out short matches
       keyPoints.push(point.trim())
     }
+    keyPointMatch = keyPointsRegex.exec(response)
   }
 
   // Count words

@@ -743,7 +743,11 @@ export class DocumentOrchestrationService {
             coverLetterOptions
           )
         content = coverLetterResult.content
-        title = coverLetterResult.subject
+        // Clean up title from AI service
+        title = DocumentOrchestrationService.cleanDocumentTitle(
+          coverLetterResult.subject,
+          'Offer Letter'
+        )
         metadata = {
           wordCount: coverLetterResult.wordCount,
           tone: coverLetterResult.tone,
@@ -760,7 +764,11 @@ export class DocumentOrchestrationService {
             memoOptions
           )
         content = memoResult.content
-        title = memoResult.title
+        // Clean up title from AI service
+        title = DocumentOrchestrationService.cleanDocumentTitle(
+          memoResult.title,
+          'Offer Memo'
+        )
         metadata = {
           wordCount: content.split(' ').length,
           complexity: memoResult.complexity,
@@ -799,6 +807,23 @@ export class DocumentOrchestrationService {
         }
         break
 
+      case 'competitive_comparison':
+        const competitiveContext = this.createOfferAnalysisContext(context)
+        const competitiveOptions = this.createOfferAnalysisOptions(options)
+        const competitiveResult =
+          await OfferAnalysisService.compareMultipleOffers(
+            competitiveContext,
+            competitiveOptions
+          )
+        content = this.formatCompetitiveAnalysis(competitiveResult)
+        title = 'Competitive Analysis'
+        metadata = {
+          overallStrength: competitiveResult.summary.overallStrength,
+          competitivePosition: competitiveResult.summary.competitivePosition,
+          totalOffers: competitiveResult.comparison?.totalOffers || 1,
+        }
+        break
+
       case 'market_analysis':
         if (context.marketData) {
           const marketInsights = await MockMarketDataService.generateMarketData(
@@ -827,13 +852,47 @@ export class DocumentOrchestrationService {
           title = 'Market Analysis'
         } else {
           content = 'Market analysis requires market data'
-          title = 'Market Analysis (Limited)'
+          title = 'Market Analysis'
+        }
+        break
+
+      case 'client_summary':
+        const clientSummaryResult =
+          await DocumentOrchestrationService.generateClientSummary(
+            context,
+            options
+          )
+        content = clientSummaryResult.content
+        title = 'Client Summary'
+        metadata = {
+          wordCount: clientSummaryResult.content.split(' ').length,
+          clientType: context.client.role,
+          experienceLevel: context.client.experienceLevel,
+        }
+        break
+
+      case 'risk_assessment':
+        const riskAssessmentResult =
+          await DocumentOrchestrationService.generateRiskAssessment(
+            context,
+            options
+          )
+        content = riskAssessmentResult.content
+        title = 'Risk Assessment'
+        metadata = {
+          wordCount: riskAssessmentResult.content.split(' ').length,
+          riskLevel: riskAssessmentResult.riskLevel,
+          keyRisks: riskAssessmentResult.keyRisks,
         }
         break
 
       default:
         content = `Generated content for ${type}`
-        title = `${type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}`
+        // Generate clean title for default case
+        title = DocumentOrchestrationService.cleanDocumentTitle(
+          '',
+          DocumentOrchestrationService.getDefaultTitle(type)
+        )
     }
 
     return {
@@ -1303,6 +1362,33 @@ ${analysis.recommendations.immediate.map((rec: string) => `• ${rec}`).join('\n
 `
   }
 
+  private static formatCompetitiveAnalysis(analysis: any): string {
+    return `
+COMPETITIVE ANALYSIS
+
+Overall Strength: ${analysis.summary.overallStrength.toUpperCase()}
+Competitive Position: ${analysis.summary.competitivePosition}
+
+Key Strengths:
+${analysis.summary.keyStrengths.map((strength: string) => `• ${strength}`).join('\n')}
+
+Key Weaknesses:
+${analysis.summary.keyWeaknesses.map((weakness: string) => `• ${weakness}`).join('\n')}
+
+Financial Analysis:
+• Price Analysis: ${analysis.financial.priceAnalysis}
+• Financing Strength: ${analysis.financial.financingStrength}
+• Market Value Comparison: ${analysis.financial.marketValueComparison}
+
+Risk Assessment: ${analysis.risks.level.toUpperCase()}
+Risk Factors:
+${analysis.risks.factors.map((factor: string) => `• ${factor}`).join('\n')}
+
+Recommendations:
+${analysis.recommendations.immediate.map((rec: string) => `• ${rec}`).join('\n')}
+`
+  }
+
   private static assessDocumentQuality(
     content: string,
     type: DocumentType
@@ -1470,6 +1556,43 @@ RECOMMENDATION:
 Proceed with confidence. The offer structure provides good negotiating position while protecting buyer interests.`
         break
 
+      case 'competitive_comparison':
+        title = 'Comprehensive Competitive Analysis'
+        content = `COMPETITIVE ANALYSIS REPORT
+
+EXECUTIVE SUMMARY:
+This competitive analysis provides a detailed comparison of our offer against key competing offers in the market.
+
+PRICE ANALYSIS:
+- Our Offer Price: Strong relative to comparables
+- Competitor 1 Price: [Price]
+- Competitor 2 Price: [Price]
+- Competitor 3 Price: [Price]
+
+FINANCIAL STRENGTH:
+- Our Financing: Strong pre-approval with reputable lender
+- Competitor 1 Financing: [Financing]
+- Competitor 2 Financing: [Financing]
+- Competitor 3 Financing: [Financing]
+
+TERMS EVALUATION:
+- Our Contingencies: [Terms]
+- Competitor 1 Terms: [Terms]
+- Competitor 2 Terms: [Terms]
+- Competitor 3 Terms: [Terms]
+
+PROPERTY POSITIONING:
+- Our Property: Well-positioned within current market conditions
+- Competitor 1 Property: [Position]
+- Competitor 2 Property: [Position]
+- Competitor 3 Property: [Position]
+
+RECOMMENDATION:
+Our offer should be competitive in the current market environment. The combination of price, terms, and buyer qualifications presents a strong package.
+
+This competitive analysis supports our negotiation strategy and offer structure.`
+        break
+
       case 'market_analysis':
         title = 'Market Analysis Report'
         content = `MARKET ANALYSIS REPORT
@@ -1593,6 +1716,291 @@ This fallback content allows you to test the document workflow and user interfac
       (total, doc) => total + Math.ceil(doc.metadata.wordCount * 1.3),
       0
     )
+  }
+
+  private static cleanDocumentTitle(
+    originalTitle: string,
+    fallbackTitle: string
+  ): string {
+    if (originalTitle && originalTitle.length > 0) {
+      // Only remove specific prefixes, not any uppercase letters
+      let cleaned = originalTitle
+        .replace(/^(Subject|Title|Re):\s*/i, '') // Remove specific prefixes
+        .replace(/^\*\*|\*\*$/g, '') // Remove markdown bold
+        .replace(/^["']|["']$/g, '') // Remove quotes
+        .replace(/\s*-\s*.+$/, '') // Remove everything after first dash
+        .replace(/:\s*.+$/, '') // Remove everything after colon
+        .replace(/\.$/, '') // Remove trailing period
+        .trim()
+
+      // Keep only first 2-3 words
+      const words = cleaned.split(/\s+/)
+      if (words.length > 3) {
+        cleaned = words.slice(0, 3).join(' ')
+      }
+
+      return cleaned
+    }
+    return fallbackTitle
+  }
+
+  private static getDefaultTitle(type: DocumentType): string {
+    switch (type) {
+      case 'cover_letter':
+        return 'Offer Letter'
+      case 'explanation_memo':
+        return 'Offer Memo'
+      case 'negotiation_strategy':
+        return 'Negotiation Strategy'
+      case 'offer_analysis':
+        return 'Offer Analysis'
+      case 'market_analysis':
+        return 'Market Analysis'
+      case 'client_summary':
+        return 'Client Summary'
+      case 'risk_assessment':
+        return 'Risk Assessment'
+      case 'competitive_comparison':
+        return 'Competitive Analysis'
+      default:
+        return type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
+    }
+  }
+
+  private static async generateClientSummary(
+    context: DocumentGenerationContext,
+    options: DocumentGenerationOptions
+  ): Promise<{ content: string; title: string }> {
+    const client = getGroqClient()
+
+    const prompt = `Generate a comprehensive client summary based on the following context:
+
+Property:
+- Address: ${context.property.address}
+- Price: ${context.property.price}
+- Type: ${context.property.type}
+- Features: ${context.property.features?.join(', ')}
+- Condition: ${context.property.condition}
+- Days on Market: ${context.property.daysOnMarket || 'N/A'}
+
+Client:
+- Name: ${context.client.name}
+- Role: ${context.client.role}
+- Experience Level: ${context.client.experienceLevel}
+- Goals: ${context.client.goals?.join(', ')}
+- Concerns: ${context.client.concerns?.join(', ')}
+- Timeline: ${context.client.timeline || 'Flexible'}
+
+Agent:
+- Name: ${context.agent.name}
+- Brokerage: ${context.agent.brokerage || 'N/A'}
+- Experience: ${context.agent.experience || 'N/A'}
+
+Market:
+- Trend: ${context.market?.trend || 'N/A'}
+- Inventory: ${context.market?.inventory || 'N/A'}
+- Competition: ${context.market?.competition || 'N/A'}
+- Location: ${context.market?.location?.city || 'N/A'}, ${context.market?.location?.state || 'N/A'}
+
+Please provide a detailed summary of the client's background, their motivation for the transaction, and their expectations for the property.
+
+Format the summary as a single paragraph, approximately 150-200 words.
+
+Title: "Client Summary"`
+
+    try {
+      const summary = await client.generateText(prompt, AI_MODELS.SUMMARY, {
+        systemPrompt:
+          'You are an expert in real estate client summaries. Generate a comprehensive, professional summary based on the provided context.',
+        temperature: 0.7,
+        maxTokens: 200,
+      })
+      return { content: summary, title: 'Client Summary' }
+    } catch (error) {
+      console.warn('Client summary generation failed, using fallback:', error)
+      return {
+        content: `Client Summary for ${context.client.name}
+
+${context.client.role} with ${context.client.experienceLevel} experience.
+
+Motivation: ${context.client.goals?.join(', ')}
+Concerns: ${context.client.concerns?.join(', ')}
+Timeline: ${context.client.timeline || 'Flexible'}
+
+Expectations: ${context.property.type} property at ${context.property.price}.
+
+This summary is generated using a fallback system. For a more personalized and detailed summary, please enable AI generation.`,
+        title: 'Client Summary',
+      }
+    }
+  }
+
+  private static async generateRiskAssessment(
+    context: DocumentGenerationContext,
+    options: DocumentGenerationOptions
+  ): Promise<{ content: string; riskLevel: string; keyRisks: string[] }> {
+    const client = getGroqClient()
+
+    const prompt = `Generate a comprehensive risk assessment for a real estate transaction based on the following context:
+
+Property:
+- Address: ${context.property.address}
+- Price: $${context.property.price.toLocaleString()}
+- Type: ${context.property.type}
+- Features: ${context.property.features?.join(', ') || 'Not specified'}
+- Condition: ${context.property.condition || 'Not specified'}
+- Days on Market: ${context.property.daysOnMarket || 'Not specified'}
+
+Client:
+- Name: ${context.client.name}
+- Role: ${context.client.role}
+- Experience Level: ${context.client.experienceLevel}
+- Goals: ${context.client.goals?.join(', ') || 'Not specified'}
+- Concerns: ${context.client.concerns?.join(', ') || 'Not specified'}
+- Timeline: ${context.client.timeline || 'Flexible'}
+
+Agent:
+- Name: ${context.agent.name}
+- Brokerage: ${context.agent.brokerage || 'Not specified'}
+- Experience: ${context.agent.experience || 'Not specified'}
+
+Market Context:
+- Trend: ${context.market?.trend || 'Not specified'}
+- Inventory: ${context.market?.inventory || 'Not specified'}
+- Competition: ${context.market?.competition || 'Not specified'}
+- Location: ${context.market?.location?.city || 'Not specified'}, ${context.market?.location?.state || 'Not specified'}
+
+Offer Details:
+- Purchase Price: $${context.offer?.purchasePrice?.toLocaleString() || context.property.price.toLocaleString()}
+- Down Payment: $${context.offer?.downPayment?.toLocaleString() || 'Not specified'}
+- Loan Amount: $${context.offer?.loanAmount?.toLocaleString() || 'Not specified'}
+- Loan Type: ${context.offer?.loanType || 'Not specified'}
+- Closing Date: ${context.offer?.closingDate || 'Not specified'}
+
+Generate a detailed risk assessment (200-250 words) that includes:
+1. Overall risk level (Low, Medium, High)
+2. Market-related risks
+3. Property-specific risks
+4. Financial risks
+5. Timeline risks
+6. Mitigation strategies
+7. Key recommendations
+
+Format as a professional risk assessment suitable for client review and decision-making.`
+
+    try {
+      const response = await client.generateText(prompt, AI_MODELS.ANALYSIS, {
+        systemPrompt:
+          'You are an expert real estate risk assessor. Generate comprehensive risk assessments that help clients understand potential challenges and mitigation strategies.',
+        temperature: 0.7,
+        maxTokens: 500,
+      })
+
+      const content = response.trim()
+      const riskLevel = this.extractRiskLevel(content)
+      const keyRisks = this.extractKeyRisks(content, context)
+
+      return {
+        content: content || this.getFallbackRiskAssessment(context),
+        riskLevel,
+        keyRisks,
+      }
+    } catch (error) {
+      console.error('Error generating risk assessment:', error)
+      return {
+        content: this.getFallbackRiskAssessment(context),
+        riskLevel: 'Medium',
+        keyRisks: [
+          'Market volatility',
+          'Property condition',
+          'Financing risks',
+        ],
+      }
+    }
+  }
+
+  private static extractRiskLevel(content: string): string {
+    const lowerContent = content.toLowerCase()
+    if (
+      lowerContent.includes('high risk') ||
+      lowerContent.includes('risk level: high')
+    ) {
+      return 'High'
+    } else if (
+      lowerContent.includes('low risk') ||
+      lowerContent.includes('risk level: low')
+    ) {
+      return 'Low'
+    }
+    return 'Medium'
+  }
+
+  private static extractKeyRisks(
+    content: string,
+    context: DocumentGenerationContext
+  ): string[] {
+    const risks: string[] = []
+
+    // Market-based risks
+    if (context.market?.trend === 'hot') {
+      risks.push('High competition market')
+    } else if (context.market?.trend === 'cool') {
+      risks.push('Market downturn risk')
+    }
+
+    // Property-based risks
+    if (context.property.daysOnMarket && context.property.daysOnMarket > 90) {
+      risks.push('Extended market time')
+    }
+
+    // Financial risks
+    if (context.client.experienceLevel === 'first-time') {
+      risks.push('First-time buyer risks')
+    }
+
+    // Timeline risks
+    if (context.client.timeline === 'urgent') {
+      risks.push('Compressed timeline')
+    }
+
+    // Default risks if none identified
+    if (risks.length === 0) {
+      risks.push('Market volatility', 'Property condition', 'Financing risks')
+    }
+
+    return risks.slice(0, 5) // Limit to 5 key risks
+  }
+
+  private static getFallbackRiskAssessment(
+    context: DocumentGenerationContext
+  ): string {
+    const riskLevel = context.market?.trend === 'hot' ? 'Medium-High' : 'Medium'
+
+    return `Risk Assessment for ${context.property.address}
+
+Overall Risk Level: ${riskLevel}
+
+Market Risk Analysis:
+The current ${context.market?.trend || 'stable'} market with ${context.market?.inventory || 'balanced'} inventory presents ${riskLevel.toLowerCase()} risk for this transaction. Competition levels are ${context.market?.competition || 'moderate'}, which may affect negotiation dynamics.
+
+Property Risk Factors:
+This ${context.property.type} at $${context.property.price.toLocaleString()} has been on the market for ${context.property.daysOnMarket || 'an undisclosed number of'} days. Property condition is ${context.property.condition || 'not specified'}, requiring due diligence during inspection.
+
+Financial Risk Considerations:
+${context.client.name} as a ${context.client.experienceLevel} ${context.client.role} should consider financing contingencies and market timing. The current offer structure includes standard protections.
+
+Timeline Risk Assessment:
+With a ${context.client.timeline || 'flexible'} timeline, there are ${context.client.timeline === 'urgent' ? 'elevated' : 'standard'} timeline risks that should be monitored throughout the process.
+
+Mitigation Strategies:
+1. Maintain appropriate contingencies
+2. Monitor market conditions closely
+3. Ensure thorough property inspection
+4. Secure financing pre-approval
+5. Prepare for potential negotiation scenarios
+
+Recommendations:
+Proceed with standard due diligence and maintain flexibility in negotiation approach based on market response and inspection findings.`
   }
 }
 

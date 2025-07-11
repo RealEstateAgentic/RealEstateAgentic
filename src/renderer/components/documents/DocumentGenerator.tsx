@@ -6,13 +6,24 @@
  * with the OpenAI orchestration service.
  */
 
-import { type FC, useState, useEffect } from 'react'
+import { type FC, useState, useEffect, useRef } from 'react'
 import { Button } from '../ui/button'
 import { Alert } from '../ui/alert'
 import { Progress } from '../ui/progress'
-import { Check, AlertCircle, Clock, FileText, Download } from 'lucide-react'
+import {
+  Check,
+  AlertCircle,
+  Clock,
+  FileText,
+  Download,
+  RefreshCw,
+  Eye,
+} from 'lucide-react'
 import { DocumentOrchestrationService } from '../../../lib/openai/services/document-orchestrator'
-import { createDocument } from '../../../lib/firebase/collections/documents'
+import {
+  createDocument,
+  getClientDocuments,
+} from '../../../lib/firebase/collections/documents'
 import { getCurrentUserProfile } from '../../../lib/firebase/auth'
 import { MarkdownRenderer } from '../estimator/markdown-renderer'
 import type {
@@ -246,7 +257,7 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({ progress }) => {
 
         {progress.status === 'generating' && (
           <div className="flex items-center space-x-2">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
             <span className="text-sm text-gray-600">
               Generating documents...
             </span>
@@ -286,6 +297,14 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   onDocumentSelect,
   selectedDocument,
 }) => {
+  const previewRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (selectedDocument && previewRef.current) {
+      previewRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [selectedDocument])
+
   if (documents.length === 0) {
     return (
       <div className="bg-gray-50 rounded-lg p-8 text-center">
@@ -316,7 +335,7 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 
       <div className="p-4">
         {selectedDocument ? (
-          <div className="space-y-4">
+          <div className="space-y-4" ref={previewRef}>
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900">
@@ -330,14 +349,14 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               <div className="flex items-center space-x-2">
                 <span
                   className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    selectedDocument.quality.score >= 80
+                    (selectedDocument.quality?.score ?? 0) >= 80
                       ? 'bg-green-100 text-green-800'
-                      : selectedDocument.quality.score >= 60
+                      : (selectedDocument.quality?.score ?? 0) >= 60
                         ? 'bg-yellow-100 text-yellow-800'
                         : 'bg-red-100 text-red-800'
                   }`}
                 >
-                  Quality: {selectedDocument.quality.score}%
+                  Quality: {selectedDocument.quality?.score ?? 'N/A'}%
                 </span>
                 <Button size="sm" variant="outline">
                   Download
@@ -349,26 +368,40 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
             </div>
 
             <div className="prose prose-sm max-w-none">
-              <MarkdownRenderer content={selectedDocument.content} />
+              {selectedDocument.content ? (
+                <MarkdownRenderer markdownContent={selectedDocument.content} />
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <p>
+                    Document content is empty. Please try regenerating the
+                    document.
+                  </p>
+                  <p className="text-sm mt-2">
+                    Debug info: Document type: {selectedDocument.type}, Title:{' '}
+                    {selectedDocument.title}
+                  </p>
+                </div>
+              )}
             </div>
 
-            {selectedDocument.quality.suggestions.length > 0 && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                <h4 className="font-medium text-yellow-800 mb-2">
-                  Suggestions for Improvement:
-                </h4>
-                <ul className="text-sm text-yellow-700 space-y-1">
-                  {selectedDocument.quality.suggestions.map(
-                    (suggestion: string, index: number) => (
-                      <li key={index} className="flex items-start">
-                        <span className="text-yellow-500 mr-2">•</span>
-                        {suggestion}
-                      </li>
-                    )
-                  )}
-                </ul>
-              </div>
-            )}
+            {selectedDocument.quality?.suggestions &&
+              selectedDocument.quality.suggestions.length > 0 && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <h4 className="font-medium text-yellow-800 mb-2">
+                    Suggestions for Improvement:
+                  </h4>
+                  <ul className="text-sm text-yellow-700 space-y-1">
+                    {selectedDocument.quality.suggestions.map(
+                      (suggestion: string, index: number) => (
+                        <li key={index} className="flex items-start">
+                          <span className="text-yellow-500 mr-2">•</span>
+                          {suggestion}
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </div>
+              )}
           </div>
         ) : (
           <div className="text-center py-8">
@@ -418,6 +451,99 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
   const [result, setResult] = useState<DocumentPackageResult | null>(null)
   const [selectedDocument, setSelectedDocument] = useState<any>(null)
   const [error, setError] = useState('')
+  const [existingDocuments, setExistingDocuments] = useState<any[]>([])
+  const [loadingExisting, setLoadingExisting] = useState(false)
+  const [showExisting, setShowExisting] = useState(true)
+
+  // Ref for scrolling to existing document viewer
+  const existingDocumentViewerRef = useRef<HTMLDivElement>(null)
+
+  // Load existing documents for this client on component mount
+  useEffect(() => {
+    loadExistingDocuments()
+  }, [clientProfile])
+
+  // Scroll to existing document viewer when viewing an existing document
+  useEffect(() => {
+    if (selectedDocument && !result && existingDocumentViewerRef.current) {
+      existingDocumentViewerRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [selectedDocument, result])
+
+  // Helper function to create consistent client ID
+  const createClientId = (firstName: string, lastName: string): string => {
+    const sanitize = (str: string) =>
+      str
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+    return `${sanitize(firstName)}-${sanitize(lastName)}` || 'unknown-client'
+  }
+
+  // Helper function to handle viewing documents
+  const handleViewDocument = (doc: any) => {
+    console.log('👁️ Viewing document:', doc)
+    console.log(
+      '📄 Document content preview:',
+      `${doc.content?.substring(0, 100)}...`
+    )
+    console.log('📊 Document metadata:', doc.metadata)
+    setSelectedDocument(doc)
+  }
+
+  const loadExistingDocuments = async () => {
+    if (
+      !clientProfile?.personalInfo?.firstName ||
+      !clientProfile?.personalInfo?.lastName
+    )
+      return
+
+    setLoadingExisting(true)
+    try {
+      const clientId = createClientId(
+        clientProfile.personalInfo.firstName,
+        clientProfile.personalInfo.lastName
+      )
+
+      console.log('🔍 Loading existing documents for clientId:', clientId)
+
+      // Try querying with category filter first
+      let result = await getClientDocuments(clientId, {
+        category: 'client_communications',
+        limit: 10,
+      })
+
+      console.log('📄 Document query result (with category):', result)
+
+      // If no results with category, try without category filter
+      if (!result.success || !result.data || result.data.length === 0) {
+        console.log('🔍 Trying query without category filter...')
+        result = await getClientDocuments(clientId, {
+          limit: 10,
+        })
+        console.log('📄 Document query result (without category):', result)
+      }
+
+      if (result.success && result.data) {
+        console.log(
+          '✅ Found',
+          result.data.length,
+          'existing documents:',
+          result.data
+        )
+        setExistingDocuments(result.data)
+      } else {
+        console.log('⚠️ No documents found or query failed:', result.error)
+        setExistingDocuments([])
+      }
+    } catch (error) {
+      console.error('❌ Error loading existing documents:', error)
+      setExistingDocuments([])
+    } finally {
+      setLoadingExisting(false)
+    }
+  }
 
   const handleTemplateChange = (template: string) => {
     setSelectedTemplate(template)
@@ -450,8 +576,15 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
         return
       }
 
+      // Create a client ID from the client profile (same format as loading)
+      const clientId = createClientId(
+        clientProfile.personalInfo.firstName,
+        clientProfile.personalInfo.lastName
+      )
+
+      console.log('💾 Saving documents for clientId:', clientId)
       console.log(
-        `Saving ${packageResult.documents.length} documents to Firebase...`
+        `📝 Saving ${packageResult.documents.length} documents to Firebase...`
       )
 
       // Save each document to Firebase
@@ -460,18 +593,22 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
           // Map document type to shared DocumentType
           const documentType = mapDocumentType(document.type)
 
-          const result = await createDocument({
+          console.log(
+            `📄 Saving document: ${document.title} (${document.type})`
+          )
+
+          const documentRequest = {
             title: document.title,
             type: documentType,
-            category: 'client_communications',
+            category: 'client_communications' as const,
             content: document.content,
-            relatedId: packageResult.packageId,
-            relatedType: 'client',
+            relatedId: clientId, // Use the client ID here
+            relatedType: 'client' as const,
             generationParams: {
               aiModel: 'gpt-4',
               temperature: 0.7,
               tone: document.metadata.tone,
-              length: 'medium',
+              length: 'medium' as const,
               context: {
                 propertyDetails: {
                   address: 'Property Address',
@@ -485,8 +622,9 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
                 },
                 clientDetails: {
                   name: `${clientProfile.personalInfo.firstName} ${clientProfile.personalInfo.lastName}`,
-                  role:
-                    clientProfile.clientType === 'buyer' ? 'buyer' : 'seller',
+                  role: (clientProfile.clientType === 'buyer'
+                    ? 'buyer'
+                    : 'seller') as 'buyer' | 'seller',
                   preferences: [],
                   timeline: clientProfile.preferences.timeframe || '3-6 months',
                   budget: 500000,
@@ -494,24 +632,39 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
                 },
               },
             },
-          })
+          }
+
+          console.log('📋 Document request:', documentRequest)
+
+          const result = await createDocument(documentRequest)
+
+          console.log('💾 Save result:', result)
 
           if (result.success) {
-            console.log(`Successfully saved ${document.type} to Firebase`)
+            console.log(
+              `✅ Successfully saved ${document.type} to Firebase with ID:`,
+              result.data?.id
+            )
           } else {
             console.error(
-              `Failed to save ${document.type} to Firebase:`,
+              `❌ Failed to save ${document.type} to Firebase:`,
               result.error
             )
           }
         } catch (error) {
-          console.error(`Error saving ${document.type} to Firebase:`, error)
+          console.error(`💥 Error saving ${document.type} to Firebase:`, error)
         }
       }
 
-      console.log('Document saving to Firebase completed')
+      console.log('🎉 Document saving to Firebase completed')
+
+      // Wait a moment before reloading to ensure Firebase has processed the writes
+      setTimeout(async () => {
+        console.log('🔄 Reloading existing documents...')
+        await loadExistingDocuments()
+      }, 1000)
     } catch (error) {
-      console.error('Error saving documents to Firebase:', error)
+      console.error('💥 Error in saveDocumentsToFirebase:', error)
     }
   }
 
@@ -707,6 +860,18 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
             <p className="text-gray-600 mt-1">
               Generate professional real estate documents powered by AI
             </p>
+            {!showExisting && existingDocuments.length > 0 && (
+              <button
+                onClick={() => setShowExisting(true)}
+                className="text-blue-600 hover:text-blue-800 text-sm mt-1 flex items-center space-x-1"
+              >
+                <FileText className="w-4 h-4" />
+                <span>
+                  Show {existingDocuments.length} existing document
+                  {existingDocuments.length !== 1 ? 's' : ''}
+                </span>
+              </button>
+            )}
           </div>
           <div className="flex space-x-2">
             <Button onClick={onCancel} variant="outline">
@@ -728,6 +893,122 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
           <Alert variant="destructive" className="mb-6">
             {error}
           </Alert>
+        )}
+
+        {/* Existing Documents Section */}
+        {showExisting && existingDocuments.length > 0 && (
+          <div className="mb-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-2">
+                  <FileText className="w-5 h-5 text-blue-600" />
+                  <h3 className="text-lg font-semibold text-blue-900">
+                    Existing Documents for{' '}
+                    {clientProfile.personalInfo.firstName}{' '}
+                    {clientProfile.personalInfo.lastName}
+                  </h3>
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={loadExistingDocuments}
+                    variant="outline"
+                    size="sm"
+                    disabled={loadingExisting}
+                  >
+                    <RefreshCw
+                      className={`w-4 h-4 mr-1 ${loadingExisting ? 'animate-spin' : ''}`}
+                    />
+                    Refresh
+                  </Button>
+                  <Button
+                    onClick={() => setShowExisting(false)}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Hide
+                  </Button>
+                </div>
+              </div>
+
+              <p className="text-blue-800 mb-4">
+                Found {existingDocuments.length} existing document
+                {existingDocuments.length !== 1 ? 's' : ''} for this client. You
+                can view them below or generate new ones.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+                {existingDocuments.map(doc => (
+                  <div
+                    key={doc.id}
+                    className="bg-white border border-blue-200 rounded-lg p-3 hover:shadow-md transition-shadow"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-medium text-gray-900 text-sm truncate">
+                        {doc.title}
+                      </h4>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          doc.status === 'final'
+                            ? 'bg-green-100 text-green-800'
+                            : doc.status === 'draft'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {doc.status}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-600 mb-2">
+                      {doc.createdAt?.toDate?.().toLocaleDateString() ||
+                        'Unknown date'}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-500">
+                        {doc.metadata?.wordCount || 0} words
+                      </span>
+                      <Button
+                        onClick={() => handleViewDocument(doc)}
+                        size="sm"
+                        variant="outline"
+                        className="text-xs"
+                      >
+                        <Eye className="w-3 h-3 mr-1" />
+                        View
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-between pt-3 border-t border-blue-200">
+                <span className="text-blue-800 text-sm">
+                  Want to create new documents instead?
+                </span>
+                <Button
+                  onClick={() => setShowExisting(false)}
+                  variant="outline"
+                  size="sm"
+                  className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                >
+                  <RefreshCw className="w-4 h-4 mr-1" />
+                  Generate New
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {loadingExisting && (
+          <div className="mb-6">
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <div className="flex items-center space-x-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
+                <span className="text-gray-700">
+                  Checking for existing documents...
+                </span>
+              </div>
+            </div>
+          </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -850,134 +1131,17 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
                 Generation Options
               </h3>
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Complexity Level
-                  </label>
-                  <select
-                    value={generationOptions.complexity}
-                    onChange={e =>
-                      setGenerationOptions(prev => ({
-                        ...prev,
-                        complexity: e.target.value,
-                      }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="simple">Simple</option>
-                    <option value="intermediate">Intermediate</option>
-                    <option value="detailed">Detailed</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tone
-                  </label>
-                  <select
-                    value={generationOptions.tone}
-                    onChange={e =>
-                      setGenerationOptions(prev => ({
-                        ...prev,
-                        tone: e.target.value,
-                      }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="professional">Professional</option>
-                    <option value="warm">Warm</option>
-                    <option value="confident">Confident</option>
-                    <option value="analytical">Analytical</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Jurisdiction
-                  </label>
-                  <select
-                    value={generationOptions.jurisdiction}
-                    onChange={e =>
-                      setGenerationOptions(prev => ({
-                        ...prev,
-                        jurisdiction: e.target.value,
-                      }))
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="CA">California</option>
-                    <option value="TX">Texas</option>
-                    <option value="FL">Florida</option>
-                    <option value="NY">New York</option>
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={generationOptions.includeMarketAnalysis}
-                      onChange={e =>
-                        setGenerationOptions(prev => ({
-                          ...prev,
-                          includeMarketAnalysis: e.target.checked,
-                        }))
-                      }
-                      className="mr-2"
-                    />
-                    <span className="text-sm text-gray-700">
-                      Include Market Analysis
-                    </span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={generationOptions.includeRiskAssessment}
-                      onChange={e =>
-                        setGenerationOptions(prev => ({
-                          ...prev,
-                          includeRiskAssessment: e.target.checked,
-                        }))
-                      }
-                      className="mr-2"
-                    />
-                    <span className="text-sm text-gray-700">
-                      Include Risk Assessment
-                    </span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={generationOptions.includeNegotiationTactics}
-                      onChange={e =>
-                        setGenerationOptions(prev => ({
-                          ...prev,
-                          includeNegotiationTactics: e.target.checked,
-                        }))
-                      }
-                      className="mr-2"
-                    />
-                    <span className="text-sm text-gray-700">
-                      Include Negotiation Tactics
-                    </span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={generationOptions.includeClientEducation}
-                      onChange={e =>
-                        setGenerationOptions(prev => ({
-                          ...prev,
-                          includeClientEducation: e.target.checked,
-                        }))
-                      }
-                      className="mr-2"
-                    />
-                    <span className="text-sm text-gray-700">
-                      Include Client Education
-                    </span>
-                  </label>
-                </div>
+                <Button
+                  onClick={generateDocuments}
+                  disabled={progress.status === 'generating'}
+                  className="w-full"
+                >
+                  {progress.status === 'generating' ? (
+                    <>Generating Documents...</>
+                  ) : (
+                    <>Generate Documents</>
+                  )}
+                </Button>
               </div>
             </div>
           </div>
@@ -1043,6 +1207,99 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
                     </ul>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Document Viewer for Existing Documents */}
+            {selectedDocument && !result && (
+              <div className="space-y-4" ref={existingDocumentViewerRef}>
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <h3 className="font-semibold text-green-900 mb-2">
+                    Viewing Existing Document
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium text-green-800">
+                        Document:
+                      </span>
+                      <span className="ml-2">{selectedDocument.title}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-green-800">Type:</span>
+                      <span className="ml-2 capitalize">
+                        {selectedDocument.type}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-green-800">
+                        Status:
+                      </span>
+                      <span className="ml-2 capitalize">
+                        {selectedDocument.status}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-green-800">
+                        Created:
+                      </span>
+                      <span className="ml-2">
+                        {new Date(
+                          selectedDocument.createdAt
+                        ).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-lg border border-gray-200 p-6">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {selectedDocument.title}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        {selectedDocument.metadata?.wordCount || 0} words •{' '}
+                        {selectedDocument.metadata?.readingTime || 0} min read
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          selectedDocument.status === 'final'
+                            ? 'bg-green-100 text-green-800'
+                            : selectedDocument.status === 'draft'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : 'bg-blue-100 text-blue-800'
+                        }`}
+                      >
+                        {selectedDocument.status}
+                      </span>
+                      <Button
+                        onClick={() => setSelectedDocument(null)}
+                        size="sm"
+                        variant="outline"
+                      >
+                        Close
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="prose prose-sm max-w-none border-t border-gray-200 pt-4">
+                    {selectedDocument.content ? (
+                      <MarkdownRenderer
+                        markdownContent={selectedDocument.content}
+                      />
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <p>No content available for this document.</p>
+                        <p className="text-sm mt-2">
+                          Debug info: Document ID: {selectedDocument.id}, Type:{' '}
+                          {selectedDocument.type}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </div>

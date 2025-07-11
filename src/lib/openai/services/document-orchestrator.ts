@@ -6,7 +6,7 @@
  * a unified interface for complex document generation requests.
  */
 
-import { getOpenAIClient, AI_MODELS } from '../client'
+import { getGroqClient, AI_MODELS } from '../../groq/client'
 import {
   CoverLetterService,
   type CoverLetterContext,
@@ -39,6 +39,18 @@ export interface DocumentPackageRequest {
   context: DocumentGenerationContext
   options: DocumentGenerationOptions
   requirements: DocumentRequirements
+  onProgress?: (progress: DocumentGenerationProgress) => void
+}
+
+export interface DocumentGenerationProgress {
+  status: 'initializing' | 'generating' | 'analyzing' | 'completed' | 'error'
+  currentStep: string
+  progress: number
+  documentsCompleted: number
+  totalDocuments: number
+  currentDocument?: string
+  timeElapsed: number
+  estimatedTimeRemaining?: number
 }
 
 export type DocumentPackageType =
@@ -289,22 +301,62 @@ export class DocumentOrchestrationService {
     try {
       console.log('Starting document package generation...')
 
+      // Report initialization progress
+      request.onProgress?.({
+        status: 'initializing',
+        currentStep: 'Initializing document generation...',
+        progress: 5,
+        documentsCompleted: 0,
+        totalDocuments: request.requirements.documents.length,
+        timeElapsed: Date.now() - startTime,
+      })
+
       // Validate and prepare context
       const validatedContext = await this.validateAndEnrichContext(
         request.context
       )
 
+      request.onProgress?.({
+        status: 'initializing',
+        currentStep: 'Validating context and preparing generation plan...',
+        progress: 10,
+        documentsCompleted: 0,
+        totalDocuments: request.requirements.documents.length,
+        timeElapsed: Date.now() - startTime,
+      })
+
       // Determine document generation strategy
       const generationPlan = this.createGenerationPlan(request)
+
+      request.onProgress?.({
+        status: 'generating',
+        currentStep: 'Starting document generation...',
+        progress: 15,
+        documentsCompleted: 0,
+        totalDocuments: request.requirements.documents.length,
+        timeElapsed: Date.now() - startTime,
+      })
 
       // Generate documents based on strategy
       const documents = await this.executeGenerationPlan(
         generationPlan,
         validatedContext,
-        request.options
+        request.options,
+        startTime,
+        request.onProgress
       )
 
       console.log(`Documents generated: ${documents.length}`)
+
+      // Report analysis phase
+      request.onProgress?.({
+        status: 'analyzing',
+        currentStep: 'Analyzing document package...',
+        progress: 85,
+        documentsCompleted: documents.length,
+        totalDocuments: request.requirements.documents.length,
+        timeElapsed: Date.now() - startTime,
+      })
 
       // Analyze and validate generated content with error handling
       let insights: DocumentInsights
@@ -357,6 +409,16 @@ export class DocumentOrchestrationService {
       }
 
       const endTime = Date.now()
+
+      // Report completion
+      request.onProgress?.({
+        status: 'completed',
+        currentStep: 'Document package completed successfully!',
+        progress: 100,
+        documentsCompleted: documents.length,
+        totalDocuments: request.requirements.documents.length,
+        timeElapsed: endTime - startTime,
+      })
 
       const result: DocumentPackageResult = {
         packageId,
@@ -541,14 +603,37 @@ export class DocumentOrchestrationService {
   private static async executeGenerationPlan(
     plan: { order: DocumentType[]; dependencies: Record<string, string[]> },
     context: DocumentGenerationContext,
-    options: DocumentGenerationOptions
+    options: DocumentGenerationOptions,
+    startTime: number,
+    onProgress?: (progress: DocumentGenerationProgress) => void
   ): Promise<GeneratedDocument[]> {
     const documents: GeneratedDocument[] = []
     const generatedContent: Record<string, any> = {}
+    const totalDocuments = plan.order.length
 
-    for (const documentType of plan.order) {
+    for (let i = 0; i < plan.order.length; i++) {
+      const documentType = plan.order[i]
+
       try {
         console.log(`Attempting to generate ${documentType}...`)
+
+        // Report progress for current document
+        const baseProgress = 15 + (i / totalDocuments) * 70 // 15% to 85%
+        onProgress?.({
+          status: 'generating',
+          currentStep: `Generating ${documentType.replace('_', ' ')}...`,
+          progress: baseProgress,
+          documentsCompleted: i,
+          totalDocuments,
+          currentDocument: documentType,
+          timeElapsed: Date.now() - startTime,
+          estimatedTimeRemaining: this.estimateRemainingTime(
+            startTime,
+            i,
+            totalDocuments
+          ),
+        })
+
         const document = await this.generateSingleDocument(
           documentType,
           context,
@@ -559,8 +644,35 @@ export class DocumentOrchestrationService {
         documents.push(document)
         generatedContent[documentType] = document
         console.log(`Successfully generated ${documentType}`)
+
+        // Report completion of current document
+        const completionProgress = 15 + ((i + 1) / totalDocuments) * 70
+        onProgress?.({
+          status: 'generating',
+          currentStep: `Completed ${documentType.replace('_', ' ')}`,
+          progress: completionProgress,
+          documentsCompleted: i + 1,
+          totalDocuments,
+          timeElapsed: Date.now() - startTime,
+          estimatedTimeRemaining: this.estimateRemainingTime(
+            startTime,
+            i + 1,
+            totalDocuments
+          ),
+        })
       } catch (error) {
         console.error(`Failed to generate ${documentType}:`, error)
+
+        // Report error but continue
+        onProgress?.({
+          status: 'generating',
+          currentStep: `Error generating ${documentType.replace('_', ' ')}, creating fallback...`,
+          progress: 15 + (i / totalDocuments) * 70,
+          documentsCompleted: i,
+          totalDocuments,
+          currentDocument: documentType,
+          timeElapsed: Date.now() - startTime,
+        })
 
         // Always create fallback document to ensure we have content
         console.log(`Creating fallback document for ${documentType}...`)
@@ -571,11 +683,39 @@ export class DocumentOrchestrationService {
         documents.push(fallbackDocument)
         generatedContent[documentType] = fallbackDocument
         console.log(`Fallback document created for ${documentType}`)
+
+        // Report fallback completion
+        const completionProgress = 15 + ((i + 1) / totalDocuments) * 70
+        onProgress?.({
+          status: 'generating',
+          currentStep: `Completed fallback for ${documentType.replace('_', ' ')}`,
+          progress: completionProgress,
+          documentsCompleted: i + 1,
+          totalDocuments,
+          timeElapsed: Date.now() - startTime,
+        })
       }
     }
 
     console.log(`Total documents generated: ${documents.length}`)
     return documents
+  }
+
+  /**
+   * Estimate remaining time for document generation
+   */
+  private static estimateRemainingTime(
+    startTime: number,
+    completed: number,
+    total: number
+  ): number {
+    if (completed === 0) return 0
+
+    const elapsedTime = Date.now() - startTime
+    const averageTimePerDocument = elapsedTime / completed
+    const remaining = total - completed
+
+    return remaining * averageTimePerDocument
   }
 
   /**
@@ -722,7 +862,7 @@ export class DocumentOrchestrationService {
     documents: GeneratedDocument[],
     context: DocumentGenerationContext
   ): Promise<DocumentInsights> {
-    const client = getOpenAIClient()
+    const client = getGroqClient()
 
     const packageContent = documents
       .map(doc => `${doc.type}: ${doc.content.substring(0, 500)}`)
@@ -757,8 +897,34 @@ Format as JSON with specific fields for each analysis point.`
         }
       )
 
-      return analysis
+      // Ensure all required properties exist with proper defaults
+      const sanitizedAnalysis: DocumentInsights = {
+        keyThemes: Array.isArray(analysis.keyThemes)
+          ? analysis.keyThemes
+          : ['Professional presentation', 'Market alignment', 'Client focus'],
+        consistencyScore:
+          typeof analysis.consistencyScore === 'number'
+            ? analysis.consistencyScore
+            : 85,
+        recommendedActions: Array.isArray(analysis.recommendedActions)
+          ? analysis.recommendedActions
+          : ['Review for consistency', 'Validate market data'],
+        marketAlignment:
+          typeof analysis.marketAlignment === 'string'
+            ? analysis.marketAlignment
+            : 'Well aligned with current market conditions',
+        strategicPosition:
+          typeof analysis.strategicPosition === 'string'
+            ? analysis.strategicPosition
+            : 'Strong positioning for negotiation',
+        riskFactors: Array.isArray(analysis.riskFactors)
+          ? analysis.riskFactors
+          : ['Market volatility', 'Timeline constraints'],
+      }
+
+      return sanitizedAnalysis
     } catch (error) {
+      console.warn('Document analysis failed, using fallback:', error)
       return {
         keyThemes: [
           'Professional presentation',
@@ -785,7 +951,7 @@ Format as JSON with specific fields for each analysis point.`
     const recommendations: string[] = []
 
     // Quality-based recommendations
-    const lowQualityDocs = documents.filter(doc => doc.quality.score < 70)
+    const lowQualityDocs = documents.filter(doc => doc.quality?.score < 70)
     if (lowQualityDocs.length > 0) {
       recommendations.push(
         `Review and improve quality of: ${lowQualityDocs.map(d => d.type).join(', ')}`
@@ -793,28 +959,40 @@ Format as JSON with specific fields for each analysis point.`
     }
 
     // Consistency recommendations
-    if (insights.consistencyScore < 80) {
+    if (insights.consistencyScore && insights.consistencyScore < 80) {
       recommendations.push(
         'Review documents for consistency in tone and messaging'
       )
     }
 
-    // Content recommendations
-    if (insights.riskFactors.length > 3) {
+    // Content recommendations - add null check for riskFactors
+    if (
+      insights.riskFactors &&
+      Array.isArray(insights.riskFactors) &&
+      insights.riskFactors.length > 3
+    ) {
       recommendations.push(
         'Consider addressing identified risk factors in client communication'
       )
     }
 
-    // Market alignment recommendations
-    if (insights.marketAlignment.includes('misaligned')) {
+    // Market alignment recommendations - add null check for marketAlignment
+    if (
+      insights.marketAlignment &&
+      insights.marketAlignment.includes('misaligned')
+    ) {
       recommendations.push(
         'Update market data and realign strategy with current conditions'
       )
     }
 
-    // Add strategic recommendations
-    recommendations.push(...insights.recommendedActions.slice(0, 3))
+    // Add strategic recommendations - add null check for recommendedActions
+    if (
+      insights.recommendedActions &&
+      Array.isArray(insights.recommendedActions)
+    ) {
+      recommendations.push(...insights.recommendedActions.slice(0, 3))
+    }
 
     return recommendations
   }

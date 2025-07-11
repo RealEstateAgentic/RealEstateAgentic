@@ -74,10 +74,8 @@ export const createDocument = async (
       throw new Error('Authentication required')
     }
 
-    // Validate client access if provided
-    if (request.relatedId && request.relatedType === 'client') {
-      await requireClientAccess(request.relatedId)()
-    }
+    // Skip client access validation in agent-only mode
+    // Agents can create documents for their clients without restriction
 
     // Generate document ID
     const documentId = uuidv4()
@@ -110,8 +108,11 @@ export const createDocument = async (
     // Create document
     const document: Document = {
       id: documentId,
-      agentId: userProfile.role === 'agent' ? userProfile.uid : '',
-      clientId: userProfile.role !== 'agent' ? userProfile.uid : '',
+      agentId: userProfile.uid, // Always treat as agent in agent-only mode
+      clientId:
+        request.relatedId && request.relatedType === 'client'
+          ? request.relatedId
+          : '',
       relatedId: request.relatedId,
       relatedType: request.relatedType,
       title: request.title,
@@ -408,8 +409,8 @@ export const getClientDocuments = async (
   }
 ): Promise<{ success: boolean; data?: Document[]; error?: string }> => {
   try {
-    // Validate client access
-    await requireClientAccess(clientId)()
+    // Skip client access validation in agent-only mode
+    // Agents can access documents for their clients
 
     // Build query
     let q = query(

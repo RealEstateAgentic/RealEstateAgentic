@@ -6,7 +6,7 @@
  * pricing trends, and negotiation insights without requiring real MLS access.
  */
 
-import { getOpenAIClient, AI_MODELS } from '../client'
+import { getGroqClient, AI_MODELS } from '../../groq/client'
 import type {
   MarketData,
   Comparable,
@@ -489,7 +489,7 @@ export class AIMarketAnalysisService {
     mockData: MockMarketResult,
     config: MockMarketConfig
   ): Promise<string> {
-    const client = getOpenAIClient()
+    const client = getGroqClient()
 
     const context = {
       location: config.location,
@@ -529,7 +529,7 @@ Use specific data points and maintain a professional, analytical tone suitable f
     subjectProperty: any,
     comparables: MockComparable[]
   ): Promise<ComparisonAnalysis> {
-    const client = getOpenAIClient()
+    const client = getGroqClient()
 
     const context = {
       subjectProperty,
@@ -575,7 +575,7 @@ Focus on data-driven analysis and specific dollar amounts.`
       buyerPosition: 'strong' | 'average' | 'weak'
     }
   ): Promise<string[]> {
-    const client = getOpenAIClient()
+    const client = getGroqClient()
 
     const context = {
       marketInsights: mockData.insights,

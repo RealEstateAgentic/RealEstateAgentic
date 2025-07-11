@@ -7,10 +7,10 @@
  */
 
 import {
-  getOpenAIClient,
+  getGroqClient,
   AI_MODELS,
   createRealEstateSystemPrompt,
-} from '../client'
+} from '../../groq/client'
 import type { Offer } from '../../../shared/types/offers'
 import type { MarketData } from '../../../shared/types/market-data'
 
@@ -698,7 +698,7 @@ export const analyzeSingleOffer = async (
     includeComparisons: false,
   }
 ): Promise<OfferAnalysisResult> => {
-  const client = getOpenAIClient()
+  const client = getGroqClient()
 
   const systemPrompt = `${createRealEstateSystemPrompt(
     'agent',
@@ -729,7 +729,7 @@ export const compareMultipleOffers = async (
     includeComparisons: true,
   }
 ): Promise<OfferAnalysisResult> => {
-  const client = getOpenAIClient()
+  const client = getGroqClient()
 
   const systemPrompt = `${createRealEstateSystemPrompt(
     'agent',
@@ -775,7 +775,7 @@ export const assessOfferStrength = async (
     includeComparisons: false,
   }
 ): Promise<OfferAnalysisResult> => {
-  const client = getOpenAIClient()
+  const client = getGroqClient()
 
   const systemPrompt = `${createRealEstateSystemPrompt(
     'agent',
@@ -807,7 +807,7 @@ export const analyzeFinancials = async (
     focusAreas: ['price', 'financing'],
   }
 ): Promise<OfferAnalysisResult> => {
-  const client = getOpenAIClient()
+  const client = getGroqClient()
 
   const systemPrompt = `${createRealEstateSystemPrompt(
     'agent',
@@ -839,7 +839,7 @@ export const assessRisks = async (
     focusAreas: ['risks'],
   }
 ): Promise<OfferAnalysisResult> => {
-  const client = getOpenAIClient()
+  const client = getGroqClient()
 
   const systemPrompt = `${createRealEstateSystemPrompt(
     'agent',
@@ -870,7 +870,7 @@ export const generateClientSummary = async (
     includeComparisons: false,
   }
 ): Promise<OfferAnalysisResult> => {
-  const client = getOpenAIClient()
+  const client = getGroqClient()
 
   const systemPrompt = `${createRealEstateSystemPrompt(
     'agent',

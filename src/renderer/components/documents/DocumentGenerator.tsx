@@ -18,6 +18,9 @@ import {
   Download,
   RefreshCw,
   Eye,
+  Edit,
+  Save,
+  X,
 } from 'lucide-react'
 import { DocumentOrchestrationService } from '../../../lib/openai/services/document-orchestrator'
 import {
@@ -290,20 +293,57 @@ interface DocumentPreviewProps {
   documents: any[]
   onDocumentSelect: (document: any) => void
   selectedDocument?: any
+  onDocumentUpdate?: (
+    documentId: string,
+    newContent: string,
+    newTitle: string
+  ) => void
 }
 
 const DocumentPreview: React.FC<DocumentPreviewProps> = ({
   documents,
   onDocumentSelect,
   selectedDocument,
+  onDocumentUpdate,
 }) => {
   const previewRef = useRef<HTMLDivElement>(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editedTitle, setEditedTitle] = useState('')
+  const [editedContent, setEditedContent] = useState('')
 
   useEffect(() => {
     if (selectedDocument && previewRef.current) {
       previewRef.current.scrollIntoView({ behavior: 'smooth' })
     }
   }, [selectedDocument])
+
+  // Initialize editing state when selectedDocument changes
+  useEffect(() => {
+    if (selectedDocument) {
+      setEditedTitle(selectedDocument.title || '')
+      setEditedContent(selectedDocument.content || '')
+      setIsEditing(false)
+    }
+  }, [selectedDocument])
+
+  const handleEdit = () => {
+    setIsEditing(true)
+  }
+
+  const handleSave = () => {
+    if (selectedDocument && onDocumentUpdate) {
+      onDocumentUpdate(selectedDocument.id, editedContent, editedTitle)
+      // Show success feedback (you could replace this with a toast notification)
+      console.log('✅ Document updated successfully:', editedTitle)
+    }
+    setIsEditing(false)
+  }
+
+  const handleCancel = () => {
+    setEditedTitle(selectedDocument?.title || '')
+    setEditedContent(selectedDocument?.content || '')
+    setIsEditing(false)
+  }
 
   if (documents.length === 0) {
     return (
@@ -337,14 +377,33 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         {selectedDocument ? (
           <div className="space-y-4" ref={previewRef}>
             <div className="flex justify-between items-start">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {selectedDocument.title}
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {selectedDocument.metadata.wordCount} words •{' '}
-                  {selectedDocument.metadata.readingTime} min read
-                </p>
+              <div className="flex-1 mr-4">
+                {isEditing ? (
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      value={editedTitle}
+                      onChange={e => setEditedTitle(e.target.value)}
+                      className="w-full text-lg font-semibold text-gray-900 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Document title"
+                    />
+                    <p className="text-sm text-gray-600">
+                      {editedContent.split(' ').length} words •{' '}
+                      {Math.ceil(editedContent.split(' ').length / 200)} min
+                      read
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      {selectedDocument.title}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {selectedDocument.metadata.wordCount} words •{' '}
+                      {selectedDocument.metadata.readingTime} min read
+                    </p>
+                  </div>
+                )}
               </div>
               <div className="flex items-center space-x-2">
                 <span
@@ -359,28 +418,73 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                   Quality: {selectedDocument.quality?.score ?? 'N/A'}%
                 </span>
                 <Button size="sm" variant="outline">
+                  <Download className="w-4 h-4 mr-1" />
                   Download
                 </Button>
-                <Button size="sm" variant="outline">
-                  Edit
-                </Button>
+                {isEditing ? (
+                  <>
+                    <Button size="sm" variant="outline" onClick={handleSave}>
+                      <Save className="w-4 h-4 mr-1" />
+                      Save
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={handleCancel}>
+                      <X className="w-4 h-4 mr-1" />
+                      Cancel
+                    </Button>
+                  </>
+                ) : (
+                  <Button size="sm" variant="outline" onClick={handleEdit}>
+                    <Edit className="w-4 h-4 mr-1" />
+                    Edit
+                  </Button>
+                )}
               </div>
             </div>
 
             <div className="prose prose-sm max-w-none">
-              {selectedDocument.content ? (
-                <MarkdownRenderer markdownContent={selectedDocument.content} />
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <p>
-                    Document content is empty. Please try regenerating the
-                    document.
-                  </p>
-                  <p className="text-sm mt-2">
-                    Debug info: Document type: {selectedDocument.type}, Title:{' '}
-                    {selectedDocument.title}
-                  </p>
+              {isEditing ? (
+                <div className="space-y-4">
+                  <div>
+                    <label
+                      htmlFor="document-content"
+                      className="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Document Content
+                    </label>
+                    <textarea
+                      id="document-content"
+                      value={editedContent}
+                      onChange={e => setEditedContent(e.target.value)}
+                      className="w-full h-96 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                      placeholder="Enter document content..."
+                    />
+                  </div>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-sm text-blue-800">
+                      <strong>Tip:</strong> You can use Markdown formatting in
+                      your content. Preview will be shown after saving.
+                    </p>
+                  </div>
                 </div>
+              ) : (
+                <>
+                  {selectedDocument.content ? (
+                    <MarkdownRenderer
+                      markdownContent={selectedDocument.content}
+                    />
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>
+                        Document content is empty. Please try regenerating the
+                        document.
+                      </p>
+                      <p className="text-sm mt-2">
+                        Debug info: Document type: {selectedDocument.type},
+                        Title: {selectedDocument.title}
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
@@ -696,6 +800,50 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
 
   const getSelectedDocuments = () => {
     return customDocuments.filter(d => d.enabled).map(d => d.type)
+  }
+
+  const handleDocumentUpdate = (
+    documentId: string,
+    newContent: string,
+    newTitle: string
+  ) => {
+    if (result) {
+      // Update the document in the results
+      const updatedDocuments = result.documents.map(doc => {
+        if (doc.id === documentId) {
+          return {
+            ...doc,
+            title: newTitle,
+            content: newContent,
+            metadata: {
+              ...doc.metadata,
+              wordCount: newContent.split(' ').length,
+              readingTime: Math.ceil(newContent.split(' ').length / 200),
+            },
+          }
+        }
+        return doc
+      })
+
+      setResult({
+        ...result,
+        documents: updatedDocuments,
+      })
+
+      // Update the selected document as well
+      if (selectedDocument && selectedDocument.id === documentId) {
+        setSelectedDocument({
+          ...selectedDocument,
+          title: newTitle,
+          content: newContent,
+          metadata: {
+            ...selectedDocument.metadata,
+            wordCount: newContent.split(' ').length,
+            readingTime: Math.ceil(newContent.split(' ').length / 200),
+          },
+        })
+      }
+    }
   }
 
   const generateDocuments = async () => {
@@ -1190,6 +1338,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
                   documents={result.documents}
                   selectedDocument={selectedDocument}
                   onDocumentSelect={setSelectedDocument}
+                  onDocumentUpdate={handleDocumentUpdate}
                 />
 
                 {result.recommendations.length > 0 && (

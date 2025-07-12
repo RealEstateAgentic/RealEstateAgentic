@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   X,
   Phone,
@@ -23,12 +23,22 @@ import {
   MessageCircle,
   TrendingUp,
   History,
+  Send,
+  CheckCircle,
+  AlertCircle,
+  Settings,
+  Star,
+  Users,
+  Save,
+  Loader2
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { DocumentGenerator } from '../documents/DocumentGenerator'
 import { LeadScoringDisplay } from '../shared/lead-scoring-display'
 import { EmailHistory } from '../shared/email-history'
 import type { AgentProfile } from '../../../shared/types'
+import { dummyData } from '../../data/dummy-data'
+import { gmailAuth } from '../../services/gmail-auth'
 
 // Define ClientProfile interface locally since it's not in shared types
 interface ClientProfile {
@@ -55,37 +65,14 @@ interface ClientProfile {
 }
 
 interface ClientModalProps {
-  client: {
-    id: number
-    name: string
-    email: string
-    phone: string
-    stage: string
-    subStatus: string
-    budget: string
-    location: string
-    leadSource: string
-    priority: string
-    dateAdded: string
-    lastContact: string | null
-    notes: string
-    favoritedProperties?: string[]
-    viewedProperties?: string[]
-    contractProperty?: string
-    contractDate?: string
-    inspectionDate?: string
-    appraisalDate?: string
-    closingDate?: string
-    soldPrice?: string
-    archivedDate?: string
-    archivedFromStage?: string
-  }
+  client: any
   onClose: () => void
-  onArchive?: (client: any) => void
-  onProgress?: (client: any) => void
-  onUnarchive?: (client: any) => void
+  onArchive: (clientId: number) => void
+  onProgress: (clientId: number, newStage: string) => void
+  onUnarchive?: (clientId: number) => void
   isArchiveMode?: boolean
   currentUser?: AgentProfile | null
+  navigate?: (path: string) => void
 }
 
 export function ClientModal({
@@ -96,17 +83,77 @@ export function ClientModal({
   onUnarchive,
   isArchiveMode = false,
   currentUser,
+  navigate,
 }: ClientModalProps) {
-  const [activeTab, setActiveTab] = useState('summary')
+  const [activeTab, setActiveTab] = useState(client.initialTab || 'summary')
+  const [selectedDocument, setSelectedDocument] = useState<any>(null)
   const [showDocumentGenerator, setShowDocumentGenerator] = useState(false)
+  const [isEditingDetails, setIsEditingDetails] = useState(false)
+  const [isSendingSurvey, setIsSendingSurvey] = useState(false)
+  const [isEditingContingencies, setIsEditingContingencies] = useState(false)
+  const [contingencyDates, setContingencyDates] = useState({
+    inspection: '2024-01-15',
+    appraisal: '2024-01-25',
+    finance: '2024-02-01'
+  })
+  const [contingencyDetails, setContingencyDetails] = useState('')
+  const [contractDetails, setContractDetails] = useState({
+    contractPrice: '',
+    sellerAgent: '',
+    closingDate: '',
+    contractDate: ''
+  })
+  const [editableDetails, setEditableDetails] = useState({
+    name: client.name,
+    email: client.email,
+    phone: client.phone,
+    budget: client.budget,
+    location: client.location,
+    priority: client.priority,
+    notes: client.notes
+  })
+
+  // Sample documents for buyer
+  const [documents, setDocuments] = useState([
+    {
+      id: 1,
+      title: 'Buyer Survey Results',
+      type: 'PDF',
+      size: '2.1 MB',
+      uploadDate: '2024-01-10',
+      description: 'Initial buyer questionnaire responses',
+      tags: 'survey, initial'
+    },
+    {
+      id: 2,
+      title: 'Generated Briefing',
+      type: 'PDF',
+      size: '1.5 MB',
+      uploadDate: '2024-01-08',
+      description: 'AI-generated client briefing document',
+      tags: 'briefing, ai-generated'
+    }
+  ])
+
+  useEffect(() => {
+    if (client.initialDocumentId && activeTab === 'documents') {
+      const doc = documents.find(d => d.id === parseInt(client.initialDocumentId || '0'))
+      if (doc) {
+        setSelectedDocument({
+          ...doc,
+          content: "This is the document content that would be displayed in a scrollable modal."
+        })
+      }
+    }
+  }, [client.initialDocumentId, activeTab, documents])
 
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return 'Not set'
     const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
       day: 'numeric',
-      year: 'numeric',
+      year: 'numeric'
     })
   }
 
@@ -151,55 +198,140 @@ export function ClientModal({
       case 'closed':
         return 'Closed'
       default:
-        return stage
+        return stage.replace('_', ' ')
     }
   }
 
   const handleArchive = () => {
     if (onArchive) {
-      onArchive(client)
+      onArchive(client.id)
     }
   }
 
   const handleProgress = () => {
     if (onProgress) {
-      onProgress(client)
+      onProgress(client.id, client.stage)
     }
   }
 
   const handleUnarchive = () => {
     if (onUnarchive) {
-      onUnarchive(client)
+      onUnarchive(client.id)
     }
   }
 
-  const handleGenerateOfferCoverLetter = () => {
-    if (!currentUser) {
-      alert('Please make sure you are logged in to generate documents.')
-      return
-    }
-
-    // Debug logging
-    console.log('Client data:', client)
-    console.log('Current user data:', currentUser)
-
-    // Validate that currentUser has required structure
-    if (!currentUser.displayName) {
-      alert(
-        'Agent profile is incomplete. Please update your profile before generating documents.'
-      )
-      return
-    }
-
+  const handleGenerateDocuments = () => {
     setShowDocumentGenerator(true)
   }
 
-  // Create adapter for AgentProfile to match DocumentGenerator expectations
+  const handleSendSurvey = async () => {
+    if (isSendingSurvey) return
+    
+    setIsSendingSurvey(true)
+    
+    try {
+      console.log('Sending survey to:', client.name, client.email)
+      
+      // Check if Gmail is authenticated
+      if (!gmailAuth.isAuthenticated()) {
+        console.log('🔑 Gmail not authenticated, starting OAuth flow...')
+        
+        const authResult = await gmailAuth.authenticate()
+        
+        if (!authResult.success) {
+          throw new Error(`Gmail authentication failed: ${authResult.error}`)
+        }
+        
+        console.log('✅ Gmail authenticated:', authResult.userEmail)
+      }
+      
+      // Import and use the automation service with Gmail API
+      const { startBuyerWorkflowWithGmail } = await import('../../services/automation')
+      
+      const result = await startBuyerWorkflowWithGmail({
+        agentId: 'agent-1', // TODO: Get actual agent ID
+        buyerEmail: client.email,
+        buyerName: client.name,
+        buyerPhone: client.phone,
+        senderEmail: gmailAuth.getUserEmail() || undefined
+      })
+      
+      if (result.success) {
+        alert(`✅ Survey sent successfully to ${client.name} from your Gmail account!\n\nForm URL: ${result.formUrl}`)
+        console.log('Survey sent successfully:', result)
+      } else {
+        throw new Error('Failed to send survey')
+      }
+    } catch (error) {
+      console.error('Error sending survey:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      alert(`❌ Failed to send survey to ${client.name}.\n\nError: ${errorMessage}`)
+    } finally {
+      setIsSendingSurvey(false)
+    }
+  }
+
+  const handleSaveContingencies = () => {
+    console.log('Saving contingency dates:', contingencyDates)
+    console.log('Additional details:', contingencyDetails)
+    console.log('Contract details:', contractDetails)
+    
+    // Task 6.5: Auto-create calendar events from contingency dates
+    try {
+      // Create calendar events for each contingency deadline
+      const events = [
+        {
+          title: 'Inspection Period Deadline',
+          date: contingencyDates.inspection,
+          time: '17:00', // 5:00 PM
+          description: `Inspection period deadline for buyer ${client.name}`,
+          clientType: 'buyer',
+          clientId: client.id.toString(),
+          priority: 'high',
+          eventType: 'inspection_deadline'
+        },
+        {
+          title: 'Appraisal Deadline',
+          date: contingencyDates.appraisal,
+          time: '17:00',
+          description: `Appraisal deadline for buyer ${client.name}`,
+          clientType: 'buyer',
+          clientId: client.id.toString(),
+          priority: 'high',
+          eventType: 'appraisal_deadline'
+        },
+        {
+          title: 'Financing Deadline',
+          date: contingencyDates.finance,
+          time: '17:00',
+          description: `Financing deadline for buyer ${client.name}`,
+          clientType: 'buyer',
+          clientId: client.id.toString(),
+          priority: 'high',
+          eventType: 'financing_deadline'
+        }
+      ]
+      
+      console.log('Auto-created calendar events for contingency deadlines:', events)
+      // In a real application, these would be saved to the calendar system
+      
+    } catch (error) {
+      console.error('Error creating calendar events:', error)
+    }
+    
+    setIsEditingContingencies(false)
+  }
+
+  const handleRepairEstimator = () => {
+    if (navigate) {
+      navigate('/repair-estimator')
+    }
+  }
+
   const createAgentProfileAdapter = (): any => {
     if (!currentUser) return null
 
     try {
-      // Parse agent name
       const nameParts = (currentUser.displayName || '').trim().split(' ')
       const firstName = nameParts[0] || 'Agent'
       const lastName = nameParts.slice(1).join(' ') || 'Name'
@@ -237,311 +369,164 @@ export function ClientModal({
 
   const handleDocumentGenerated = (result: any) => {
     console.log('Document generated:', result)
-    // Don't immediately close the modal - let the user review the generated documents
-    // The user can manually close the modal when they're done
-
-    // Optional: Show a success notification or update UI to indicate completion
-    // For now, just log the result and keep the modal open
+    setShowDocumentGenerator(false)
   }
 
   const handleCancelDocumentGeneration = () => {
     setShowDocumentGenerator(false)
   }
 
-  // Handler for Download Meeting Materials
-  const handleDownloadMeetingMaterials = () => {
-    if (!currentUser) {
-      alert('Please make sure you are logged in to access meeting materials.')
-      return
-    }
-
-    if (!currentUser.displayName) {
-      alert(
-        'Agent profile is incomplete. Please update your profile before generating documents.'
-      )
-      return
-    }
-
-    // Open document generator with client education package
-    setShowDocumentGenerator(true)
+  const handleSaveDetails = () => {
+    // In a real application, this would update the client data
+    setIsEditingDetails(false)
   }
 
-  // Handler for Add Client Details
-  const handleAddClientDetails = () => {
-    alert(
-      `Opening client details editor for ${client.name}. This would navigate to a detailed client information form.`
-    )
-    // TODO: Navigate to client details editor or open modal
+  const handleCancelEditDetails = () => {
+    setEditableDetails({
+      name: client.name,
+      email: client.email,
+      phone: client.phone,
+      budget: client.budget,
+      location: client.location,
+      priority: client.priority,
+      notes: client.notes
+    })
+    setIsEditingDetails(false)
   }
 
-  // Handler for Compare Properties
-  const handleCompareProperties = () => {
-    alert(
-      `Opening property comparison tool for ${client.name}. This would show favorited properties side-by-side with market analysis.`
-    )
-    // TODO: Navigate to property comparison interface
-  }
-
-  // Handler for Upload Inspection Report
-  const handleUploadInspectionReport = () => {
-    alert(
-      `Redirecting to repair estimator to upload inspection report for ${client.name}.`
-    )
-    // TODO: Navigate to repair estimator with client context
-    // window.location.pathname = '/repair-estimator'
-  }
-
-  // Handler for Generate Cost Analysis
-  const handleGenerateCostAnalysis = () => {
-    if (!currentUser) {
-      alert('Please make sure you are logged in to generate cost analysis.')
-      return
-    }
-
-    if (!currentUser.displayName) {
-      alert(
-        'Agent profile is incomplete. Please update your profile before generating documents.'
-      )
-      return
-    }
-
-    // Open document generator for cost analysis
-    setShowDocumentGenerator(true)
-  }
-
-  // Handler for Draft Repair Request
-  const handleDraftRepairRequest = () => {
-    if (!currentUser) {
-      alert('Please make sure you are logged in to draft repair requests.')
-      return
-    }
-
-    if (!currentUser.displayName) {
-      alert(
-        'Agent profile is incomplete. Please update your profile before generating documents.'
-      )
-      return
-    }
-
-    // Open document generator for repair request documents
-    setShowDocumentGenerator(true)
-  }
-
-  // Handler for Suggest Thank You Gift
-  const handleSuggestThankYouGift = () => {
-    alert(
-      `AI will analyze ${client.name}'s preferences and transaction details to suggest personalized thank you gifts. This feature integrates with gift recommendation services.`
-    )
-    // TODO: Implement AI-powered gift suggestion workflow
-  }
-
-  // Handler for Start Post-Closing Follow-up
-  const handleStartPostClosingFollowup = () => {
-    alert(
-      `Starting automated post-closing follow-up sequence for ${client.name}. This includes satisfaction surveys, referral requests, and nurture campaigns.`
-    )
-    // TODO: Trigger post-closing automation workflow
-  }
-
-  // Handler for Request Referral
-  const handleRequestReferral = () => {
-    alert(
-      `Opening referral request interface for ${client.name}. This would generate personalized referral request messages and track referral outcomes.`
-    )
-    // TODO: Open referral request modal or workflow
-  }
-
-  // Handler for See Full Summary
-  const handleSeeFullSummary = () => {
-    alert(
-      `Opening full client summary for ${client.name}. This would show a comprehensive AI-generated summary of all client interactions and data.`
-    )
-    // TODO: Navigate to full summary view
-  }
-
-  // Handler for Download Full Summary
-  const handleDownloadFullSummary = () => {
-    alert(
-      `Downloading full client summary for ${client.name}. This would generate and download a PDF report of all client data.`
-    )
-    // TODO: Generate and download summary PDF
-  }
-
-  // Handler for View Document
   const handleViewDocument = (document: any) => {
-    alert(
-      `Opening document viewer for "${document.title}". This would display the document content in a modal or new window.`
-    )
-    // TODO: Open document viewer modal
+    setSelectedDocument({
+      ...document,
+      content: "This is the document content that would be displayed in a scrollable modal."
+    })
   }
 
-  // Handler for Download Document
   const handleDownloadDocument = (document: any) => {
-    alert(
-      `Downloading "${document.title}". This would trigger the file download.`
-    )
-    // TODO: Trigger file download
+    console.log('Downloading document:', document.title)
   }
 
-  // Handler for Rename Document
-  const handleRenameDocument = (document: any) => {
-    const newName = prompt(`Enter new name for "${document.title}":`, document.title)
-    if (newName && newName.trim()) {
-      alert(
-        `Renaming "${document.title}" to "${newName}". This would update the document name in the database.`
-      )
-      // TODO: Update document name in database
-    }
+  const handleSeeFullSummary = () => {
+    console.log('See full summary clicked')
   }
 
-  // Handler for Email Thread Click
+  const handleDownloadFullSummary = () => {
+    console.log('Download full summary clicked')
+  }
+
   const handleEmailThreadClick = (thread: any) => {
-    alert(
-      `Opening email thread "${thread.subject}" with ${thread.messageCount} messages. This would display the full email conversation in a modal.`
-    )
-    // TODO: Open email thread modal
+    console.log('Email thread clicked:', thread)
   }
 
-  // Convert client data to ClientProfile format for DocumentGenerator
   const createClientProfile = (): ClientProfile => {
-    try {
-      // Safely parse client name
-      const nameParts = (client.name || '').trim().split(' ')
-      const firstName = nameParts[0] || 'Client'
-      const lastName = nameParts.slice(1).join(' ') || 'Name'
+    const nameParts = client.name.trim().split(' ')
+    const firstName = nameParts[0] || 'Client'
+    const lastName = nameParts.slice(1).join(' ') || 'Name'
 
-      // Safely parse location
-      const locationParts = (client.location || '').split(',')
-      const city = locationParts[0]?.trim() || 'Unknown City'
-      const state = locationParts[1]?.trim() || 'Unknown State'
-
-      return {
-        id: client.id.toString(),
-        name: client.name || 'Unknown Client',
-        email: client.email || 'unknown@email.com',
-        phone: client.phone || 'Unknown Phone',
-        clientType: 'buyer',
-        personalInfo: {
-          firstName,
-          lastName,
-          city,
-          state,
-          zipCode: '', // Not available in current client data
-        },
-        preferences: {
-          timeframe: client.stage || 'unknown',
-          budget: client.budget || 'Not specified',
-          location: client.location || 'Not specified',
-        },
-        notes: client.notes || '',
-        createdAt: client.dateAdded || new Date().toISOString(),
-        updatedAt:
-          client.lastContact || client.dateAdded || new Date().toISOString(),
-      }
-    } catch (error) {
-      console.error('Error creating client profile:', error)
-      // Return a safe fallback profile
-      return {
-        id: client.id.toString(),
-        name: client.name || 'Unknown Client',
-        email: client.email || 'unknown@email.com',
-        phone: client.phone || 'Unknown Phone',
-        clientType: 'buyer',
-        personalInfo: {
-          firstName: 'Client',
-          lastName: 'Name',
-          city: 'Unknown City',
-          state: 'Unknown State',
-          zipCode: '',
-        },
-        preferences: {
-          timeframe: 'unknown',
-          budget: 'Not specified',
-          location: 'Not specified',
-        },
-        notes: '',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }
+    return {
+      id: client.id.toString(),
+      name: client.name,
+      email: client.email,
+      phone: client.phone,
+      clientType: 'buyer',
+      personalInfo: {
+        firstName,
+        lastName,
+        city: 'Unknown City',
+        state: 'Unknown State',
+        zipCode: 'Unknown Zip',
+      },
+      preferences: {
+        timeframe: 'Not specified',
+        budget: client.budget,
+        location: client.location,
+      },
+      notes: client.notes,
+      createdAt: client.dateAdded,
+      updatedAt: client.lastContact || client.dateAdded,
     }
+  }
+
+  const getVisibleTabs = () => {
+    const baseTabs = [
+      { id: 'ai_lead_scoring', label: 'AI Lead Scoring', icon: TrendingUp },
+      { id: 'summary', label: 'Summary', icon: null },
+    ]
+
+    const stageSpecificTabs = []
+    
+    // Add Contingencies tab only for Under Contract stage
+    if (client.stage === 'under_contract') {
+      stageSpecificTabs.push({ id: 'contingencies', label: 'Contingencies', icon: Clock })
+    }
+
+    const alwaysVisibleTabs = [
+      { id: 'documents', label: 'Documents and Content', icon: FolderOpen },
+      { id: 'calendar', label: 'Calendar', icon: CalendarDays },
+    ]
+
+    return [...baseTabs, ...stageSpecificTabs, ...alwaysVisibleTabs]
   }
 
   const getStageActions = () => {
     switch (client.stage) {
       case 'new_leads':
         return (
-          <div className="flex gap-2">
-            <Button
-              className="bg-[#A9D09E] hover:bg-[#A9D09E]/90"
-              onClick={handleDownloadMeetingMaterials}
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              onClick={handleSendSurvey}
+              disabled={isSendingSurvey}
+              className="bg-[#3B7097] hover:bg-[#3B7097]/90"
             >
-              <FileText className="size-4 mr-2" />
-              Download Meeting Materials
+              <Send className="size-4 mr-2" />
+              {isSendingSurvey ? 'Sending...' : 'Send Survey'}
             </Button>
-            <Button variant="outline" onClick={handleAddClientDetails}>
-              <Plus className="size-4 mr-2" />
-              Add Client Details
+            <Button variant="outline">
+              <Download className="size-4 mr-2" />
+              Download Meeting Materials
             </Button>
           </div>
         )
       case 'active_search':
         return (
-          <div className="flex gap-2">
-            <Button
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              onClick={handleGenerateDocuments}
               className="bg-[#3B7097] hover:bg-[#3B7097]/90"
-              onClick={handleGenerateOfferCoverLetter}
             >
               <FileText className="size-4 mr-2" />
-              Generate Offer Cover Letter
-            </Button>
-            <Button variant="outline" onClick={handleCompareProperties}>
-              <Home className="size-4 mr-2" />
-              Compare Properties
-            </Button>
-            <Button variant="outline" onClick={handleAddClientDetails}>
-              <Plus className="size-4 mr-2" />
-              Add Client Details
+              Generate Documents
             </Button>
           </div>
         )
       case 'under_contract':
         return (
-          <div className="flex gap-2">
-            <Button
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              onClick={handleRepairEstimator}
               className="bg-[#3B7097] hover:bg-[#3B7097]/90"
-              onClick={handleUploadInspectionReport}
+            >
+              Repair Estimator
+            </Button>
+            <Button 
+              onClick={handleGenerateDocuments}
+              className="bg-[#3B7097] hover:bg-[#3B7097]/90"
             >
               <FileText className="size-4 mr-2" />
-              Upload Inspection Report
+              Generate Documents
             </Button>
-            <Button variant="outline" onClick={handleGenerateCostAnalysis}>
-              <Download className="size-4 mr-2" />
-              Generate Cost Analysis
-            </Button>
-            <Button variant="outline" onClick={handleDraftRepairRequest}>
-              <FileText className="size-4 mr-2" />
-              Draft Repair Request
+            <Button 
+              onClick={() => setIsEditingContingencies(true)}
+              className="bg-[#3B7097] hover:bg-[#3B7097]/90"
+            >
+              <Edit className="size-4 mr-2" />
+              Edit Contingencies
             </Button>
           </div>
         )
       case 'closed':
         return (
-          <div className="flex gap-2">
-            <Button
-              className="bg-[#A9D09E] hover:bg-[#A9D09E]/90"
-              onClick={handleSuggestThankYouGift}
-            >
-              <FileText className="size-4 mr-2" />
-              Suggest Thank You Gift
-            </Button>
-            <Button variant="outline" onClick={handleStartPostClosingFollowup}>
-              <Mail className="size-4 mr-2" />
-              Start Post-Closing Follow-up
-            </Button>
-            <Button variant="outline" onClick={handleRequestReferral}>
-              <Phone className="size-4 mr-2" />
-              Request Referral
-            </Button>
+          <div className="flex flex-wrap gap-2">
+            {/* No buttons for closed stage per requirements */}
           </div>
         )
       default:
@@ -555,35 +540,13 @@ export function ClientModal({
         return (
           <div className="space-y-4">
             <div className="bg-[#75BDE0]/10 p-4 rounded-lg border border-[#75BDE0]/30">
-              <h4 className="font-medium text-gray-800 mb-2">
-                Lead Information
-              </h4>
+              <h4 className="font-medium text-gray-800 mb-2">Survey Status</h4>
               <div className="space-y-2 text-sm">
-                <div>
-                  <strong>Source:</strong> {client.leadSource}
-                </div>
-                <div>
-                  <strong>Priority:</strong> {client.priority}
-                </div>
-                <div>
-                  <strong>Date Added:</strong> {formatDate(client.dateAdded)}
-                </div>
-                <div>
-                  <strong>Last Contact:</strong>{' '}
-                  {formatDate(client.lastContact)}
-                </div>
+                <div><strong>Survey Status:</strong> Pending</div>
+                <div><strong>Lead Source:</strong> {client.leadSource}</div>
+                <div><strong>Priority:</strong> {client.priority}</div>
+                <div><strong>Date Added:</strong> {formatDate(client.dateAdded)}</div>
               </div>
-            </div>
-            <div className="bg-[#c05e51]/10 p-4 rounded-lg border border-[#c05e51]/30">
-              <h4 className="font-medium text-gray-800 mb-2">AI Briefing</h4>
-              <p className="text-sm text-gray-700">
-                {client.subStatus === 'to_initiate_contact' &&
-                  'Schedule initial consultation call'}
-                {client.subStatus === 'awaiting_survey' &&
-                  'Send buyer survey form'}
-                {client.subStatus === 'review_survey' &&
-                  'Review submitted survey and prepare briefing'}
-              </p>
             </div>
           </div>
         )
@@ -591,118 +554,186 @@ export function ClientModal({
         return (
           <div className="space-y-4">
             <div className="bg-[#A9D09E]/10 p-4 rounded-lg border border-[#A9D09E]/30">
-              <h4 className="font-medium text-gray-800 mb-2">
-                Property Search
-              </h4>
+              <h4 className="font-medium text-gray-800 mb-2">Search Progress</h4>
               <div className="space-y-2 text-sm">
-                <div>
-                  <strong>Favorited Properties:</strong>{' '}
-                  {client.favoritedProperties?.length || 0}
-                </div>
-                <div>
-                  <strong>Viewed Properties:</strong>{' '}
-                  {client.viewedProperties?.length || 0}
-                </div>
-                <div>
-                  <strong>Status:</strong> {client.subStatus.replace('_', ' ')}
-                </div>
+                <div><strong>Properties Viewed:</strong> 5</div>
+                <div><strong>Favorites:</strong> 2</div>
+                <div><strong>Offers Made:</strong> 1</div>
               </div>
             </div>
-            {client.favoritedProperties &&
-              client.favoritedProperties.length > 0 && (
-                <div className="bg-[#F6E2BC]/50 p-4 rounded-lg border border-[#F6E2BC]">
-                  <h4 className="font-medium text-gray-800 mb-2">
-                    Favorited Properties
-                  </h4>
-                  <div className="space-y-1">
-                    {client.favoritedProperties.map((property, index) => (
-                      <div key={index} className="text-sm text-gray-700">
-                        • {property}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
           </div>
         )
       case 'under_contract':
         return (
           <div className="space-y-4">
-            {/* Transaction Timeline */}
-            <div className="bg-[#c05e51]/10 p-4 rounded-lg border border-[#c05e51]/30">
-              <h4 className="font-medium text-gray-800 mb-2">
-                Contract Details
-              </h4>
+            <div className="bg-[#F6E2BC]/30 p-4 rounded-lg border border-[#F6E2BC]/50">
+              <h4 className="font-medium text-gray-800 mb-2">Contract Status</h4>
               <div className="space-y-2 text-sm">
-                <div>
-                  <strong>Property:</strong> {client.contractProperty}
+                <div><strong>Contract Price:</strong> $435,000</div>
+                <div><strong>Closing Date:</strong> {formatDate('2024-02-15')}</div>
+                <div><strong>Contract Date:</strong> {formatDate('2024-01-05')}</div>
+              </div>
+            </div>
+          </div>
+        )
+      case 'closed':
+        return (
+          <div className="space-y-4">
+            <div className="bg-[#A9D09E]/10 p-4 rounded-lg border border-[#A9D09E]/30">
+              <h4 className="font-medium text-gray-800 mb-2">Closing Summary</h4>
+              <div className="space-y-2 text-sm">
+                <div><strong>Final Purchase Price:</strong> $432,000</div>
+                <div><strong>Closing Date:</strong> {formatDate('2024-02-12')}</div>
+                <div><strong>Days to Close:</strong> 38 days</div>
+              </div>
+            </div>
+          </div>
+        )
+      default:
+        return (
+          <div className="space-y-4">
+            <div className="text-gray-500">No stage-specific content available.</div>
+          </div>
+        )
+    }
+  }
+
+  // Get next event for this client
+  const getNextEvent = () => {
+    const clientEvents = dummyData.calendarEvents.filter(event => 
+      event.clientType === 'buyer' && event.clientId === client.id.toString()
+    )
+    const today = new Date()
+    const upcomingEvents = clientEvents.filter(event => {
+      const eventDate = new Date(event.date)
+      return eventDate >= today
+    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    
+    return upcomingEvents.length > 0 ? upcomingEvents[0] : null
+  }
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'summary':
+        if (client.stage === 'closed') {
+          // Phase 7: Closed stage specific design matching seller implementation
+          return (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Purchase Summary Widget */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <Home className="size-5 text-green-600 mr-2" />
+                  <h3 className="font-semibold text-gray-800">Purchase Summary</h3>
                 </div>
-                <div>
-                  <strong>Contract Date:</strong>{' '}
-                  {formatDate(client.contractDate)}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Final Purchase Price:</span>
+                    <span className="text-sm text-gray-900">$432,000</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Closing Date:</span>
+                    <span className="text-sm text-gray-900">February 12, 2024</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Days to Close:</span>
+                    <span className="text-sm text-gray-900">45 days</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Property Address:</span>
+                    <span className="text-sm text-gray-900">123 Elm Street</span>
+                  </div>
                 </div>
-                <div>
-                  <strong>Inspection Date:</strong>{' '}
-                  {formatDate(client.inspectionDate)}
+              </div>
+
+              {/* Buyer Motivation Widget - updated for closed */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <TrendingUp className="size-5 text-green-600 mr-2" />
+                  <h3 className="font-semibold text-gray-800">Buyer Motivation</h3>
                 </div>
-                <div>
-                  <strong>Appraisal Date:</strong>{' '}
-                  {formatDate(client.appraisalDate)}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Original Timeline:</span>
+                    <span className="text-sm text-gray-900">Next 3-6 months</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Reason for Buying:</span>
+                    <span className="text-sm text-gray-900">First-time buyer</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Original Budget:</span>
+                    <span className="text-sm text-gray-900">{client.budget}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Priority Level:</span>
+                    <span className="text-sm text-gray-900">{client.priority}</span>
+                  </div>
                 </div>
-                <div>
-                  <strong>Closing Date:</strong>{' '}
-                  {formatDate(client.closingDate)}
+              </div>
+
+              {/* Recent Notes Widget */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <MessageCircle className="size-5 text-orange-600 mr-2" />
+                  <h3 className="font-semibold text-gray-800">Final Notes</h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="text-sm text-gray-700">
+                    {client.notes || 'Successful home purchase completed. Client expressed satisfaction with the process and property selection.'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Post-Closing Status Widget */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <CheckCircle className="size-5 text-green-600 mr-2" />
+                  <h3 className="font-semibold text-gray-800">Post-Closing Status</h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Keys Received</span>
+                    <CheckCircle className="size-4 text-green-600" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Final Walkthrough</span>
+                    <CheckCircle className="size-4 text-green-600" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Utilities Connected</span>
+                    <CheckCircle className="size-4 text-green-600" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Move-in Ready</span>
+                    <CheckCircle className="size-4 text-green-600" />
+                  </div>
                 </div>
               </div>
             </div>
-
-            {/* Option Period Deadline */}
-            <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-              <h4 className="font-medium text-red-800 mb-2 flex items-center">
-                <Clock className="size-4 mr-2" />
-                Option Period Deadline
-              </h4>
-              <p className="text-sm text-red-700">
-                Option period expires: <strong>{formatDate(client.inspectionDate)}</strong>
-              </p>
-            </div>
-
-            {/* Inspection Hub */}
-            <div className="bg-[#A9D09E]/10 p-4 rounded-lg border border-[#A9D09E]/30">
-              <h4 className="font-medium text-gray-800 mb-2">Inspection Hub</h4>
-              <p className="text-sm text-gray-600 mb-3">Manage inspection reports and repair estimates</p>
-              <Button 
-                onClick={handleUploadInspectionReport}
-                className="bg-[#3B7097] hover:bg-[#3B7097]/90"
-              >
-                <Upload className="size-4 mr-2" />
-                Upload Inspection Report
-              </Button>
-            </div>
-
-            {/* Key Contacts Widget */}
-            <div className="bg-[#F6E2BC]/10 p-4 rounded-lg border border-[#F6E2BC]/30">
-              <h4 className="font-medium text-gray-800 mb-3">Key Contacts</h4>
+          )
+        }
+        
+        // Regular summary for other stages
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Widget A: Client Details */}
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="flex items-center mb-4">
+                <Home className="size-5 text-blue-600 mr-2" />
+                <h3 className="font-semibold text-gray-800">Client Details</h3>
+              </div>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-sm">Lender</div>
-                    <div className="text-xs text-gray-500">Not assigned</div>
-                  </div>
-                  <Button size="sm" variant="outline">
-                    <User className="size-3 mr-1" />
-                    Add
-                  </Button>
+                  <span className="text-sm font-medium text-gray-700">Looking for:</span>
+                  <span className="text-sm text-gray-900">Single Family Home</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-sm">Title/Escrow Officer</div>
-                    <div className="text-xs text-gray-500">Not assigned</div>
-                  </div>
-                  <Button size="sm" variant="outline">
-                    <User className="size-3 mr-1" />
-                    Add
-                  </Button>
+                  <span className="text-sm font-medium text-gray-700">Zipcode(s):</span>
+                  <span className="text-sm text-gray-900">{client.location}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700">Property Type Desired:</span>
+                  <span className="text-sm text-gray-900">Single Family</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
@@ -718,90 +749,7 @@ export function ClientModal({
             </div>
           </div>
         )
-      default:
-        return (
-          <div className="space-y-4">
-            <div className="bg-[#A9D09E]/10 p-4 rounded-lg border border-[#A9D09E]/30">
-              <h4 className="font-medium text-gray-800 mb-2">Stage Information</h4>
-              <div className="space-y-2 text-sm">
-                <div><strong>Current Stage:</strong> {getStageName(client.stage)}</div>
-                <div><strong>Status:</strong> {client.subStatus.replace('_', ' ')}</div>
-              </div>
-            </div>
-          </div>
-        )
-    }
-  }
 
-  // Define which tabs should be visible based on client stage
-  const getVisibleTabs = () => {
-    const baseTabs = [
-      { id: 'summary', label: 'Client Summary', icon: null },
-      { id: 'stage_details', label: 'Stage Details', icon: null },
-      { id: 'ai_lead_scoring', label: 'AI Lead Scoring', icon: TrendingUp },
-      { id: 'email_history', label: 'Email History', icon: History },
-    ]
-
-    const stageSpecificTabs = []
-    
-    // Add Offers tab only for Active Search stage
-    if (client.stage === 'active_search') {
-      stageSpecificTabs.push({ id: 'offers', label: 'Offers', icon: DollarSign })
-    }
-    
-    // Add Contingencies tab only for Under Contract stage
-    if (client.stage === 'under_contract') {
-      stageSpecificTabs.push({ id: 'contingencies', label: 'Contingencies', icon: Clock })
-    }
-
-    const alwaysVisibleTabs = [
-      { id: 'content', label: 'Content', icon: FolderOpen },
-      { id: 'calendar', label: 'Calendar', icon: CalendarDays },
-    ]
-
-    return [...baseTabs, ...stageSpecificTabs, ...alwaysVisibleTabs]
-  }
-
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'summary':
-        return (
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-medium text-gray-800 mb-2">
-                Client Notes
-              </h3>
-              <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
-                {client.notes || 'No notes available'}
-              </p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-800 mb-2">
-                Client Details
-              </h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <strong>Lead Source:</strong> {client.leadSource}
-                </div>
-                <div>
-                  <strong>Priority:</strong> {client.priority}
-                </div>
-                <div>
-                  <strong>Date Added:</strong>{' '}
-                  {formatDate(client.dateAdded)}
-                </div>
-                <div>
-                  <strong>Last Contact:</strong>{' '}
-                  {formatDate(client.lastContact)}
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-      
-      case 'stage_details':
-        return getStageSpecificContent()
-      
       case 'ai_lead_scoring':
         return (
           <LeadScoringDisplay
@@ -809,220 +757,238 @@ export function ClientModal({
             clientName={client.name}
           />
         )
-      
-      case 'offers':
-        return (
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-medium text-gray-800 mb-3">Client Offers</h3>
-            </div>
-            <div className="space-y-3">
-              {/* Sample offer data - in real app this would come from database */}
-              <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-medium text-gray-800">123 Main Street</h4>
-                    <p className="text-sm text-gray-600">Offer Price: $450,000</p>
-                    <p className="text-xs text-gray-500">Submitted: March 15, 2024</p>
-                  </div>
-                  <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Pending</span>
-                </div>
-              </div>
-              <div className="text-sm text-gray-500 text-center py-4">
-                No additional offers found for this client.
-              </div>
-            </div>
-          </div>
-        )
-      
+
       case 'contingencies':
         return (
           <div className="space-y-4">
-            <div>
-              <h3 className="font-medium text-gray-800 mb-3">Transaction Contingencies</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Track and manage all major contingencies for this transaction.
-              </p>
-              <h4 className="font-medium text-gray-800 mb-2">
-                Closed Transaction
-              </h4>
-              <div className="space-y-2 text-sm">
-                <div>
-                  <strong>Property:</strong> {client.contractProperty}
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-gray-800">Buyer Contingencies</h3>
+              {isEditingContingencies && (
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={handleSaveContingencies}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Save className="size-4 mr-2" />
+                    Save
+                  </Button>
+                  <Button
+                    onClick={() => setIsEditingContingencies(false)}
+                    variant="outline"
+                  >
+                    Cancel
+                  </Button>
                 </div>
+              )}
+            </div>
+            
+            {/* Contract Details Section */}
+            <div className="mb-6 p-4 bg-[#3B7097]/5 rounded-lg border border-[#3B7097]/20">
+              <h4 className="font-semibold text-gray-800 mb-4">Contract Details</h4>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <strong>Sale Price:</strong> {client.soldPrice}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Contract Price</label>
+                  {isEditingContingencies ? (
+                    <input
+                      type="text"
+                      value={contractDetails.contractPrice}
+                      onChange={(e) => setContractDetails({...contractDetails, contractPrice: e.target.value})}
+                      placeholder="e.g., $435,000"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
+                    />
+                  ) : (
+                    <div className="text-sm text-gray-800 font-medium">
+                      {contractDetails.contractPrice || <span className="text-gray-500 italic">Not entered</span>}
+                    </div>
+                  )}
                 </div>
+                
                 <div>
-                  <strong>Closing Date:</strong>{' '}
-                  {formatDate(client.closingDate)}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Seller Agent</label>
+                  {isEditingContingencies ? (
+                    <input
+                      type="text"
+                      value={contractDetails.sellerAgent}
+                      onChange={(e) => setContractDetails({...contractDetails, sellerAgent: e.target.value})}
+                      placeholder="e.g., Jane Smith, ABC Realty"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
+                    />
+                  ) : (
+                    <div className="text-sm text-gray-800 font-medium">
+                      {contractDetails.sellerAgent || <span className="text-gray-500 italic">Not entered</span>}
+                    </div>
+                  )}
                 </div>
+                
                 <div>
-                  <strong>Status:</strong> {client.subStatus.replace('_', ' ')}
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Closing Date</label>
+                  {isEditingContingencies ? (
+                    <input
+                      type="date"
+                      value={contractDetails.closingDate}
+                      onChange={(e) => setContractDetails({...contractDetails, closingDate: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
+                    />
+                  ) : (
+                    <div className="text-sm text-gray-800 font-medium">
+                      {contractDetails.closingDate ? formatDate(contractDetails.closingDate) : <span className="text-gray-500 italic">Not set</span>}
+                    </div>
+                  )}
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Contract Date</label>
+                  {isEditingContingencies ? (
+                    <input
+                      type="date"
+                      value={contractDetails.contractDate}
+                      onChange={(e) => setContractDetails({...contractDetails, contractDate: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
+                    />
+                  ) : (
+                    <div className="text-sm text-gray-800 font-medium">
+                      {contractDetails.contractDate ? formatDate(contractDetails.contractDate) : <span className="text-gray-500 italic">Not set</span>}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-            <div className="bg-[#A9D09E]/10 p-4 rounded-lg border border-[#A9D09E]/30">
-              <h4 className="font-medium text-gray-800 mb-2">
-                Post-Closing Tasks
-              </h4>
-              <p className="text-sm text-gray-700">
-                {client.subStatus === 'post_closing_checklist' &&
-                  'Complete post-closing checklist and schedule follow-up'}
-                {client.subStatus === 'nurture_campaign_active' &&
-                  'Client in nurture campaign, potential referral source'}
-              </p>
-            </div>
-            <div className="space-y-4">
+            
+            {/* Contingencies Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <AlertCircle className="size-5 text-yellow-600" />
+                  <div>
+                    <div className="font-medium text-gray-800">Inspection Contingency</div>
+                    {isEditingContingencies ? (
+                      <input
+                        type="date"
+                        value={contingencyDates.inspection}
+                        onChange={(e) => setContingencyDates({...contingencyDates, inspection: e.target.value})}
+                        className="text-sm border rounded px-2 py-1"
+                      />
+                    ) : (
+                      <div className="text-sm text-gray-600">Due: {formatDate(contingencyDates.inspection)}</div>
+                    )}
+                  </div>
+                </div>
+                <span className="text-sm font-medium text-yellow-600">Pending</span>
+              </div>
+              
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-3">
-                  <input type="checkbox" id="inspection" className="rounded" />
-                  <label htmlFor="inspection" className="text-sm font-medium">Inspection Contingency</label>
+                  <Clock className="size-5 text-gray-600" />
+                  <div>
+                    <div className="font-medium text-gray-800">Appraisal Contingency</div>
+                    {isEditingContingencies ? (
+                      <input
+                        type="date"
+                        value={contingencyDates.appraisal}
+                        onChange={(e) => setContingencyDates({...contingencyDates, appraisal: e.target.value})}
+                        className="text-sm border rounded px-2 py-1"
+                      />
+                    ) : (
+                      <div className="text-sm text-gray-600">Due: {formatDate(contingencyDates.appraisal)}</div>
+                    )}
+                  </div>
                 </div>
-                <span className="text-xs text-gray-500">Due: {formatDate(client.inspectionDate)}</span>
+                <span className="text-sm font-medium text-gray-600">Pending</span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                 <div className="flex items-center space-x-3">
-                  <input type="checkbox" id="appraisal" className="rounded" />
-                  <label htmlFor="appraisal" className="text-sm font-medium">Appraisal Contingency</label>
+                  <CheckCircle className="size-5 text-green-600" />
+                  <div>
+                    <div className="font-medium text-gray-800">Finance Contingency</div>
+                    {isEditingContingencies ? (
+                      <input
+                        type="date"
+                        value={contingencyDates.finance}
+                        onChange={(e) => setContingencyDates({...contingencyDates, finance: e.target.value})}
+                        className="text-sm border rounded px-2 py-1"
+                      />
+                    ) : (
+                      <div className="text-sm text-gray-600">Due: {formatDate(contingencyDates.finance)}</div>
+                    )}
+                  </div>
                 </div>
-                <span className="text-xs text-gray-500">Due: {formatDate(client.appraisalDate)}</span>
+                <span className="text-sm font-medium text-green-600">Complete</span>
               </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <input type="checkbox" id="loan" className="rounded" />
-                  <label htmlFor="loan" className="text-sm font-medium">Loan Contingency</label>
+              
+              {/* Additional details field */}
+              {isEditingContingencies && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Additional Details
+                  </label>
+                  <textarea
+                    value={contingencyDetails}
+                    onChange={(e) => setContingencyDetails(e.target.value)}
+                    rows={3}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                    placeholder="Enter any additional contingency details or notes..."
+                  />
                 </div>
-                <span className="text-xs text-gray-500">Due: {formatDate(client.closingDate)}</span>
-              </div>
+              )}
+              
+              {contingencyDetails && !isEditingContingencies && (
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                  <div className="text-sm font-medium text-gray-800 mb-1">Additional Details:</div>
+                  <div className="text-sm text-gray-600">{contingencyDetails}</div>
+                </div>
+              )}
             </div>
           </div>
         )
-      
-      case 'content':
+
+      case 'documents':
         return (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="font-medium text-gray-800">Document Repository</h3>
-              <Button size="sm" variant="outline">
-                <Plus className="size-4 mr-2" />
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-800">Documents and Content</h3>
+              <Button className="bg-[#3B7097] hover:bg-[#3B7097]/90">
+                <Upload className="size-4 mr-2" />
                 Upload Document
               </Button>
             </div>
-            <div className="space-y-3">
-              {/* Sample document data */}
-              <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <FileText className="size-4 text-gray-500" />
-                  <div>
-                    <div className="text-sm font-medium">Pre-approval Letter - ABC Bank.pdf</div>
-                    <div className="text-xs text-gray-500">Uploaded 2 days ago</div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {documents.map((doc) => (
+                <div key={doc.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    <h4 className="font-medium text-gray-900 text-sm">{doc.title}</h4>
+                    <span className="text-xs text-gray-500">{doc.type}</span>
+                  </div>
+                  <p className="text-xs text-gray-600 mb-3">{doc.description}</p>
+                  <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+                    <span>{doc.size}</span>
+                    <span>{formatDate(doc.uploadDate)}</span>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button
+                      onClick={() => handleViewDocument(doc)}
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      <Eye className="size-3 mr-1" />
+                      View
+                    </Button>
+                    <Button
+                      onClick={() => handleDownloadDocument(doc)}
+                      size="sm"
+                      variant="outline"
+                    >
+                      <Download className="size-3" />
+                    </Button>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => handleViewDocument({
-                      id: 1,
-                      title: "Pre-approval Letter - ABC Bank.pdf",
-                      type: "pdf",
-                      uploadedDate: "2 days ago",
-                      content: "This is a sample pre-approval letter content. In a real application, this would display the actual document content or embed a PDF viewer."
-                    })}
-                  >
-                    <Eye className="size-3 mr-1" />
-                    View
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => handleDownloadDocument({
-                      id: 1,
-                      title: "Pre-approval Letter - ABC Bank.pdf"
-                    })}
-                  >
-                    <Download className="size-3 mr-1" />
-                    Download
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => handleRenameDocument({
-                      id: 1,
-                      title: "Pre-approval Letter - ABC Bank.pdf"
-                    })}
-                  >
-                    <Edit className="size-3 mr-1" />
-                    Rename
-                  </Button>
-                </div>
-              </div>
-
-              {/* Additional sample document */}
-              <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <FileText className="size-4 text-gray-500" />
-                  <div>
-                    <div className="text-sm font-medium">Property Wish List - Notes.docx</div>
-                    <div className="text-xs text-gray-500">Uploaded 1 week ago</div>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => handleViewDocument({
-                      id: 2,
-                      title: "Property Wish List - Notes.docx",
-                      type: "docx",
-                      uploadedDate: "1 week ago",
-                      content: "Client's property wish list and preferences:\n\n• 3-4 bedrooms\n• 2+ bathrooms\n• Updated kitchen\n• Large backyard\n• Good school district\n• Near public transportation\n• Parking space\n• Modern appliances included"
-                    })}
-                  >
-                    <Eye className="size-3 mr-1" />
-                    View
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => handleDownloadDocument({
-                      id: 2,
-                      title: "Property Wish List - Notes.docx"
-                    })}
-                  >
-                    <Download className="size-3 mr-1" />
-                    Download
-                  </Button>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => handleRenameDocument({
-                      id: 2,
-                      title: "Property Wish List - Notes.docx"
-                    })}
-                  >
-                    <Edit className="size-3 mr-1" />
-                    Rename
-                  </Button>
-                </div>
-              </div>
-
-              <div className="text-sm text-gray-500 text-center py-4">
-                No additional documents found.
-              </div>
+              ))}
             </div>
           </div>
         )
-      
-      case 'email_history':
-        return (
-          <EmailHistory
-            clientEmail={client.email}
-            clientName={client.name}
-          />
-        )
-      
+
       case 'calendar':
         return (
           <div className="space-y-6">
@@ -1065,17 +1031,11 @@ export function ClientModal({
             </div>
           </div>
         )
-      
+
       default:
-        return (
-          <div className="space-y-4">
-            <div className="text-gray-500">Select a tab to view content.</div>
-          </div>
-        )
+        return <div>Content not found</div>
     }
   }
-
-  const visibleTabs = getVisibleTabs()
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -1168,47 +1128,65 @@ export function ClientModal({
             {renderTabContent()}
           </div>
 
-          {/* Actions */}
-          <div className="p-6 border-t border-gray-200 bg-gray-50">
-            <div className="flex justify-between items-start">
+          {/* Footer Actions */}
+          <div className="border-t border-gray-200 p-6">
+            <div className="flex flex-wrap gap-2">
               {/* Stage-specific actions */}
-              <div className="flex-1">{getStageActions()}</div>
+              {getStageActions()}
+              
+              {/* Edit Details Button - Always present */}
+              <Button
+                onClick={() => setIsEditingDetails(true)}
+                variant="outline"
+                className="border-[#3B7097] text-[#3B7097] hover:bg-[#3B7097]/10"
+              >
+                <Edit className="size-4 mr-2" />
+                Edit Details
+              </Button>
 
-              {/* Archive/Progress buttons or Unarchive button */}
-              <div className="flex gap-2 ml-4">
-                {isArchiveMode ? (
-                  // Archive mode: Show only Unarchive button
+              {/* Archive/Unarchive Logic */}
+              {isArchiveMode ? (
+                <Button
+                  onClick={handleUnarchive}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <RotateCcw className="size-4 mr-2" />
+                  Unarchive
+                </Button>
+              ) : (
+                <>
                   <Button
-                    onClick={handleUnarchive}
-                    className="bg-[#A9D09E] hover:bg-[#A9D09E]/90 text-white"
+                    onClick={handleArchive}
+                    variant="outline"
+                    className="border-red-300 text-red-600 hover:bg-red-50"
                   >
-                    <RotateCcw className="size-4 mr-2" />
-                    Unarchive
+                    <Archive className="size-4 mr-2" />
+                    Archive
                   </Button>
-                ) : (
-                  // Normal mode: Show Archive and Progress buttons
-                  <>
-                    {shouldShowProgressButton(client.stage) && (
-                      <Button
-                        onClick={handleProgress}
-                        className="bg-[#3B7097] hover:bg-[#3B7097]/90 text-white"
-                      >
-                        <ArrowRight className="size-4 mr-2" />
-                        {getProgressButtonText(client.stage)}
-                      </Button>
-                    )}
-
+                  
+                  {/* Progress Button */}
+                  {shouldShowProgressButton(client.stage) && (
                     <Button
-                      onClick={handleArchive}
-                      variant="outline"
-                      className="border-[#c05e51] text-[#c05e51] hover:bg-[#c05e51]/10"
+                      onClick={handleProgress}
+                      className="bg-[#A9D09E] hover:bg-[#A9D09E]/90"
                     >
-                      <Archive className="size-4 mr-2" />
-                      Archive
+                      <ArrowRight className="size-4 mr-2" />
+                      {getProgressButtonText(client.stage)}
                     </Button>
-                  </>
-                )}
-              </div>
+                  )}
+
+                  {/* Return to Previous Stage Button */}
+                  {getPreviousStageText(client.stage) && (
+                    <Button
+                      onClick={() => {}} // Implement previous stage logic
+                      variant="outline"
+                    >
+                      <RotateCcw className="size-4 mr-2" />
+                      {getPreviousStageText(client.stage)}
+                    </Button>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>

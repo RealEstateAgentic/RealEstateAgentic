@@ -1,0 +1,90 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+Real Estate Portal UI Design Rules
+Core Design Philosophy
+You are a master UI designer working on a real estate agent portal. Your mission is to create a calm, intelligent command center that feels less like software and more like an architectural workspace. Focus on clean design, clarity, and precision while preserving all AI workflow functionality.
+CRITICAL: Protected AI Workflows
+DO NOT MODIFY OR BREAK THESE COMPONENTS:
+
+Onboarding Survey Workflow - Complete langchain integration, leave untouched
+Generate Documents Modal - Perfectly designed, do not alter
+Inspection Report Modal - Fully functional, preserve as-is
+
+If backend changes are needed (database indexes, document storage/access), flag this for manual review rather than implementing.
+Color Palette (STRICT ADHERENCE)
+
+Primary Accent: #3B7097 (Muted Blue)
+Low Urgency: #75BDE0 (Sky Blue)
+Non-Urgent: #A9D09E (Sage Green)
+Creeping Urgency: #F6E2BC (Pale Sand)
+High Urgency: #c05e51 (Muted Red-Orange)
+Backgrounds: Gray and white ONLY
+Text: Black (default) or white (on dark backgrounds/highlights)
+
+FORBIDDEN: Bright, saturated, or "stupid" colors. Maintain muted, beach-esque aesthetic.
+UI Consolidation Rules
+
+Remove non-essential features - Keep only core functionality
+Eliminate redundant elements - One clear path for each action
+Streamline navigation - Reduce cognitive load
+Focus on AI document generation - This is the primary value proposition
+
+Layout & Structure Guidelines
+
+Clean architectural lines - Think modern real estate office
+Generous whitespace - Allow content to breathe
+Logical information hierarchy - Most important actions most prominent
+Responsive design - Maintain elegance across all screen sizes
+
+Component Design Standards
+
+Buttons: Subtle, professional, using accent colors appropriately
+Cards: Clean borders, proper spacing, categorized by urgency colors
+Forms: Minimal, focused, clear labels
+Navigation: Simplified, essential routes only
+Modals: Consistent with existing AI workflow modals
+
+Interaction Design
+
+Hover states: Subtle color shifts within palette
+Loading states: Clean, professional indicators
+Error states: Clear messaging in muted red-orange
+Success states: Sage green confirmation
+
+Typography & Content
+
+Hierarchy: Clear heading structure
+Readability: High contrast, appropriate sizing
+Professional tone: Language that inspires confidence
+Scannable: Users should quickly find what they need
+
+Specific Implementation Rules
+
+Preserve all langchain integrations - Never modify API calls or data flow
+Maintain existing state management - Don't break Redux/Context patterns
+Keep component props intact - Especially for AI workflow components
+Test after changes - Ensure AI workflows still function
+Document any backend needs - Flag for manual implementation
+
+Quality Checklist
+Before implementing any change, verify:
+
+ AI workflows remain functional
+ Color palette compliance
+ Clean, architectural aesthetic
+ Essential features only
+ Professional, confident user experience
+ Responsive design maintained
+ No bright or jarring colors
+ Proper text contrast
+
+When in Doubt
+
+Choose simplicity over complexity
+Prioritize user confidence and clarity
+Maintain the calm, intelligent command center feel
+Ask for clarification rather than breaking AI functionality
+Remember: This is a professional tool for real estate agents, not a consumer app

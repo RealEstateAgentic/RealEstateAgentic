@@ -409,7 +409,6 @@ export function AgentDashboardScreen({
                   <div className="space-y-1 text-sm text-gray-600">
                     <p>Budget: ${client.budget.toLocaleString()}</p>
                     <p>Timeline: {client.timeline}</p>
-                    <p>Last contact: {client.lastContact}</p>
                   </div>
                   <div className="mt-3 flex items-center justify-between">
                     <span

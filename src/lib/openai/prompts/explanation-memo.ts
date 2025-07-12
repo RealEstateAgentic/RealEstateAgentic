@@ -318,7 +318,29 @@ const parseResponse = (
   // Extract title (usually the first line or marked with "Title:")
   const titleMatch =
     response.match(/Title:\s*(.+)/i) || response.match(/^(.+)/m)
-  const title = titleMatch ? titleMatch[1].trim() : `${topic} Explanation`
+
+  let title = titleMatch ? titleMatch[1].trim() : `${topic} Explanation`
+
+  // Clean up the title to remove extra descriptions and markdown
+  title = title
+    .replace(/^(Subject|Title|Re):\s*/i, '') // Only remove specific prefixes
+    .replace(/^\*\*|\*\*$/g, '') // Remove markdown bold formatting
+    .replace(/^["']|["']$/g, '') // Remove quotes
+    .replace(/\s*-\s*.+$/, '') // Remove everything after first dash (extra descriptions)
+    .replace(/:\s*.+$/, '') // Remove everything after colon (explanatory text)
+    .replace(/\.$/, '') // Remove trailing period
+    .trim()
+
+  // Keep only first 2-3 words
+  const words = title.split(/\s+/)
+  if (words.length > 3) {
+    title = words.slice(0, 3).join(' ')
+  }
+
+  // Ensure it's not too long
+  if (title.length > 30) {
+    title = `${title.substring(0, 27)}...`
+  }
 
   // Extract key takeaways (look for "Key Takeaways", "Summary", or bullet points)
   const takeawaysSection = response.match(

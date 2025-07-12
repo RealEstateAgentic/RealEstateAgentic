@@ -51,7 +51,7 @@ export function ClientModal({
   onUnarchive, 
   isArchiveMode = false 
 }: ClientModalProps) {
-  const [activeTab, setActiveTab] = useState(client.initialTab || 'overview')
+  const [activeTab, setActiveTab] = useState(client.initialTab || 'summary')
   const [selectedDocument, setSelectedDocument] = useState<any>(null)
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
   const [isEditingContingencies, setIsEditingContingencies] = useState(false)
@@ -262,9 +262,8 @@ export function ClientModal({
   // Define which tabs should be visible based on client stage
   const getVisibleTabs = () => {
     const baseTabs = [
-      { id: 'overview', label: 'Overview', icon: null },
-      { id: 'stage_details', label: 'Stage Details', icon: null },
-      // Removed 'summary' tab as requested
+      { id: 'summary', label: 'Summary', icon: null },
+      // Removed 'overview' and 'stage_details' tabs as requested
     ]
 
     const stageSpecificTabs = []
@@ -518,9 +517,25 @@ export function ClientModal({
     }
   }
 
+  // Get next event for this client from calendar data
+  const getNextEvent = () => {
+    const clientEvents = dummyData.calendarEvents.filter(event => 
+      event.clientType === 'seller' && event.clientId === client.id.toString()
+    )
+    const today = new Date()
+    const upcomingEvents = clientEvents.filter(event => {
+      const eventDate = new Date(event.date)
+      return eventDate >= today
+    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    
+    return upcomingEvents.length > 0 ? upcomingEvents[0] : null
+  }
+
+  const nextEvent = getNextEvent()
+
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'overview':
+      case 'summary':
         return (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Widget A: Property Details */}
@@ -545,7 +560,7 @@ export function ClientModal({
               </div>
             </div>
 
-            {/* Widget B: Seller Motivation */}
+            {/* Widget B: Seller Motivation with Price Range */}
             <div className="bg-white border border-gray-200 rounded-lg p-6">
               <div className="flex items-center mb-4">
                 <TrendingUp className="size-5 text-green-600 mr-2" />
@@ -561,6 +576,10 @@ export function ClientModal({
                   <span className="text-sm text-gray-900">{isEditingDetails ? editableDetails.reasonForSelling : client.reasonForSelling}</span>
                 </div>
                 <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-gray-700">Expected Price Range:</span>
+                  <span className="text-sm text-gray-900">$425,000 - $450,000</span>
+                </div>
+                <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-700">Priority:</span>
                   <span className={`text-sm px-2 py-1 rounded-full text-xs font-medium border ${
                     (isEditingDetails ? editableDetails.priority : client.priority) === 'High' ? 'bg-[#c05e51]/10 text-[#c05e51] border-[#c05e51]/20' :
@@ -573,45 +592,57 @@ export function ClientModal({
               </div>
             </div>
 
-            {/* Widget C: Recent Notes & Insights */}
+            {/* Widget C: Recent Notes (Removed AI functionality) */}
             <div className="bg-white border border-gray-200 rounded-lg p-6">
               <div className="flex items-center mb-4">
                 <MessageCircle className="size-5 text-purple-600 mr-2" />
-                <h3 className="font-semibold text-gray-800">Recent Notes & Insights</h3>
+                <h3 className="font-semibold text-gray-800">Recent Notes</h3>
               </div>
               <div className="space-y-3 max-h-32 overflow-y-auto">
                 <div className="bg-blue-50 p-3 rounded-lg">
                   <p className="text-sm text-gray-700">{isEditingDetails ? editableDetails.notes : client.notes}</p>
                   <span className="text-xs text-gray-500 mt-1">Manual Note • {formatDate(client.dateAdded)}</span>
                 </div>
-                <div className="bg-orange-50 p-3 rounded-lg">
-                  <p className="text-sm text-gray-700">AI Insight: Property appears to be well-maintained based on initial consultation.</p>
-                  <span className="text-xs text-gray-500 mt-1">AI Generated • 2 days ago</span>
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <p className="text-sm text-gray-700">Initial contact established. Client expressed interest in listing within the next 3 months.</p>
+                  <span className="text-xs text-gray-500 mt-1">Note • 3 days ago</span>
                 </div>
               </div>
             </div>
 
-            {/* Widget D: Next Event */}
+            {/* Widget D: Next Event (Connected to Calendar) */}
             <div className="bg-white border border-gray-200 rounded-lg p-6">
               <div className="flex items-center mb-4">
                 <Calendar className="size-5 text-orange-600 mr-2" />
                 <h3 className="font-semibold text-gray-800">Next Event</h3>
               </div>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="text-center">
-                  <h4 className="text-lg font-semibold text-blue-800 mb-1">Listing Consultation</h4>
-                  <p className="text-sm text-blue-700 mb-2">{isEditingDetails ? editableDetails.propertyAddress : client.propertyAddress}</p>
-                  <div className="flex items-center justify-center text-sm text-blue-600">
-                    <Calendar className="size-4 mr-1" />
-                    <span>Tomorrow at 2:00 PM</span>
+              {nextEvent ? (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="text-center">
+                    <h4 className="text-lg font-semibold text-blue-800 mb-1">{nextEvent.title}</h4>
+                    <p className="text-sm text-blue-700 mb-2">{nextEvent.location || client.propertyAddress}</p>
+                    <div className="flex items-center justify-center text-sm text-blue-600">
+                      <Calendar className="size-4 mr-1" />
+                      <span>{new Date(nextEvent.date).toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        month: 'short', 
+                        day: 'numeric' 
+                      })} at {nextEvent.time}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <div className="text-center text-gray-500">
+                    <Calendar className="size-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm">No upcoming events scheduled</p>
+                    <p className="text-xs text-gray-400">Add events in the Calendar tab</p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )
-      case 'stage_details':
-        return getStageSpecificContent()
       case 'offers':
         return (
           <div className="space-y-4">
@@ -1190,6 +1221,10 @@ export function ClientModal({
               <div className="flex items-center space-x-2 text-sm text-gray-600">
                 <MapPin className="size-4" />
                 <span>{isEditingDetails ? editableDetails.propertyAddress : client.propertyAddress}</span>
+              </div>
+              <div className="flex items-center space-x-2 text-sm text-gray-500 mt-1">
+                <Calendar className="size-4" />
+                <span>Date Added: {formatDate(client.dateAdded)}</span>
               </div>
             </div>
           </div>

@@ -751,9 +751,8 @@ export function ClientModal({
   // Define which tabs should be visible based on client stage
   const getVisibleTabs = () => {
     const baseTabs = [
-      { id: 'overview', label: 'Overview', icon: null },
-      { id: 'stage_details', label: 'Stage Details', icon: null },
       { id: 'summary', label: 'Summary', icon: null },
+      // Removed 'overview' and 'stage_details' tabs as requested
     ]
 
     const stageSpecificTabs = []
@@ -779,7 +778,7 @@ export function ClientModal({
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'overview':
+      case 'summary':
         return (
           <div className="space-y-4">
             <div>
@@ -789,46 +788,12 @@ export function ClientModal({
                   <li>• {client.budget} budget for home purchase in {client.location}</li>
                   <li>• {client.priority} priority lead from {client.leadSource}</li>
                   <li>• Currently in {getStageName(client.stage)} stage</li>
-                  <li>• Last contacted: {formatDate(client.lastContact)}</li>
+                  <li>• Date Added: {formatDate(client.dateAdded)}</li>
                   {client.favoritedProperties && client.favoritedProperties.length > 0 && (
                     <li>• Has favorited {client.favoritedProperties.length} properties</li>
                   )}
                 </ul>
               </div>
-            </div>
-          </div>
-        )
-      
-      case 'stage_details':
-        return getStageSpecificContent()
-      
-      case 'summary':
-        return (
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-medium text-gray-800 mb-3">AI-Generated Client Summary</h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-700 mb-3">
-                  Comprehensive summary derived from all available client data including surveys, emails, meeting transcripts, and notes.
-                </p>
-                <ul className="space-y-1 text-sm text-gray-600">
-                  <li>• Lead source analysis and engagement pattern</li>
-                  <li>• Communication preferences and response history</li>
-                  <li>• Property preferences and search criteria</li>
-                  <li>• Budget considerations and financing status</li>
-                  <li>• Timeline expectations and urgency factors</li>
-                </ul>
-              </div>
-            </div>
-            <div className="flex gap-2 pt-4 border-t border-gray-200">
-              <Button variant="outline" onClick={handleSeeFullSummary}>
-                <FileText className="size-4 mr-2" />
-                See Full Summary
-              </Button>
-              <Button variant="outline" onClick={handleDownloadFullSummary}>
-                <Download className="size-4 mr-2" />
-                Download Full Summary
-              </Button>
             </div>
           </div>
         )
@@ -1253,7 +1218,7 @@ export function ClientModal({
 
           {/* Client Vitals */}
           <div className="p-6 border-b border-gray-200 bg-gray-50">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div className="flex items-center">
                 <Phone className="size-4 text-gray-400 mr-2" />
                 <span className="text-sm">{client.phone}</span>
@@ -1269,6 +1234,10 @@ export function ClientModal({
               <div className="flex items-center">
                 <MapPin className="size-4 text-gray-400 mr-2" />
                 <span className="text-sm">{client.location}</span>
+              </div>
+              <div className="flex items-center">
+                <Calendar className="size-4 text-gray-400 mr-2" />
+                <span className="text-sm">Added: {formatDate(client.dateAdded)}</span>
               </div>
             </div>
           </div>
@@ -1286,16 +1255,7 @@ export function ClientModal({
               >
                 Client Summary
               </button>
-              <button
-                onClick={() => setActiveTab('details')}
-                className={`py-4 px-1 text-sm font-medium border-b-2 ${
-                  activeTab === 'details'
-                    ? 'border-[#3B7097] text-[#3B7097]'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Stage Details
-              </button>
+              {/* Removed 'details' tab as requested */}
             </nav>
           </div>
 
@@ -1335,7 +1295,7 @@ export function ClientModal({
               </div>
             )}
 
-            {activeTab === 'details' && getStageSpecificContent()}
+            {/* Removed 'details' tab content as requested */}
           </div>
 
           {/* Actions */}

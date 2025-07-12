@@ -6,6 +6,7 @@ import { makeAppSetup } from 'lib/electron-app/factories/app/setup'
 import { MainWindow } from './windows/main'
 import { setupPDFHandlers, removePDFHandlers } from './ipc/pdf-handlers'
 import { initializeFromEnv } from '../lib/groq/client'
+import { initializeFromEnv as initializeOpenAI } from '../lib/openai/client'
 import { registerReportHandlers } from './ipc/report-handlers'
 import { setupEmailHandler } from './email-handler'
 import { setupWebhookHandler } from './webhook-handler'
@@ -37,6 +38,15 @@ makeAppWithSingleInstanceLock(async () => {
   } catch (error) {
     console.error('❌ Failed to initialize Groq client:', error)
     // Continue without Groq if key is missing
+  }
+
+  // Initialize OpenAI client in main process
+  try {
+    initializeOpenAI()
+    console.log('✅ OpenAI client initialized successfully')
+  } catch (error) {
+    console.error('❌ Failed to initialize OpenAI client:', error)
+    // Continue without OpenAI if key is missing
   }
 
   // Setup IPC handlers

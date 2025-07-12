@@ -36,6 +36,7 @@ import { DocumentGenerator } from '../documents/DocumentGenerator'
 import { LeadScoringDisplay } from '../shared/lead-scoring-display'
 import type { AgentProfile } from '../../../shared/types'
 import { dummyData } from '../../data/dummy-data'
+import { gmailAuth } from '../../services/gmail-auth'
 
 // Define ClientProfile interface locally since it's not in shared types
 interface ClientProfile {
@@ -110,6 +111,7 @@ export function ClientModal({
   const [selectedDocument, setSelectedDocument] = useState<any>(null)
   const [showDocumentGenerator, setShowDocumentGenerator] = useState(false)
   const [isEditingDetails, setIsEditingDetails] = useState(false)
+  const [isSendingSurvey, setIsSendingSurvey] = useState(false)
   const [editableDetails, setEditableDetails] = useState({
     name: client.name,
     email: client.email,
@@ -229,6 +231,53 @@ export function ClientModal({
 
   const handleGenerateDocuments = () => {
     setShowDocumentGenerator(true)
+  }
+
+  const handleSendSurvey = async () => {
+    if (isSendingSurvey) return
+    
+    setIsSendingSurvey(true)
+    
+    try {
+      console.log('Sending survey to:', client.name, client.email)
+      
+      // Check if Gmail is authenticated
+      if (!gmailAuth.isAuthenticated()) {
+        console.log('🔑 Gmail not authenticated, starting OAuth flow...')
+        
+        const authResult = await gmailAuth.authenticate()
+        
+        if (!authResult.success) {
+          throw new Error(`Gmail authentication failed: ${authResult.error}`)
+        }
+        
+        console.log('✅ Gmail authenticated:', authResult.userEmail)
+      }
+      
+      // Import and use the automation service with Gmail API
+      const { startBuyerWorkflowWithGmail } = await import('../../services/automation')
+      
+      const result = await startBuyerWorkflowWithGmail({
+        agentId: 'agent-1', // TODO: Get actual agent ID
+        buyerEmail: client.email,
+        buyerName: client.name,
+        buyerPhone: client.phone,
+        senderEmail: gmailAuth.getUserEmail() || undefined
+      })
+      
+      if (result.success) {
+        alert(`✅ Survey sent successfully to ${client.name} from your Gmail account!\n\nForm URL: ${result.formUrl}`)
+        console.log('Survey sent successfully:', result)
+      } else {
+        throw new Error('Failed to send survey')
+      }
+    } catch (error) {
+      console.error('Error sending survey:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      alert(`❌ Failed to send survey to ${client.name}.\n\nError: ${errorMessage}`)
+    } finally {
+      setIsSendingSurvey(false)
+    }
   }
 
   const createAgentProfileAdapter = (): any => {
@@ -356,9 +405,13 @@ export function ClientModal({
       case 'new_leads':
         return (
           <div className="flex flex-wrap gap-2">
-            <Button className="bg-[#3B7097] hover:bg-[#3B7097]/90">
+            <Button 
+              onClick={handleSendSurvey}
+              disabled={isSendingSurvey}
+              className="bg-[#3B7097] hover:bg-[#3B7097]/90"
+            >
               <Send className="size-4 mr-2" />
-              Send Survey
+              {isSendingSurvey ? 'Sending...' : 'Send Survey'}
             </Button>
             <Button variant="outline">
               <Download className="size-4 mr-2" />

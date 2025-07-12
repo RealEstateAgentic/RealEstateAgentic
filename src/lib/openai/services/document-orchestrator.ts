@@ -31,6 +31,7 @@ import { MockMarketDataService } from './mock-market-data'
 import type { Offer } from '../../../shared/types/offers'
 import type { Negotiation } from '../../../shared/types/negotiations'
 import type { MarketData } from '../../../shared/types/market-data'
+import { workflowIntegration } from '../../analytics/workflow-integration'
 
 // ========== ORCHESTRATION TYPES ==========
 
@@ -301,6 +302,12 @@ export class DocumentOrchestrationService {
     try {
       console.log('Starting document package generation...')
 
+      // Start negotiation tracking
+      const negotiationId = await workflowIntegration.onDocumentGenerationStart(
+        request.context,
+        request.options
+      )
+
       // Report initialization progress
       request.onProgress?.({
         status: 'initializing',
@@ -343,7 +350,8 @@ export class DocumentOrchestrationService {
         validatedContext,
         request.options,
         startTime,
-        request.onProgress
+        request.onProgress,
+        negotiationId
       )
 
       console.log(`Documents generated: ${documents.length}`)
@@ -439,6 +447,15 @@ export class DocumentOrchestrationService {
         },
         insights,
         recommendations,
+      }
+
+      // Track document generation completion
+      if (negotiationId) {
+        await workflowIntegration.onDocumentGenerationComplete(
+          negotiationId,
+          result,
+          validatedContext
+        )
       }
 
       console.log(
@@ -605,7 +622,8 @@ export class DocumentOrchestrationService {
     context: DocumentGenerationContext,
     options: DocumentGenerationOptions,
     startTime: number,
-    onProgress?: (progress: DocumentGenerationProgress) => void
+    onProgress?: (progress: DocumentGenerationProgress) => void,
+    negotiationId?: string | null
   ): Promise<GeneratedDocument[]> {
     const documents: GeneratedDocument[] = []
     const generatedContent: Record<string, any> = {}
@@ -644,6 +662,15 @@ export class DocumentOrchestrationService {
         documents.push(document)
         generatedContent[documentType] = document
         console.log(`Successfully generated ${documentType}`)
+
+        // Track document generation in analytics
+        if (negotiationId) {
+          await workflowIntegration.onDocumentGenerated(
+            negotiationId,
+            document,
+            context
+          )
+        }
 
         // Report completion of current document
         const completionProgress = 15 + ((i + 1) / totalDocuments) * 70

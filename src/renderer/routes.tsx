@@ -15,6 +15,8 @@ import { SellersPortalV2Screen } from './screens/sellers-portal-v2'
 import { SellersArchiveScreen } from './screens/sellers-archive'
 import { AgentDashboardScreen } from './screens/agent-dashboard'
 import { AgentAuthWrapper } from './components/auth/AgentAuth'
+import { AnalyticsReports } from './components/analytics/AnalyticsReports'
+import { StrategyRecommendations } from './components/analytics/StrategyRecommendations'
 import type { AgentProfile } from '../shared/types'
 
 export function App() {
@@ -196,6 +198,71 @@ export function App() {
 
       case '/repair-estimator':
         return <RepairEstimator />
+      case '/analytics':
+        if (isAuthenticated && userType === 'agent' && currentUser) {
+          return (
+            <div className="h-full p-6 bg-gray-50">
+              <AnalyticsReports />
+            </div>
+          )
+        }
+        return (
+          <div className="p-8 text-center">
+            <p className="text-gray-600 mb-4">
+              Please sign in to access Analytics
+            </p>
+            <button
+              onClick={() => navigate('/auth/agent')}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              Sign In
+            </button>
+          </div>
+        )
+      case '/strategy-recommendations':
+        if (isAuthenticated && userType === 'agent' && currentUser) {
+          // Mock negotiation context for demo
+          const mockContext = {
+            propertyType: 'single_family' as const,
+            priceRange: { min: 400000, max: 500000, label: '$400K-$500K' },
+            daysOnMarket: 15,
+            marketConditions: 'warm' as const,
+            marketTrend: 'stable' as const,
+            seasonality: 'spring' as const,
+            multipleOffers: false,
+            competingOffers: 0,
+            location: {
+              city: 'Seattle',
+              state: 'WA',
+              neighborhood: 'Capitol Hill',
+              zipCode: '98102',
+            },
+            listingAgent: 'John Doe',
+            buyerAgent: currentUser.displayName || 'Current Agent',
+            transactionType: 'purchase' as const,
+          }
+          return (
+            <div className="h-full p-6 bg-gray-50">
+              <StrategyRecommendations
+                context={mockContext}
+                showDetailed={true}
+              />
+            </div>
+          )
+        }
+        return (
+          <div className="p-8 text-center">
+            <p className="text-gray-600 mb-4">
+              Please sign in to access Strategy Recommendations
+            </p>
+            <button
+              onClick={() => navigate('/auth/agent')}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              Sign In
+            </button>
+          </div>
+        )
       default:
         // Root route - show marketing landing page for unauthenticated users, Home Dashboard for authenticated users
         if (isAuthenticated && userType === 'agent') {

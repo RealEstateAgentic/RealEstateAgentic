@@ -17,7 +17,10 @@ const generateDynamicCalendarEvents = () => {
       time: "9:00 AM",
       date: getDateOffset(0),
       type: "showing",
-      location: "123 Main St, Anytown"
+      location: "123 Main St, Anytown",
+      priority: "high",
+      clientType: "buyer",
+      clientId: "1"
     },
     {
       id: 2,
@@ -25,7 +28,10 @@ const generateDynamicCalendarEvents = () => {
       time: "11:30 AM",
       date: getDateOffset(0),
       type: "consultation",
-      location: "Office"
+      location: "Office",
+      priority: "low",
+      clientType: "buyer",
+      clientId: "2"
     },
     {
       id: 3,
@@ -33,7 +39,10 @@ const generateDynamicCalendarEvents = () => {
       time: "2:00 PM",
       date: getDateOffset(0),
       type: "closing",
-      location: "Title Company"
+      location: "Title Company",
+      priority: "high",
+      clientType: "seller",
+      clientId: "1"
     },
     {
       id: 4,
@@ -41,7 +50,10 @@ const generateDynamicCalendarEvents = () => {
       time: "4:00 PM",
       date: getDateOffset(0),
       type: "consultation",
-      location: "Phone"
+      location: "Phone",
+      priority: "low",
+      clientType: "buyer",
+      clientId: "3"
     },
     
     // Tomorrow (Day 1)
@@ -51,7 +63,10 @@ const generateDynamicCalendarEvents = () => {
       time: "10:00 AM",
       date: getDateOffset(1),
       type: "inspection",
-      location: "456 Oak St, Anytown"
+      location: "456 Oak St, Anytown",
+      priority: "low",
+      clientType: "buyer",
+      clientId: "1"
     },
     {
       id: 6,
@@ -59,7 +74,10 @@ const generateDynamicCalendarEvents = () => {
       time: "1:00 PM",
       date: getDateOffset(1),
       type: "listing",
-      location: "789 Pine Ave"
+      location: "789 Pine Ave",
+      priority: "low",
+      clientType: "seller",
+      clientId: "2"
     },
     {
       id: 7,
@@ -67,7 +85,10 @@ const generateDynamicCalendarEvents = () => {
       time: "3:30 PM",
       date: getDateOffset(1),
       type: "consultation",
-      location: "Phone"
+      location: "Phone",
+      priority: "low",
+      clientType: "buyer",
+      clientId: "4"
     },
     
     // Day 2
@@ -77,7 +98,10 @@ const generateDynamicCalendarEvents = () => {
       time: "9:00 AM",
       date: getDateOffset(2),
       type: "listing",
-      location: "789 Pine Ave, Anytown"
+      location: "789 Pine Ave, Anytown",
+      priority: "high",
+      clientType: "seller",
+      clientId: "1"
     },
     {
       id: 9,
@@ -85,7 +109,10 @@ const generateDynamicCalendarEvents = () => {
       time: "11:00 AM",
       date: getDateOffset(2),
       type: "showing",
-      location: "Various locations"
+      location: "Various locations",
+      priority: "low",
+      clientType: "buyer",
+      clientId: "2"
     },
     {
       id: 10,
@@ -93,7 +120,10 @@ const generateDynamicCalendarEvents = () => {
       time: "2:00 PM",
       date: getDateOffset(2),
       type: "consultation",
-      location: "Title Company"
+      location: "Title Company",
+      priority: "high",
+      clientType: "seller",
+      clientId: "3"
     },
     
     // Day 3
@@ -103,7 +133,10 @@ const generateDynamicCalendarEvents = () => {
       time: "9:30 AM",
       date: getDateOffset(3),
       type: "inspection",
-      location: "321 Elm St"
+      location: "321 Elm St",
+      priority: "low",
+      clientType: "buyer",
+      clientId: "1"
     },
     {
       id: 12,
@@ -111,7 +144,10 @@ const generateDynamicCalendarEvents = () => {
       time: "1:00 PM",
       date: getDateOffset(3),
       type: "consultation",
-      location: "Office"
+      location: "Office",
+      priority: "high",
+      clientType: "seller",
+      clientId: "2"
     },
     {
       id: 13,
@@ -119,7 +155,10 @@ const generateDynamicCalendarEvents = () => {
       time: "3:00 PM",
       date: getDateOffset(3),
       type: "listing",
-      location: "567 Broadway"
+      location: "567 Broadway",
+      priority: "low",
+      clientType: "seller",
+      clientId: "1"
     },
     
     // Day 4
@@ -129,7 +168,10 @@ const generateDynamicCalendarEvents = () => {
       time: "10:00 AM",
       date: getDateOffset(4),
       type: "listing",
-      location: "789 Pine Ave"
+      location: "789 Pine Ave",
+      priority: "low",
+      clientType: "seller",
+      clientId: "2"
     },
     {
       id: 15,
@@ -137,7 +179,10 @@ const generateDynamicCalendarEvents = () => {
       time: "2:00 PM",
       date: getDateOffset(4),
       type: "showing",
-      location: "East Side Properties"
+      location: "East Side Properties",
+      priority: "low",
+      clientType: "buyer",
+      clientId: "3"
     },
     {
       id: 16,
@@ -145,7 +190,10 @@ const generateDynamicCalendarEvents = () => {
       time: "4:30 PM",
       date: getDateOffset(4),
       type: "consultation",
-      location: "Phone"
+      location: "Phone",
+      priority: "high",
+      clientType: "buyer",
+      clientId: "1"
     },
     
     // Day 5
@@ -155,7 +203,10 @@ const generateDynamicCalendarEvents = () => {
       time: "10:00 AM",
       date: getDateOffset(5),
       type: "showing",
-      location: "Multiple Properties"
+      location: "Multiple Properties",
+      priority: "low",
+      clientType: "buyer",
+      clientId: "2"
     },
     {
       id: 18,
@@ -163,7 +214,10 @@ const generateDynamicCalendarEvents = () => {
       time: "1:00 PM",
       date: getDateOffset(5),
       type: "listing",
-      location: "123 Main St"
+      location: "123 Main St",
+      priority: "low",
+      clientType: "seller",
+      clientId: "3"
     },
     
     // Day 6
@@ -173,7 +227,10 @@ const generateDynamicCalendarEvents = () => {
       time: "11:00 AM",
       date: getDateOffset(6),
       type: "inspection",
-      location: "456 Oak St"
+      location: "456 Oak St",
+      priority: "high",
+      clientType: "buyer",
+      clientId: "1"
     },
     {
       id: 20,
@@ -181,7 +238,10 @@ const generateDynamicCalendarEvents = () => {
       time: "2:00 PM",
       date: getDateOffset(6),
       type: "consultation",
-      location: "Office"
+      location: "Office",
+      priority: "low",
+      clientType: "seller",
+      clientId: "2"
     }
   ]
 }
@@ -321,41 +381,6 @@ export const dummyData = {
     }
   ],
 
-  // Market snapshot
-  marketSnapshot: {
-    zipCode: "12345",
-    medianSalePrice: "$485,000",
-    averageDaysOnMarket: 28,
-    newListingsThisWeek: 15,
-    priceChange: "+2.3%",
-    inventoryLevel: "Low"
-  },
-
-  // Notifications
-  notifications: [
-    {
-      id: 1,
-      type: "new_lead",
-      message: "New buyer lead from website form",
-      timestamp: "2024-01-14T10:30:00Z",
-      read: false
-    },
-    {
-      id: 2,
-      type: "deadline_reminder",
-      message: "Inspection contingency expires tomorrow for Miller Family",
-      timestamp: "2024-01-14T09:00:00Z",
-      read: false
-    },
-    {
-      id: 3,
-      type: "document_received",
-      message: "Appraisal report received for 456 Oak St",
-      timestamp: "2024-01-13T16:45:00Z",
-      read: true
-    }
-  ],
-
   // Buyer clients for Kanban board
   buyerClients: [
     // New Leads
@@ -368,11 +393,7 @@ export const dummyData = {
       subStatus: "to_initiate_contact",
       budget: "$450,000 - $550,000",
       location: "Downtown area",
-      leadSource: "Website Form",
-      priority: "high",
-      dateAdded: "2024-01-14",
-      lastContact: null,
-      notes: "First-time buyer, pre-approved with local bank"
+      leadSource: "Website Form"
     },
     {
       id: 2,
@@ -383,11 +404,7 @@ export const dummyData = {
       subStatus: "awaiting_survey",
       budget: "$600,000 - $700,000",
       location: "Suburban neighborhoods",
-      leadSource: "Referral",
-      priority: "medium",
-      dateAdded: "2024-01-13",
-      lastContact: "2024-01-14",
-      notes: "Looking for 4BR family home, has 2 kids"
+      leadSource: "Referral"
     },
     {
       id: 3,
@@ -398,11 +415,7 @@ export const dummyData = {
       subStatus: "review_survey",
       budget: "$300,000 - $400,000",
       location: "Any area",
-      leadSource: "Zillow",
-      priority: "high",
-      dateAdded: "2024-01-12",
-      lastContact: "2024-01-13",
-      notes: "Veteran buyer, VA loan pre-approved"
+      leadSource: "Zillow"
     },
     {
       id: 4,
@@ -413,11 +426,7 @@ export const dummyData = {
       subStatus: "to_initiate_contact",
       budget: "$500,000 - $650,000",
       location: "Austin area",
-      leadSource: "Website Form",
-      priority: "high",
-      dateAdded: "2024-01-15",
-      lastContact: null,
-      notes: "Software developer, interested in modern condos"
+      leadSource: "Website Form"
     },
     // Active Search
     {
@@ -430,46 +439,34 @@ export const dummyData = {
       budget: "$500,000 - $600,000",
       location: "Midtown",
       leadSource: "Past Client Referral",
-      priority: "high",
-      dateAdded: "2024-01-10",
-      lastContact: "2024-01-14",
-      notes: "Loves modern condos, flexible timing",
       favoritedProperties: ["123 Main St", "456 Oak Ave"],
       viewedProperties: ["789 Pine Rd", "321 Elm St"]
     },
     {
       id: 6,
-      name: "David Thompson",
-      email: "d.thompson@email.com",
+      name: "David Kim",
+      email: "d.kim@email.com",
       phone: "(555) 678-9012",
       stage: "active_search",
       subStatus: "needs_new_listings",
       budget: "$400,000 - $500,000",
-      location: "East Side",
-      leadSource: "Open House",
-      priority: "medium",
-      dateAdded: "2024-01-08",
-      lastContact: "2024-01-13",
-      notes: "Looking for investment property, cash buyer",
-      favoritedProperties: ["234 Market St"],
-      viewedProperties: ["567 Broadway", "890 First Ave", "345 Second St"]
+      location: "Westside",
+      leadSource: "Website Form",
+      favoritedProperties: ["987 Cedar Ln"],
+      viewedProperties: ["654 Birch Ave", "321 Spruce St"]
     },
     {
       id: 7,
-      name: "Lisa Brown",
-      email: "l.brown@email.com",
+      name: "Lisa Chen",
+      email: "l.chen@email.com",
       phone: "(555) 789-0123",
       stage: "active_search",
       subStatus: "preparing_offer",
       budget: "$650,000 - $750,000",
-      location: "West Hills",
-      leadSource: "Website Form",
-      priority: "high",
-      dateAdded: "2024-01-05",
-      lastContact: "2024-01-14",
-      notes: "Ready to make offer on 789 Pine Rd",
-      favoritedProperties: ["789 Pine Rd"],
-      viewedProperties: ["789 Pine Rd", "123 Hill St", "456 Valley Rd"]
+      location: "North Hills",
+      leadSource: "Referral",
+      favoritedProperties: ["555 Maple Dr", "777 Oak St"],
+      viewedProperties: ["444 Pine Ave", "888 Elm Rd"]
     },
     // Under Contract
     {
@@ -479,77 +476,55 @@ export const dummyData = {
       phone: "(555) 890-1234",
       stage: "under_contract",
       subStatus: "inspection_period",
-      budget: "$525,000",
-      location: "Northside",
-      leadSource: "Referral",
-      priority: "critical",
-      dateAdded: "2024-01-02",
-      lastContact: "2024-01-14",
-      notes: "Inspection scheduled for tomorrow",
-      contractProperty: "123 Main St",
-      contractDate: "2024-01-12",
-      inspectionDate: "2024-01-16",
-      appraisalDate: "2024-01-20",
+      budget: "$520,000",
+      location: "Eastside",
+      leadSource: "Past Client",
+      contractProperty: "321 Willow St",
+      contractDate: "2024-01-10",
       closingDate: "2024-02-15"
     },
     {
       id: 9,
-      name: "Davis Family",
-      email: "davis.family@email.com",
+      name: "Anderson Family",
+      email: "anderson.family@email.com",
       phone: "(555) 901-2345",
       stage: "under_contract",
       subStatus: "awaiting_appraisal",
       budget: "$475,000",
       location: "Southside",
-      leadSource: "Past Client",
-      priority: "high",
-      dateAdded: "2024-01-01",
-      lastContact: "2024-01-13",
-      notes: "Appraisal ordered, waiting for results",
-      contractProperty: "456 Oak St",
-      contractDate: "2024-01-10",
-      inspectionDate: "2024-01-14",
-      appraisalDate: "2024-01-18",
-      closingDate: "2024-02-12"
+      leadSource: "Referral",
+      contractProperty: "789 Poplar Ave",
+      contractDate: "2024-01-08",
+      closingDate: "2024-02-20"
     },
     {
       id: 10,
-      name: "Wilson Family",
-      email: "wilson.family@email.com",
+      name: "Brown Family",
+      email: "brown.family@email.com",
       phone: "(555) 012-3456",
       stage: "under_contract",
       subStatus: "financing_contingency",
       budget: "$380,000",
       location: "Central",
-      leadSource: "Website Form",
-      priority: "medium",
-      dateAdded: "2023-12-28",
-      lastContact: "2024-01-12",
-      notes: "Waiting for final loan approval",
-      contractProperty: "789 Pine Ave",
-      contractDate: "2024-01-08",
-      inspectionDate: "2024-01-12",
-      appraisalDate: "2024-01-16",
-      closingDate: "2024-02-08"
+      leadSource: "Walk-in",
+      contractProperty: "123 Hickory Ln",
+      contractDate: "2024-01-05",
+      closingDate: "2024-02-10"
     },
     // Closed
     {
       id: 11,
-      name: "Anderson Family",
-      email: "anderson.family@email.com",
+      name: "Taylor Family",
+      email: "taylor.family@email.com",
       phone: "(555) 123-4567",
       stage: "closed",
       subStatus: "post_closing_checklist",
       budget: "$425,000",
-      location: "Eastside",
-      leadSource: "Referral",
-      priority: "low",
-      dateAdded: "2023-12-15",
-      lastContact: "2024-01-10",
-      notes: "Closed successfully, follow-up needed",
-      contractProperty: "321 Elm St",
+      location: "Northwest",
+      leadSource: "Social Media",
+      contractProperty: "456 Sycamore St",
       contractDate: "2023-12-20",
-      closingDate: "2024-01-10",
+      closingDate: "2024-01-12",
       soldPrice: "$420,000"
     },
     {
@@ -562,10 +537,6 @@ export const dummyData = {
       budget: "$350,000",
       location: "Westside",
       leadSource: "Past Client",
-      priority: "low",
-      dateAdded: "2023-12-10",
-      lastContact: "2024-01-05",
-      notes: "Happy with purchase, potential referral source",
       contractProperty: "654 Maple Dr",
       contractDate: "2023-12-15",
       closingDate: "2024-01-08",
@@ -584,8 +555,7 @@ export const dummyData = {
       stage: "listed",
       listingDate: "2024-01-10",
       askingPrice: "$485,000",
-      location: "West Hills",
-      notes: "Motivated sellers, open to negotiations"
+      location: "West Hills"
     },
     {
       id: 2,
@@ -596,8 +566,7 @@ export const dummyData = {
       stage: "appointment_set",
       listingDate: null,
       askingPrice: "TBD",
-      location: "Downtown",
-      notes: "Investment property, needs staging"
+      location: "Downtown"
     },
     {
       id: 3,
@@ -608,8 +577,7 @@ export const dummyData = {
       stage: "under_contract",
       listingDate: "2024-01-05",
       askingPrice: "$520,000",
-      location: "Eastside",
-      notes: "Estate sale, quick closing preferred"
+      location: "Eastside"
     },
     {
       id: 4,
@@ -620,8 +588,7 @@ export const dummyData = {
       stage: "closed",
       listingDate: "2023-12-15",
       askingPrice: "$395,000",
-      location: "Southside",
-      notes: "Successful sale, happy clients"
+      location: "Southside"
     }
   ],
 
@@ -637,10 +604,6 @@ export const dummyData = {
       budget: "$380,000 - $420,000",
       location: "Northeast",
       leadSource: "Referral",
-      priority: "medium",
-      dateAdded: "2023-12-20",
-      lastContact: "2024-01-05",
-      notes: "Looking for starter home, first-time buyers",
       favoritedProperties: ["101 Pine St", "202 Oak Ave"],
       viewedProperties: ["303 Maple Dr", "404 Elm St"],
       archivedDate: "2024-01-05T10:30:00Z",
@@ -656,10 +619,6 @@ export const dummyData = {
       budget: "$550,000",
       location: "Westside",
       leadSource: "Website Form",
-      priority: "high",
-      dateAdded: "2023-12-01",
-      lastContact: "2024-01-03",
-      notes: "Deal fell through after inspection",
       contractProperty: "505 Valley Rd",
       contractDate: "2023-12-15",
       inspectionDate: "2024-01-03",

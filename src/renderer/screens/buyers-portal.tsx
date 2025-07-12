@@ -203,7 +203,7 @@ export function BuyersPortalScreen({
 
     try {
       const buyerData = {
-        agentId: currentUser.uid,
+        agentId: currentUser?.uid || 'temp-agent-id',
         name: newLeadForm.name,
         email: newLeadForm.email,
         phone: newLeadForm.phone,
@@ -211,7 +211,6 @@ export function BuyersPortalScreen({
         notes: newLeadForm.notes || '',
         stage: 'new_leads',
         subStatus: 'to_initiate_contact',
-        priority: newLeadForm.priority,
         dateAdded: new Date().toISOString(),
         lastContact: null,
         isArchived: false,

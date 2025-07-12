@@ -11,7 +11,6 @@ interface BuyerData {
   notes?: string;
   stage: string;
   subStatus: string;
-  priority: string;
   dateAdded: string;
   lastContact: string | null;
   isArchived: boolean;
@@ -40,7 +39,6 @@ interface SellerData {
   notes?: string;
   stage: string;
   subStatus: string;
-  priority: string;
   dateAdded: string;
   lastContact: string | null;
   isArchived: boolean;

@@ -103,6 +103,8 @@ export function setupOAuthHandler(): void {
   ipcMain.handle('exchange-oauth-tokens', async (event, authCode: string) => {
     try {
       console.log('🔄 Exchanging OAuth code for tokens in main process...')
+      console.log('🔑 CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? `${process.env.GOOGLE_CLIENT_ID.substring(0, 20)}...` : 'NOT SET')
+      console.log('🔑 CLIENT_SECRET:', process.env.GOOGLE_CLIENT_SECRET ? `${process.env.GOOGLE_CLIENT_SECRET.substring(0, 8)}...` : 'NOT SET')
       
       const response = await fetch('https://oauth2.googleapis.com/token', {
         method: 'POST',

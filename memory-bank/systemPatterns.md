@@ -1,4 +1,4 @@
-# System Patterns: Real Estate Agentic
+# System Patterns: AIgent Pro
 
 ## Architecture Overview
 

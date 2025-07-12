@@ -202,7 +202,7 @@ export const DocumentLibrary: React.FC = () => {
           metadata: {
             ...metadata,
             author: user.displayName || user.email,
-            creator: 'Real Estate Agentic',
+            creator: 'AIgent Pro',
           },
         }
 

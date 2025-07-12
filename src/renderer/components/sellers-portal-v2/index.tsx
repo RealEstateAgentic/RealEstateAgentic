@@ -9,6 +9,8 @@ import { ClientModal } from './client-modal'
 import { ClientCommunicationFeed } from './client-communication-feed'
 import { Button } from '../ui/button'
 import { Archive, Plus, X, Upload } from 'lucide-react'
+import { firebaseCollections } from '../../services/firebase/collections'
+import { uploadClientDocuments } from '../../../lib/firebase/storage'
 
 // Mock data for seller clients - following the 5 stages from requirements
 const mockSellerClients = [
@@ -110,11 +112,42 @@ interface SellersPortalV2Props {
   userType?: string
 }
 
+/**
+ * Get the next stage in the seller workflow
+ */
+function getNextStage(currentStage: string): string | null {
+  switch (currentStage) {
+    case 'new_lead': return 'pre_listing'
+    case 'pre_listing': return 'active_listing'
+    case 'active_listing': return 'under_contract'
+    case 'under_contract': return 'closed'
+    case 'closed': return null
+    default: return null
+  }
+}
+
+/**
+ * Get default sub-status for a given stage
+ */
+function getDefaultSubStatus(stage: string): string {
+  switch (stage) {
+    case 'new_lead': return 'to_initiate_contact'
+    case 'pre_listing': return 'preparing_cma'
+    case 'active_listing': return 'accepting_showings'
+    case 'under_contract': return 'awaiting_inspection'
+    case 'closed': return 'post_closing_checklist'
+    default: return 'unknown'
+  }
+}
+
 export function SellersPortalV2({ navigate, currentUser, userType }: SellersPortalV2Props) {
   const [selectedClient, setSelectedClient] = useState<any>(null)
-  const [sellerClients, setSellerClients] = useState(mockSellerClients)
+  const [sellerClients, setSellerClients] = useState<any[]>([])
   const [archivedClients, setArchivedClients] = useState<any[]>([])
   const [showNewLeadModal, setShowNewLeadModal] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [hasError, setHasError] = useState<string | null>(null)
   const [newLeadForm, setNewLeadForm] = useState({
     name: '',
     email: '',
@@ -124,6 +157,35 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
     notes: '',
     documents: [] as File[]
   })
+
+  // Set up real-time listener for seller clients
+  useEffect(() => {
+    if (!currentUser?.uid) {
+      setIsLoading(false)
+      return
+    }
+
+    console.log('Setting up real-time listener for sellers')
+    const unsubscribe = firebaseCollections.getSellersRealTime(
+      currentUser.uid,
+      (sellers) => {
+        console.log('Received real-time sellers update:', sellers.length)
+        setSellerClients(sellers)
+        setIsLoading(false)
+        setHasError(null)
+      },
+      (error) => {
+        console.error('Real-time sellers error:', error)
+        setHasError('Failed to load sellers—please refresh')
+        setIsLoading(false)
+      }
+    )
+
+    return () => {
+      console.log('Cleaning up sellers real-time listener')
+      unsubscribe()
+    }
+  }, [currentUser?.uid])
 
   // Handle URL parameters for direct client access and new lead action
   useEffect(() => {
@@ -175,39 +237,39 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
     }
   }
 
-  const handleArchive = (clientId: number) => {
-    const clientToArchive = sellerClients.find(c => c.id === clientId)
-    if (clientToArchive) {
-      setArchivedClients(prev => [...prev, clientToArchive])
-      setSellerClients(prev => prev.filter(c => c.id !== clientId))
+  const handleArchive = async (client: any) => {
+    if (!currentUser?.uid) {
+      setHasError('User not authenticated')
+      return
+    }
+
+    try {
+      await firebaseCollections.archiveSeller(client.id, client.stage)
+    } catch (error) {
+      console.error('Error archiving client:', error)
+      setHasError('Failed to archive client. Please try again.')
     }
     setSelectedClient(null)
   }
 
-  const handleProgress = (client: any) => {
-    const getNextStage = (currentStage: string) => {
-      switch (currentStage) {
-        case 'new_lead':
-          return 'pre_listing'
-        case 'pre_listing':
-          return 'active_listing'
-        case 'active_listing':
-          return 'under_contract'
-        case 'under_contract':
-          return 'closed'
-        default:
-          return currentStage
-      }
+  const handleProgress = async (client: any) => {
+    if (!currentUser?.uid) {
+      setHasError('User not authenticated')
+      return
     }
 
-    const nextStage = getNextStage(client.stage)
-    setSellerClients(prev => 
-      prev.map(c => 
-        c.id === client.id 
-          ? { ...c, stage: nextStage, subStatus: getDefaultSubStatus(nextStage) }
-          : c
-      )
-    )
+    try {
+      const nextStage = getNextStage(client.stage)
+      if (nextStage) {
+        await firebaseCollections.updateSeller(client.id, {
+          stage: nextStage,
+          subStatus: getDefaultSubStatus(nextStage)
+        })
+      }
+    } catch (error) {
+      console.error('Error progressing client:', error)
+      setHasError('Failed to progress client. Please try again.')
+    }
     setSelectedClient(null)
   }
 
@@ -222,11 +284,21 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
     }
   }
 
-  const handleUnarchive = (clientId: number) => {
-    const clientToUnarchive = archivedClients.find(c => c.id === clientId)
-    if (clientToUnarchive) {
-      setSellerClients(prev => [...prev, clientToUnarchive])
-      setArchivedClients(prev => prev.filter(c => c.id !== clientId))
+  const handleUnarchive = async (client: any) => {
+    if (!currentUser?.uid) {
+      setHasError('User not authenticated')
+      return
+    }
+
+    try {
+      await firebaseCollections.updateSeller(client.id, {
+        isArchived: false,
+        archivedDate: null,
+        archivedFromStage: null
+      })
+    } catch (error) {
+      console.error('Error unarchiving client:', error)
+      setHasError('Failed to unarchive client. Please try again.')
     }
     setSelectedClient(null)
   }
@@ -244,35 +316,74 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
     })
   }
 
-  const handleSubmitNewLead = (e: React.FormEvent) => {
+  const handleSubmitNewLead = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!newLeadForm.name || !newLeadForm.email || !newLeadForm.phone) {
-      alert('Please fill in all required fields')
+      setHasError('Please fill in all required fields')
       return
     }
 
-    const newLead = {
-      id: Date.now(),
-      name: newLeadForm.name,
-      email: newLeadForm.email,
-      phone: newLeadForm.phone,
-      stage: 'new_lead',
-      subStatus: 'to_initiate_contact',
-      propertyAddress: newLeadForm.propertyAddress,
-      propertyType: 'Not specified',
-      bedrooms: 0,
-      bathrooms: 0,
-      timeline: 'Not specified',
-      reasonForSelling: 'Not specified',
-      leadSource: newLeadForm.leadSource,
-      dateAdded: new Date().toISOString(),
-      lastContact: null,
-      notes: newLeadForm.notes,
+    if (!currentUser?.uid) {
+      setHasError('User not authenticated')
+      return
     }
 
-    setSellerClients(prev => [...prev, newLead])
-    handleCloseNewLeadModal()
+    setIsCreating(true)
+    setHasError(null)
+
+    try {
+      const sellerData = {
+        agentId: currentUser.uid,
+        name: newLeadForm.name,
+        email: newLeadForm.email,
+        phone: newLeadForm.phone,
+        propertyAddress: newLeadForm.propertyAddress || '',
+        leadSource: newLeadForm.leadSource || '',
+        notes: newLeadForm.notes || '',
+        stage: 'new_lead',
+        subStatus: 'to_initiate_contact',
+        // priority: newLeadForm.priority,
+        dateAdded: new Date().toISOString(),
+        lastContact: null,
+        isArchived: false,
+        archivedDate: null,
+        archivedFromStage: null,
+        uploadedDocuments: []
+      }
+
+      // Create seller first
+      const newSeller = await firebaseCollections.createSeller(sellerData)
+      
+      // Upload documents if any
+      if (newLeadForm.documents.length > 0) {
+        const uploadResults = await uploadClientDocuments(
+          newSeller.id,
+          'seller',
+          newLeadForm.documents
+        )
+        
+        // Update seller with document metadata
+        const documentMetadata = uploadResults.map(result => ({
+          name: result.fileName,
+          url: result.url,
+          type: result.contentType,
+          size: result.size,
+          uploadDate: result.uploadedAt.toISOString()
+        }))
+        
+        await firebaseCollections.updateSeller(newSeller.id, {
+          uploadedDocuments: documentMetadata
+        })
+      }
+      
+      handleCloseNewLeadModal()
+    } catch (error) {
+      console.error('Error creating seller:', error)
+      setHasError('Failed to create seller. Please try again.')
+    } finally {
+      setIsCreating(false)
+    }
   }
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -327,6 +438,8 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
                 stage={stage.stage}
                 clients={sellerClients}
                 onClientClick={handleClientClick}
+                isLoading={isLoading}
+                hasError={hasError}
               />
             ))}
           </div>
@@ -360,6 +473,12 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
             </div>
 
             <form onSubmit={handleSubmitNewLead} className="space-y-4">
+              {hasError && (
+                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
+                  {hasError}
+                </div>
+              )}
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Name *
@@ -468,6 +587,7 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
                   type="button"
                   variant="outline"
                   onClick={handleCloseNewLeadModal}
+                  disabled={isCreating}
                 >
                   Cancel
                 </Button>
@@ -475,7 +595,7 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
                   type="submit"
                   className="bg-blue-600 hover:bg-blue-700"
                 >
-                  Add Lead
+                  {isCreating ? 'Creating...' : 'Add Lead'}
                 </Button>
               </div>
             </form>

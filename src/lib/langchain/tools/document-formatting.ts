@@ -654,7 +654,7 @@ export class PDFDocumentGeneratorTool extends Tool {
         author: metadata.author || 'Real Estate Agent',
         subject: metadata.subject || 'Property Information',
         keywords: metadata.keywords || 'real estate, property, analysis',
-        creator: metadata.creator || 'Real Estate Agentic Platform',
+        creator: metadata.creator || 'AIgent Pro Platform',
       },
     }
   }

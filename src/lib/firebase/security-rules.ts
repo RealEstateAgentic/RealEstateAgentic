@@ -1,12 +1,6 @@
 /**
- * Firebase Security Rules for Real Estate Agentic Application
- *
- * This file contains the Firestore security rules for all collections
- * supporting role-based access control for agents, buyers, and sellers.
- *
- * To deploy these rules:
- * 1. Copy the rules object content to your firestore.rules file
- * 2. Deploy using: firebase deploy --only firestore:rules
+ * Firebase Security Rules for AIgent Pro Application
+ * Defines access control patterns for Firestore collections
  */
 
 export const firestoreSecurityRules = `

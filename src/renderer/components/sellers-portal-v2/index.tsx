@@ -10,6 +10,7 @@ import { ClientCommunicationFeed } from './client-communication-feed'
 import { Button } from '../ui/button'
 import { Archive, Plus, X, Upload } from 'lucide-react'
 import { firebaseCollections } from '../../services/firebase/collections'
+import { uploadClientDocuments } from '../../../lib/firebase/storage'
 
 // Mock data for seller clients - following the 5 stages from requirements
 const mockSellerClients = [
@@ -238,36 +239,74 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
     })
   }
 
-  const handleSubmitNewLead = (e: React.FormEvent) => {
+  const handleSubmitNewLead = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!newLeadForm.name || !newLeadForm.email || !newLeadForm.phone) {
-      alert('Please fill in all required fields')
+      setHasError('Please fill in all required fields')
       return
     }
 
-    const newLead = {
-      id: Date.now(),
-      name: newLeadForm.name,
-      email: newLeadForm.email,
-      phone: newLeadForm.phone,
-      stage: 'new_lead',
-      subStatus: 'to_initiate_contact',
-      propertyAddress: newLeadForm.propertyAddress,
-      propertyType: 'Not specified',
-      bedrooms: 0,
-      bathrooms: 0,
-      timeline: 'Not specified',
-      reasonForSelling: 'Not specified',
-      leadSource: newLeadForm.leadSource,
-      priority: newLeadForm.priority,
-      dateAdded: new Date().toISOString(),
-      lastContact: null,
-      notes: newLeadForm.notes,
+    if (!currentUser?.uid) {
+      setHasError('User not authenticated')
+      return
     }
 
-    setSellerClients(prev => [...prev, newLead])
-    handleCloseNewLeadModal()
+    setIsCreating(true)
+    setHasError(null)
+
+    try {
+      const sellerData = {
+        agentId: currentUser.uid,
+        name: newLeadForm.name,
+        email: newLeadForm.email,
+        phone: newLeadForm.phone,
+        propertyAddress: newLeadForm.propertyAddress || '',
+        leadSource: newLeadForm.leadSource || '',
+        notes: newLeadForm.notes || '',
+        stage: 'new_lead',
+        subStatus: 'to_initiate_contact',
+        priority: newLeadForm.priority,
+        dateAdded: new Date().toISOString(),
+        lastContact: null,
+        isArchived: false,
+        archivedDate: null,
+        archivedFromStage: null,
+        uploadedDocuments: []
+      }
+
+      // Create seller first
+      const newSeller = await firebaseCollections.createSeller(sellerData)
+      
+      // Upload documents if any
+      if (newLeadForm.documents.length > 0) {
+        const uploadResults = await uploadClientDocuments(
+          newSeller.id,
+          'seller',
+          newLeadForm.documents
+        )
+        
+        // Update seller with document metadata
+        const documentMetadata = uploadResults.map(result => ({
+          name: result.fileName,
+          url: result.url,
+          type: result.contentType,
+          size: result.size,
+          uploadDate: result.uploadedAt.toISOString()
+        }))
+        
+        await firebaseCollections.updateSeller(newSeller.id, {
+          uploadedDocuments: documentMetadata
+        })
+      }
+      
+      handleCloseNewLeadModal()
+    } catch (error) {
+      console.error('Error creating seller:', error)
+      setHasError('Failed to create seller. Please try again.')
+    } finally {
+      setIsCreating(false)
+    }
   }
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -355,6 +394,12 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
             </div>
 
             <form onSubmit={handleSubmitNewLead} className="space-y-4">
+              {hasError && (
+                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
+                  {hasError}
+                </div>
+              )}
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Name *

@@ -6,14 +6,13 @@
 import { useState, useEffect } from 'react'
 import { Layout } from './components/layout'
 import { MainScreen } from './screens/main'
+import { MarketingLanding } from './screens/marketing-landing'
 import { RepairEstimator } from './screens/repair-estimator'
 import { BuyersPortalScreen } from './screens/buyers-portal'
 import { BuyersArchiveScreen } from './screens/buyers-archive'
 import { SellersPortalScreen } from './screens/sellers-portal'
 import { SellersPortalV2Screen } from './screens/sellers-portal-v2'
 import { SellersArchiveScreen } from './screens/sellers-archive'
-import { LearnPortalScreen } from './screens/learn-portal'
-import { MarketingPortalScreen } from './screens/marketing-portal'
 import { AgentDashboardScreen } from './screens/agent-dashboard'
 import { AgentAuthWrapper } from './components/auth/AgentAuth'
 import { AnalyticsReports } from './components/analytics/AnalyticsReports'
@@ -50,7 +49,7 @@ export function App() {
     setCurrentUser(profile)
     setUserType('agent')
     setIsAuthenticated(true)
-    navigate('/agent-dashboard')
+    navigate('/')
   }
 
   const handleLogout = () => {
@@ -197,10 +196,6 @@ export function App() {
           </div>
         )
 
-      case '/learn-portal':
-        return <LearnPortalScreen {...navigationProps} />
-      case '/marketing-portal':
-        return <MarketingPortalScreen {...navigationProps} />
       case '/repair-estimator':
         return <RepairEstimator />
       case '/analytics':
@@ -269,8 +264,20 @@ export function App() {
           </div>
         )
       default:
-        return <MainScreen />
+        // Root route - show marketing landing page for unauthenticated users, Home Dashboard for authenticated users
+        if (isAuthenticated && userType === 'agent') {
+          return <MainScreen navigate={navigate} />
+        } else {
+          return <MarketingLanding navigate={navigate} />
+        }
     }
+  }
+
+  // Check if we should show the marketing landing page without layout
+  const shouldShowMarketingLanding = currentRoute === '/' && !isAuthenticated
+  
+  if (shouldShowMarketingLanding) {
+    return renderCurrentScreen()
   }
 
   return (

@@ -3,7 +3,7 @@
  * Implements the Kanban-style board with five stages as specified in the requirements
  */
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { KanbanColumn } from './kanban-column'
 import { ClientModal } from './client-modal'
 import { ClientCommunicationFeed } from './client-communication-feed'
@@ -126,9 +126,33 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
     phone: '',
     propertyAddress: '',
     leadSource: '',
+    priority: 'Medium',
     notes: '',
     documents: [] as File[]
   })
+
+  // Handle URL parameters for direct client access and new lead action
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const clientId = params.get('clientId')
+    const tab = params.get('tab')
+    const documentId = params.get('documentId')
+    const action = params.get('action')
+    
+    if (clientId) {
+      const client = sellerClients.find(c => c.id === parseInt(clientId))
+      if (client) {
+        setSelectedClient({ ...client, initialTab: tab, initialDocumentId: documentId })
+      }
+    }
+    
+    // Handle new lead action from dashboard
+    if (action === 'newLead') {
+      setShowNewLeadModal(true)
+      // Clear the URL parameter to avoid reopening modal on refresh
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [sellerClients])
 
   // Define the 5 stages from requirements
   const kanbanStages = [
@@ -147,80 +171,8 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
     setSelectedClient(null)
   }
 
-  const handleArchive = (client: any) => {
-    // Remove from active clients
-    const updatedSellerClients = sellerClients.filter(c => c.id !== client.id)
-    setSellerClients(updatedSellerClients)
-
-    // Add to archived clients with additional properties
-    const archivedClient = {
-      ...client,
-      archivedDate: new Date().toISOString(),
-      archivedFromStage: getStageName(client.stage),
-    }
-    setArchivedClients([archivedClient, ...archivedClients])
-
-    // Close modal
-    setSelectedClient(null)
-  }
-
-  const handleProgress = (client: any) => {
-    const nextStage = getNextStage(client.stage)
-    if (nextStage) {
-      // Update client's stage
-      const updatedSellerClients = sellerClients.map(c =>
-        c.id === client.id ? { ...c, stage: nextStage } : c
-      )
-      setSellerClients(updatedSellerClients)
-
-      // Update selected client to reflect changes
-      setSelectedClient({ ...client, stage: nextStage })
-    }
-  }
-
-  const handleUnarchive = (client: any) => {
-    // Remove from archived clients
-    const updatedArchivedClients = archivedClients.filter(c => c.id !== client.id)
-    setArchivedClients(updatedArchivedClients)
-
-    // Add back to active clients, removing archive-specific properties
-    const { archivedDate, archivedFromStage, ...activeClient } = client
-    setSellerClients([...sellerClients, activeClient])
-
-    // Close modal
-    setSelectedClient(null)
-  }
-
-  const getNextStage = (currentStage: string) => {
-    switch (currentStage) {
-      case 'new_lead':
-        return 'pre_listing'
-      case 'pre_listing':
-        return 'active_listing'
-      case 'active_listing':
-        return 'under_contract'
-      case 'under_contract':
-        return 'closed'
-      default:
-        return null
-    }
-  }
-
-  const getStageName = (stage: string) => {
-    switch (stage) {
-      case 'new_lead':
-        return 'New Lead'
-      case 'pre_listing':
-        return 'Pre-Listing'
-      case 'active_listing':
-        return 'Active Listing'
-      case 'under_contract':
-        return 'Under Contract'
-      case 'closed':
-        return 'Closed'
-      default:
-        return stage
-    }
+  const handleNewLeadClick = () => {
+    setShowNewLeadModal(true)
   }
 
   const handleSellerArchive = () => {
@@ -229,8 +181,44 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
     }
   }
 
-  const handleNewLeadClick = () => {
-    setShowNewLeadModal(true)
+  const handleArchive = (clientId: number) => {
+    const clientToArchive = sellerClients.find(c => c.id === clientId)
+    if (clientToArchive) {
+      setArchivedClients(prev => [...prev, clientToArchive])
+      setSellerClients(prev => prev.filter(c => c.id !== clientId))
+    }
+    setSelectedClient(null)
+  }
+
+  const handleProgress = (clientId: number, newStage: string) => {
+    setSellerClients(prev => 
+      prev.map(c => 
+        c.id === clientId 
+          ? { ...c, stage: newStage, subStatus: getDefaultSubStatus(newStage) }
+          : c
+      )
+    )
+    setSelectedClient(null)
+  }
+
+  const getDefaultSubStatus = (stage: string) => {
+    switch (stage) {
+      case 'new_lead': return 'to_initiate_contact'
+      case 'pre_listing': return 'preparing_cma'
+      case 'active_listing': return 'active'
+      case 'under_contract': return 'pending_inspection'
+      case 'closed': return 'completed'
+      default: return 'unknown'
+    }
+  }
+
+  const handleUnarchive = (clientId: number) => {
+    const clientToUnarchive = archivedClients.find(c => c.id === clientId)
+    if (clientToUnarchive) {
+      setSellerClients(prev => [...prev, clientToUnarchive])
+      setArchivedClients(prev => prev.filter(c => c.id !== clientId))
+    }
+    setSelectedClient(null)
   }
 
   const handleCloseNewLeadModal = () => {
@@ -241,20 +229,46 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
       phone: '',
       propertyAddress: '',
       leadSource: '',
+      priority: 'Medium',
       notes: '',
       documents: []
     })
   }
 
-  const handleNewLeadFormChange = (field: string, value: string) => {
-    setNewLeadForm(prev => ({
-      ...prev,
-      [field]: value
-    }))
+  const handleSubmitNewLead = (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!newLeadForm.name || !newLeadForm.email || !newLeadForm.phone) {
+      alert('Please fill in all required fields')
+      return
+    }
+
+    const newLead = {
+      id: Date.now(),
+      name: newLeadForm.name,
+      email: newLeadForm.email,
+      phone: newLeadForm.phone,
+      stage: 'new_lead',
+      subStatus: 'to_initiate_contact',
+      propertyAddress: newLeadForm.propertyAddress,
+      propertyType: 'Not specified',
+      bedrooms: 0,
+      bathrooms: 0,
+      timeline: 'Not specified',
+      reasonForSelling: 'Not specified',
+      leadSource: newLeadForm.leadSource,
+      priority: newLeadForm.priority,
+      dateAdded: new Date().toISOString(),
+      lastContact: null,
+      notes: newLeadForm.notes,
+    }
+
+    setSellerClients(prev => [...prev, newLead])
+    handleCloseNewLeadModal()
   }
 
-  const handleDocumentUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
     if (files) {
       setNewLeadForm(prev => ({
         ...prev,
@@ -263,75 +277,40 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
     }
   }
 
-  const handleRemoveDocument = (index: number) => {
-    setNewLeadForm(prev => ({
-      ...prev,
-      documents: prev.documents.filter((_, i) => i !== index)
-    }))
-  }
-
-  const handleSubmitNewLead = () => {
-    // Validate required fields
-    if (!newLeadForm.name || !newLeadForm.email || !newLeadForm.phone || !newLeadForm.propertyAddress) {
-      alert('Please fill in all required fields (Name, Email, Phone, Property Address)')
-      return
-    }
-
-    // Generate new client ID
-    const newClientId = Math.max(...sellerClients.map(c => c.id)) + 1
-
-    // Create new client object
-    const newClient = {
-      id: newClientId,
-      name: newLeadForm.name,
-      email: newLeadForm.email,
-      phone: newLeadForm.phone,
-      stage: 'new_lead',
-      subStatus: 'to_initiate_contact',
-      propertyAddress: newLeadForm.propertyAddress,
-      propertyType: 'TBD',
-      bedrooms: 0,
-      bathrooms: 0,
-      timeline: 'TBD',
-      reasonForSelling: 'TBD',
-      leadSource: newLeadForm.leadSource || 'Manual Entry',
-      priority: 'Medium',
-      dateAdded: new Date().toISOString(),
-      lastContact: null,
-      notes: newLeadForm.notes || 'Manually added lead',
-      // Documents would be stored in the Content tab in a real application
-      uploadedDocuments: newLeadForm.documents.map((file, index) => ({
-        id: index + 1,
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        uploadDate: new Date().toISOString()
-      }))
-    }
-
-    // Add to seller clients
-    setSellerClients(prev => [...prev, newClient])
-
-    // Close modal and reset form
-    handleCloseNewLeadModal()
-
-    // Show success message
-    alert(`New seller lead "${newLeadForm.name}" has been added to the New Lead column!`)
-  }
-
   return (
     <div className="h-full bg-gray-50">
-      <div className="h-full flex">
+      <div className="h-full flex flex-col">
         {/* Main Content Area */}
-        <div className="flex-1 p-6 overflow-x-auto">
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-800">Sellers Portal</h1>
-            <p className="text-gray-600">
-              Manage all seller clients through their journey from lead to closing
-            </p>
+        <div className="flex-1 p-6 overflow-auto">
+          <div className="mb-6 flex justify-between items-start">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">Sellers Portal</h1>
+              <p className="text-gray-600">
+                Manage all seller clients through their journey from lead to closing
+              </p>
+            </div>
+            
+            {/* Action Buttons - Top Right */}
+            <div className="flex space-x-4">
+              <Button
+                onClick={handleNewLeadClick}
+                className="bg-[#3B7097] hover:bg-[#3B7097]/90 text-white"
+              >
+                <Plus className="size-4 mr-2" />
+                Add New Seller Lead
+              </Button>
+              <Button
+                onClick={handleSellerArchive}
+                variant="outline"
+                className="border-[#3B7097] text-[#3B7097] hover:bg-[#3B7097]/10"
+              >
+                <Archive className="size-4 mr-2" />
+                Seller Archive
+              </Button>
+            </div>
           </div>
 
-          {/* Kanban Board */}
+          {/* Kanban Board - Full Width with Vertical Scrolling */}
           <div className="flex gap-6 min-w-max">
             {kanbanStages.map(stage => (
               <KanbanColumn
@@ -344,38 +323,6 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
             ))}
           </div>
         </div>
-
-        {/* Right Sidebar */}
-        <div className="w-80 p-6 border-l border-gray-200 flex flex-col">
-          <div className="flex-1">
-            {/* Add New Seller Lead Button */}
-            <div className="mb-6">
-              <Button
-                onClick={handleNewLeadClick}
-                variant="outline"
-                className="w-full border-[#3B7097] text-[#3B7097] hover:bg-[#3B7097]/10"
-              >
-                <Plus className="size-4 mr-2" />
-                Add New Seller Lead
-              </Button>
-            </div>
-
-            {/* Client Communication Feed */}
-            <ClientCommunicationFeed />
-          </div>
-
-          {/* Seller Archive Button */}
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <Button
-              onClick={handleSellerArchive}
-              variant="outline"
-              className="w-full border-[#3B7097] text-[#3B7097] hover:bg-[#3B7097]/10"
-            >
-              <Archive className="size-4 mr-2" />
-              Seller Archive
-            </Button>
-          </div>
-        </div>
       </div>
 
       {/* Client Modal */}
@@ -386,178 +333,157 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
           onArchive={handleArchive}
           onProgress={handleProgress}
           onUnarchive={handleUnarchive}
-          isArchiveMode={archivedClients.some(c => c.id === selectedClient.id)}
+          currentUser={currentUser}
         />
       )}
 
       {/* New Lead Modal */}
       {showNewLeadModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              {/* Header */}
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold">Add New Seller Lead</h2>
-                <button
-                  onClick={handleCloseNewLeadModal}
-                  className="text-gray-500 hover:text-gray-700"
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Add New Seller Lead</h3>
+              <button
+                onClick={handleCloseNewLeadModal}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitNewLead} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Name *
+                </label>
+                <input
+                  type="text"
+                  value={newLeadForm.name}
+                  onChange={(e) => setNewLeadForm(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  value={newLeadForm.email}
+                  onChange={(e) => setNewLeadForm(prev => ({ ...prev, email: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone *
+                </label>
+                <input
+                  type="tel"
+                  value={newLeadForm.phone}
+                  onChange={(e) => setNewLeadForm(prev => ({ ...prev, phone: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Property Address
+                </label>
+                <input
+                  type="text"
+                  value={newLeadForm.propertyAddress}
+                  onChange={(e) => setNewLeadForm(prev => ({ ...prev, propertyAddress: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter property address"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Lead Source
+                </label>
+                <select
+                  value={newLeadForm.leadSource}
+                  onChange={(e) => setNewLeadForm(prev => ({ ...prev, leadSource: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <X className="size-6" />
-                </button>
+                  <option value="">Select source</option>
+                  <option value="Referral">Referral</option>
+                  <option value="Website">Website</option>
+                  <option value="Social Media">Social Media</option>
+                  <option value="Cold Call">Cold Call</option>
+                  <option value="Walk-in">Walk-in</option>
+                  <option value="Other">Other</option>
+                </select>
               </div>
 
-              {/* Form */}
-              <div className="space-y-4">
-                {/* Required Fields */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={newLeadForm.name}
-                    onChange={(e) => handleNewLeadFormChange('name', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
-                    placeholder="Enter client name"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Priority Level
+                </label>
+                <select
+                  value={newLeadForm.priority}
+                  onChange={(e) => setNewLeadForm(prev => ({ ...prev, priority: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    value={newLeadForm.email}
-                    onChange={(e) => handleNewLeadFormChange('email', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
-                    placeholder="Enter email address"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Notes
+                </label>
+                <textarea
+                  value={newLeadForm.notes}
+                  onChange={(e) => setNewLeadForm(prev => ({ ...prev, notes: e.target.value }))}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Additional notes about this lead..."
+                />
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone Number <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="tel"
-                    value={newLeadForm.phone}
-                    onChange={(e) => handleNewLeadFormChange('phone', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
-                    placeholder="Enter phone number"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Property Address <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={newLeadForm.propertyAddress}
-                    onChange={(e) => handleNewLeadFormChange('propertyAddress', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
-                    placeholder="Enter property address"
-                  />
-                </div>
-
-                {/* Optional Fields */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Lead Source
-                  </label>
-                  <select
-                    value={newLeadForm.leadSource}
-                    onChange={(e) => handleNewLeadFormChange('leadSource', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
-                  >
-                    <option value="">Select lead source</option>
-                    <option value="Referral">Referral</option>
-                    <option value="Website">Website</option>
-                    <option value="Social Media">Social Media</option>
-                    <option value="Open House">Open House</option>
-                    <option value="Cold Call">Cold Call</option>
-                    <option value="Email Campaign">Email Campaign</option>
-                    <option value="Zillow">Zillow</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Notes
-                  </label>
-                  <textarea
-                    value={newLeadForm.notes}
-                    onChange={(e) => handleNewLeadFormChange('notes', e.target.value)}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
-                    placeholder="Add any additional notes about this lead..."
-                  />
-                </div>
-
-                {/* Document Upload */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Initial Documents
-                  </label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                    <div className="text-center">
-                      <Upload className="size-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 mb-2">
-                        Drag and drop files here, or click to select
-                      </p>
-                      <input
-                        type="file"
-                        multiple
-                        onChange={handleDocumentUpload}
-                        className="hidden"
-                        id="document-upload"
-                      />
-                      <label
-                        htmlFor="document-upload"
-                        className="cursor-pointer bg-[#3B7097] text-white px-4 py-2 rounded-md text-sm hover:bg-[#3B7097]/90"
-                      >
-                        Choose Files
-                      </label>
-                    </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Documents (Optional)
+                </label>
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFileUpload}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {newLeadForm.documents.length > 0 && (
+                  <div className="mt-2 text-sm text-gray-600">
+                    {newLeadForm.documents.length} file(s) selected
                   </div>
-
-                  {/* Show uploaded documents */}
-                  {newLeadForm.documents.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      {newLeadForm.documents.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between bg-gray-50 p-2 rounded">
-                          <span className="text-sm text-gray-600">{file.name}</span>
-                          <button
-                            onClick={() => handleRemoveDocument(index)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <X className="size-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
 
-              {/* Form Actions */}
-              <div className="flex justify-end space-x-2 mt-6">
+              <div className="flex justify-end space-x-3 pt-4">
                 <Button
+                  type="button"
                   variant="outline"
                   onClick={handleCloseNewLeadModal}
                 >
                   Cancel
                 </Button>
                 <Button
-                  onClick={handleSubmitNewLead}
-                  className="bg-[#3B7097] hover:bg-[#3B7097]/90"
+                  type="submit"
+                  className="bg-blue-600 hover:bg-blue-700"
                 >
                   Add Lead
                 </Button>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       )}

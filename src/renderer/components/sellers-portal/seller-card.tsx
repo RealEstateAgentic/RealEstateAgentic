@@ -122,12 +122,6 @@ export function SellerCard({ seller }: SellerCardProps) {
           <Calendar className="size-4" />
           <span>Added: {seller.dateAdded}</span>
         </div>
-        {seller.lastContact && (
-          <div className="flex items-center gap-2 text-gray-600">
-            <Calendar className="size-4" />
-            <span>Last Contact: {seller.lastContact}</span>
-          </div>
-        )}
       </div>
 
       <div className="mt-3 pt-3 border-t border-gray-200">

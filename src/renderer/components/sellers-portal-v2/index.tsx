@@ -9,6 +9,7 @@ import { ClientModal } from './client-modal'
 import { ClientCommunicationFeed } from './client-communication-feed'
 import { Button } from '../ui/button'
 import { Archive, Plus, X, Upload } from 'lucide-react'
+import { firebaseCollections } from '../../services/firebase/collections'
 
 // Mock data for seller clients - following the 5 stages from requirements
 const mockSellerClients = [
@@ -120,6 +121,8 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
   const [sellerClients, setSellerClients] = useState(mockSellerClients)
   const [archivedClients, setArchivedClients] = useState<any[]>([])
   const [showNewLeadModal, setShowNewLeadModal] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const [hasError, setHasError] = useState<string | null>(null)
   const [newLeadForm, setNewLeadForm] = useState({
     name: '',
     email: '',
@@ -147,34 +150,56 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
     setSelectedClient(null)
   }
 
-  const handleArchive = (client: any) => {
-    // Remove from active clients
-    const updatedSellerClients = sellerClients.filter(c => c.id !== client.id)
-    setSellerClients(updatedSellerClients)
+  const handleArchive = async (client: any) => {
+    try {
+      // Update client as archived in Firebase
+      await firebaseCollections.updateSeller(client.id, {
+        isArchived: true,
+        archivedDate: new Date().toISOString(),
+        archivedFromStage: getStageName(client.stage)
+      })
 
-    // Add to archived clients with additional properties
-    const archivedClient = {
-      ...client,
-      archivedDate: new Date().toISOString(),
-      archivedFromStage: getStageName(client.stage),
-    }
-    setArchivedClients([archivedClient, ...archivedClients])
-
-    // Close modal
-    setSelectedClient(null)
-  }
-
-  const handleProgress = (client: any) => {
-    const nextStage = getNextStage(client.stage)
-    if (nextStage) {
-      // Update client's stage
-      const updatedSellerClients = sellerClients.map(c =>
-        c.id === client.id ? { ...c, stage: nextStage } : c
-      )
+      // Remove from active clients
+      const updatedSellerClients = sellerClients.filter(c => c.id !== client.id)
       setSellerClients(updatedSellerClients)
 
-      // Update selected client to reflect changes
-      setSelectedClient({ ...client, stage: nextStage })
+      // Add to archived clients with additional properties
+      const archivedClient = {
+        ...client,
+        archivedDate: new Date().toISOString(),
+        archivedFromStage: getStageName(client.stage),
+      }
+      setArchivedClients([archivedClient, ...archivedClients])
+
+      // Close modal
+      setSelectedClient(null)
+    } catch (error) {
+      console.error('Error archiving seller:', error)
+      alert('Failed to archive client. Please try again.')
+      throw error
+    }
+  }
+
+  const handleProgress = async (client: any) => {
+    const nextStage = getNextStage(client.stage)
+    if (nextStage) {
+      try {
+        // Update client's stage in Firebase
+        await firebaseCollections.updateSeller(client.id, { stage: nextStage })
+        
+        // Update local state
+        const updatedSellerClients = sellerClients.map(c =>
+          c.id === client.id ? { ...c, stage: nextStage } : c
+        )
+        setSellerClients(updatedSellerClients)
+
+        // Update selected client to reflect changes
+        setSelectedClient({ ...client, stage: nextStage })
+      } catch (error) {
+        console.error('Error updating seller stage:', error)
+        alert('Failed to update client stage. Please try again.')
+        throw error
+      }
     }
   }
 
@@ -270,53 +295,75 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
     }))
   }
 
-  const handleSubmitNewLead = () => {
+  const handleSubmitNewLead = async () => {
     // Validate required fields
     if (!newLeadForm.name || !newLeadForm.email || !newLeadForm.phone || !newLeadForm.propertyAddress) {
       alert('Please fill in all required fields (Name, Email, Phone, Property Address)')
       return
     }
 
-    // Generate new client ID
-    const newClientId = Math.max(...sellerClients.map(c => c.id)) + 1
-
-    // Create new client object
-    const newClient = {
-      id: newClientId,
-      name: newLeadForm.name,
-      email: newLeadForm.email,
-      phone: newLeadForm.phone,
-      stage: 'new_lead',
-      subStatus: 'to_initiate_contact',
-      propertyAddress: newLeadForm.propertyAddress,
-      propertyType: 'TBD',
-      bedrooms: 0,
-      bathrooms: 0,
-      timeline: 'TBD',
-      reasonForSelling: 'TBD',
-      leadSource: newLeadForm.leadSource || 'Manual Entry',
-      priority: 'Medium',
-      dateAdded: new Date().toISOString(),
-      lastContact: null,
-      notes: newLeadForm.notes || 'Manually added lead',
-      // Documents would be stored in the Content tab in a real application
-      uploadedDocuments: newLeadForm.documents.map((file, index) => ({
-        id: index + 1,
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        uploadDate: new Date().toISOString()
-      }))
+    if (!currentUser?.uid) {
+      alert('Agent information is required to create a client')
+      return
     }
 
-    // Add to seller clients
-    setSellerClients(prev => [...prev, newClient])
+    setIsCreating(true)
+    setHasError(null)
 
-    // Close modal and reset form
-    handleCloseNewLeadModal()
+    try {
+      // Map form data to SellerData interface
+      const sellerData = {
+        agentId: currentUser.uid,
+        name: newLeadForm.name,
+        email: newLeadForm.email,
+        phone: newLeadForm.phone,
+        propertyAddress: newLeadForm.propertyAddress,
+        leadSource: newLeadForm.leadSource || 'Manual Entry',
+        notes: newLeadForm.notes || 'Manually added lead',
+        stage: 'new_lead',
+        subStatus: 'to_initiate_contact',
+        priority: 'Medium',
+        dateAdded: new Date().toISOString(),
+        lastContact: null,
+        isArchived: false,
+        archivedDate: null,
+        archivedFromStage: null,
+        uploadedDocuments: newLeadForm.documents.map((file, index) => ({
+          name: file.name,
+          url: '', // Stub for now - will be implemented later
+          type: file.type,
+          size: file.size,
+          uploadDate: new Date().toISOString()
+        }))
+      }
 
-    // Show success message
-    alert(`New seller lead "${newLeadForm.name}" has been added to the New Lead column!`)
+      // Create seller in Firebase
+      const createdSeller = await firebaseCollections.createSeller(sellerData)
+      
+      // Add to local state for immediate UI update
+      const newClient = {
+        ...createdSeller,
+        propertyType: 'TBD',
+        bedrooms: 0,
+        bathrooms: 0,
+        timeline: 'TBD',
+        reasonForSelling: 'TBD'
+      }
+      
+      setSellerClients(prev => [...prev, newClient as any])
+
+      // Close modal and reset form
+      handleCloseNewLeadModal()
+
+      // Show success message
+      alert(`New seller lead "${newLeadForm.name}" has been added to the New Lead column!`)
+    } catch (error) {
+      console.error('Error creating seller:', error)
+      setHasError('Failed to create seller. Please try again.')
+      throw error
+    } finally {
+      setIsCreating(false)
+    }
   }
 
   return (
@@ -542,19 +589,28 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
                 </div>
               </div>
 
+              {/* Error Display */}
+              {hasError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-sm text-red-600">{hasError}</p>
+                </div>
+              )}
+
               {/* Form Actions */}
               <div className="flex justify-end space-x-2 mt-6">
                 <Button
                   variant="outline"
                   onClick={handleCloseNewLeadModal}
+                  disabled={isCreating}
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={handleSubmitNewLead}
                   className="bg-[#3B7097] hover:bg-[#3B7097]/90"
+                  disabled={isCreating}
                 >
-                  Add Lead
+                  {isCreating ? 'Creating...' : 'Add Lead'}
                 </Button>
               </div>
             </div>

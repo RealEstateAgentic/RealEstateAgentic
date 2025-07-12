@@ -10,6 +10,7 @@ import { ClientCommunicationFeed } from '../components/buyers-portal/client-comm
 import { Button } from '../components/ui/button'
 import { Archive, FileText, Users, DollarSign, Plus, X, Upload } from 'lucide-react'
 import { dummyData } from '../data/dummy-data'
+import { firebaseCollections } from '../services/firebase/collections'
 
 import type { AgentProfile } from '../../shared/types'
 import { OfferForm } from '../components/offers/OfferForm'
@@ -38,6 +39,8 @@ export function BuyersPortalScreen({
   const [showOfferForm, setShowOfferForm] = useState(false)
   const [selectedOffer, setSelectedOffer] = useState<any>(null)
   const [showNewLeadModal, setShowNewLeadModal] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const [hasError, setHasError] = useState<string | null>(null)
   const [newLeadForm, setNewLeadForm] = useState({
     name: '',
     email: '',
@@ -55,34 +58,56 @@ export function BuyersPortalScreen({
     setSelectedClient(null)
   }
 
-  const handleArchive = (client: any) => {
-    // Remove from active clients
-    const updatedBuyerClients = buyerClients.filter(c => c.id !== client.id)
-    setBuyerClients(updatedBuyerClients)
+  const handleArchive = async (client: any) => {
+    try {
+      // Update client as archived in Firebase
+      await firebaseCollections.updateBuyer(client.id, {
+        isArchived: true,
+        archivedDate: new Date().toISOString(),
+        archivedFromStage: getStageName(client.stage)
+      })
 
-    // Add to archived clients with additional properties
-    const archivedClient = {
-      ...client,
-      archivedDate: new Date().toISOString(),
-      archivedFromStage: getStageName(client.stage),
-    }
-    setArchivedClients([archivedClient, ...archivedClients])
-
-    // Close modal
-    setSelectedClient(null)
-  }
-
-  const handleProgress = (client: any) => {
-    const nextStage = getNextStage(client.stage)
-    if (nextStage) {
-      // Update client's stage
-      const updatedBuyerClients = buyerClients.map(c =>
-        c.id === client.id ? { ...c, stage: nextStage } : c
-      )
+      // Remove from active clients
+      const updatedBuyerClients = buyerClients.filter(c => c.id !== client.id)
       setBuyerClients(updatedBuyerClients)
 
-      // Update selected client to reflect changes
-      setSelectedClient({ ...client, stage: nextStage })
+      // Add to archived clients with additional properties
+      const archivedClient = {
+        ...client,
+        archivedDate: new Date().toISOString(),
+        archivedFromStage: getStageName(client.stage),
+      }
+      setArchivedClients([archivedClient, ...archivedClients])
+
+      // Close modal
+      setSelectedClient(null)
+    } catch (error) {
+      console.error('Error archiving buyer:', error)
+      alert('Failed to archive client. Please try again.')
+      throw error
+    }
+  }
+
+  const handleProgress = async (client: any) => {
+    const nextStage = getNextStage(client.stage)
+    if (nextStage) {
+      try {
+        // Update client's stage in Firebase
+        await firebaseCollections.updateBuyer(client.id, { stage: nextStage })
+        
+        // Update local state
+        const updatedBuyerClients = buyerClients.map(c =>
+          c.id === client.id ? { ...c, stage: nextStage } : c
+        )
+        setBuyerClients(updatedBuyerClients)
+
+        // Update selected client to reflect changes
+        setSelectedClient({ ...client, stage: nextStage })
+      } catch (error) {
+        console.error('Error updating buyer stage:', error)
+        alert('Failed to update client stage. Please try again.')
+        throw error
+      }
     }
   }
 
@@ -184,51 +209,73 @@ export function BuyersPortalScreen({
     }))
   }
 
-  const handleSubmitNewLead = () => {
+  const handleSubmitNewLead = async () => {
     // Validate required fields
     if (!newLeadForm.name || !newLeadForm.email || !newLeadForm.phone) {
       alert('Please fill in all required fields (Name, Email, Phone)')
       return
     }
 
-    // Generate new client ID
-    const newClientId = Math.max(...buyerClients.map(c => c.id)) + 1
-
-    // Create new client object
-    const newClient = {
-      id: newClientId,
-      name: newLeadForm.name,
-      email: newLeadForm.email,
-      phone: newLeadForm.phone,
-      stage: 'new_leads',
-      subStatus: 'to_initiate_contact',
-      budget: 'TBD',
-      location: 'TBD',
-      leadSource: newLeadForm.leadSource || 'Manual Entry',
-      priority: 'Medium',
-      dateAdded: new Date().toISOString(),
-      lastContact: null,
-      notes: newLeadForm.notes || 'Manually added lead',
-      favoritedProperties: [],
-      viewedProperties: [],
-      // Documents would be stored in the Content tab in a real application
-      uploadedDocuments: newLeadForm.documents.map((file, index) => ({
-        id: index + 1,
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        uploadDate: new Date().toISOString()
-      }))
+    if (!currentUser?.uid) {
+      alert('Agent information is required to create a client')
+      return
     }
 
-    // Add to buyer clients
-    setBuyerClients(prev => [...prev, newClient])
+    setIsCreating(true)
+    setHasError(null)
 
-    // Close modal and reset form
-    handleCloseNewLeadModal()
+    try {
+      // Map form data to BuyerData interface
+      const buyerData = {
+        agentId: currentUser.uid,
+        name: newLeadForm.name,
+        email: newLeadForm.email,
+        phone: newLeadForm.phone,
+        leadSource: newLeadForm.leadSource || 'Manual Entry',
+        notes: newLeadForm.notes || 'Manually added lead',
+        stage: 'new_leads',
+        subStatus: 'to_initiate_contact',
+        priority: 'Medium',
+        dateAdded: new Date().toISOString(),
+        lastContact: null,
+        isArchived: false,
+        archivedDate: null,
+        archivedFromStage: null,
+        uploadedDocuments: newLeadForm.documents.map((file, index) => ({
+          name: file.name,
+          url: '', // Stub for now - will be implemented later
+          type: file.type,
+          size: file.size,
+          uploadDate: new Date().toISOString()
+        }))
+      }
 
-    // Show success message
-    alert(`New lead "${newLeadForm.name}" has been added to the New Leads column!`)
+      // Create buyer in Firebase
+      const createdBuyer = await firebaseCollections.createBuyer(buyerData)
+      
+      // Add to local state for immediate UI update
+      const newClient = {
+        ...createdBuyer,
+        budget: 'TBD',
+        location: 'TBD',
+        favoritedProperties: [],
+        viewedProperties: []
+      }
+      
+      setBuyerClients(prev => [...prev, newClient as any])
+
+      // Close modal and reset form
+      handleCloseNewLeadModal()
+
+      // Show success message
+      alert(`New lead "${newLeadForm.name}" has been added to the New Leads column!`)
+    } catch (error) {
+      console.error('Error creating buyer:', error)
+      setHasError('Failed to create buyer. Please try again.')
+      throw error
+    } finally {
+      setIsCreating(false)
+    }
   }
 
   const kanbanStages = [
@@ -540,19 +587,28 @@ export function BuyersPortalScreen({
                 </div>
               </div>
 
+              {/* Error Display */}
+              {hasError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                  <p className="text-sm text-red-600">{hasError}</p>
+                </div>
+              )}
+
               {/* Actions */}
               <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
                 <Button
                   variant="outline"
                   onClick={handleCloseNewLeadModal}
+                  disabled={isCreating}
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={handleSubmitNewLead}
                   className="bg-[#3B7097] hover:bg-[#3B7097]/90"
+                  disabled={isCreating}
                 >
-                  Add Lead
+                  {isCreating ? 'Creating...' : 'Add Lead'}
                 </Button>
               </div>
             </div>

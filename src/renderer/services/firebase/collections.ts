@@ -6,9 +6,27 @@ interface BuyerData {
   agentId: string;
   name: string;
   email: string;
-  phone?: string;
-  formData: Record<string, any>;
-  status: string;
+  phone: string;
+  leadSource?: string;
+  notes?: string;
+  stage: string;
+  subStatus: string;
+  priority: string;
+  dateAdded: string;
+  lastContact: string | null;
+  isArchived: boolean;
+  archivedDate: string | null;
+  archivedFromStage: string | null;
+  uploadedDocuments: {
+    name: string;
+    url: string;
+    type: string;
+    size: number;
+    uploadDate: string;
+  }[];
+  // Legacy fields for backward compatibility
+  formData?: Record<string, any>;
+  status?: string;
   qualificationSummary?: string;
 }
 
@@ -16,10 +34,28 @@ interface SellerData {
   agentId: string;
   name: string;
   email: string;
-  phone?: string;
-  propertyAddress?: string;
-  formData: Record<string, any>;
-  status: string;
+  phone: string;
+  propertyAddress: string;
+  leadSource?: string;
+  notes?: string;
+  stage: string;
+  subStatus: string;
+  priority: string;
+  dateAdded: string;
+  lastContact: string | null;
+  isArchived: boolean;
+  archivedDate: string | null;
+  archivedFromStage: string | null;
+  uploadedDocuments: {
+    name: string;
+    url: string;
+    type: string;
+    size: number;
+    uploadDate: string;
+  }[];
+  // Legacy fields for backward compatibility
+  formData?: Record<string, any>;
+  status?: string;
   qualificationSummary?: string;
 }
 
@@ -75,17 +111,24 @@ export const firebaseCollections = {
   async createSeller(data: SellerData) {
     console.log('💾 Creating seller in Firebase:', data.name);
     
-    // Simulate database operation
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const seller = {
-      id: `seller_${Date.now()}`,
-      ...data,
-      createdAt: new Date().toISOString()
-    };
-    
-    console.log('✅ Seller created:', seller.id);
-    return seller;
+    try {
+      const docRef = await addDoc(collection(db, 'sellers'), {
+        ...data,
+        createdAt: new Date().toISOString()
+      });
+      
+      const seller = {
+        id: docRef.id,
+        ...data,
+        createdAt: new Date().toISOString()
+      };
+      
+      console.log('✅ Seller created:', seller.id);
+      return seller;
+    } catch (error) {
+      console.error('❌ Error creating seller:', error);
+      throw error;
+    }
   },
 
   async createWorkflow(data: WorkflowData) {
@@ -117,21 +160,31 @@ export const firebaseCollections = {
   async updateBuyer(buyerId: string, updates: Partial<BuyerData>) {
     console.log('💾 Updating buyer in Firebase:', buyerId);
     
-    // Simulate database operation
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    console.log('✅ Buyer updated:', buyerId);
-    return { id: buyerId, ...updates };
+    try {
+      const docRef = doc(db, 'buyers', buyerId);
+      await updateDoc(docRef, updates);
+      
+      console.log('✅ Buyer updated:', buyerId);
+      return { id: buyerId, ...updates };
+    } catch (error) {
+      console.error('❌ Error updating buyer:', error);
+      throw error;
+    }
   },
 
   async updateSeller(sellerId: string, updates: Partial<SellerData>) {
     console.log('💾 Updating seller in Firebase:', sellerId);
     
-    // Simulate database operation
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    console.log('✅ Seller updated:', sellerId);
-    return { id: sellerId, ...updates };
+    try {
+      const docRef = doc(db, 'sellers', sellerId);
+      await updateDoc(docRef, updates);
+      
+      console.log('✅ Seller updated:', sellerId);
+      return { id: sellerId, ...updates };
+    } catch (error) {
+      console.error('❌ Error updating seller:', error);
+      throw error;
+    }
   },
 
   async getBuyer(buyerId: string) {
@@ -210,19 +263,25 @@ export const firebaseCollections = {
     }
   },
 
-  async getBuyers() {
-    console.log('💾 Getting all buyers from Firebase');
+  async getBuyers(agentId?: string) {
+    console.log('💾 Getting buyers from Firebase', agentId ? `for agent: ${agentId}` : '(all)');
     
     try {
       const buyersCollection = collection(db, 'buyers');
-      const querySnapshot = await getDocs(buyersCollection);
-      const buyers = [];
+      let q = query(buyersCollection, where('isArchived', '==', false));
+      
+      if (agentId) {
+        q = query(buyersCollection, where('agentId', '==', agentId), where('isArchived', '==', false));
+      }
+      
+      const querySnapshot = await getDocs(q);
+      const buyers: (BuyerData & { id: string })[] = [];
       
       querySnapshot.forEach((doc) => {
         buyers.push({
           id: doc.id,
           ...doc.data()
-        });
+        } as BuyerData & { id: string });
       });
       
       console.log('✅ Retrieved', buyers.length, 'buyers');
@@ -233,19 +292,25 @@ export const firebaseCollections = {
     }
   },
 
-  async getSellers() {
-    console.log('💾 Getting all sellers from Firebase');
+  async getSellers(agentId?: string) {
+    console.log('💾 Getting sellers from Firebase', agentId ? `for agent: ${agentId}` : '(all)');
     
     try {
       const sellersCollection = collection(db, 'sellers');
-      const querySnapshot = await getDocs(sellersCollection);
-      const sellers = [];
+      let q = query(sellersCollection, where('isArchived', '==', false));
+      
+      if (agentId) {
+        q = query(sellersCollection, where('agentId', '==', agentId), where('isArchived', '==', false));
+      }
+      
+      const querySnapshot = await getDocs(q);
+      const sellers: (SellerData & { id: string })[] = [];
       
       querySnapshot.forEach((doc) => {
         sellers.push({
           id: doc.id,
           ...doc.data()
-        });
+        } as SellerData & { id: string });
       });
       
       console.log('✅ Retrieved', sellers.length, 'sellers');
@@ -281,13 +346,13 @@ export const firebaseCollections = {
     try {
       const analysesCollection = collection(db, 'gpt-analysis');
       const querySnapshot = await getDocs(analysesCollection);
-      const analyses = [];
+      const analyses: (GPTAnalysisData & { id: string })[] = [];
       
       querySnapshot.forEach((doc) => {
         analyses.push({
           id: doc.id,
           ...doc.data()
-        });
+        } as GPTAnalysisData & { id: string });
       });
       
       console.log('✅ Retrieved', analyses.length, 'GPT analyses');
@@ -305,13 +370,13 @@ export const firebaseCollections = {
       const analysesCollection = collection(db, 'gpt-analysis');
       const q = query(analysesCollection, where('clientEmail', '==', clientEmail));
       const querySnapshot = await getDocs(q);
-      const analyses = [];
+      const analyses: (GPTAnalysisData & { id: string })[] = [];
       
       querySnapshot.forEach((doc) => {
         analyses.push({
           id: doc.id,
           ...doc.data()
-        });
+        } as GPTAnalysisData & { id: string });
       });
       
       console.log('✅ Retrieved', analyses.length, 'GPT analyses for', clientEmail);

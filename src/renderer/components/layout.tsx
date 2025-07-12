@@ -5,10 +5,8 @@
 
 import { ReactNode, useState } from 'react'
 import {
-  Search,
   Bell,
   User,
-  Brain,
   ChevronDown,
   LogOut,
   TrendingUp,
@@ -43,8 +41,6 @@ function Navigation({
   isAuthenticated?: boolean
   onLogout?: () => void
 }) {
-  const [isSecondBrainOpen, setIsSecondBrainOpen] = useState(false)
-  const [selectedClient, setSelectedClient] = useState<string | null>(null)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
 
   const navItems = [
@@ -58,22 +54,6 @@ function Navigation({
     n => !n.read
   ).length
 
-  const handleSecondBrainToggle = () => {
-    // If a client is already selected, deactivate the feature
-    if (selectedClient) {
-      setSelectedClient(null)
-      setIsSecondBrainOpen(false)
-    } else {
-      // If no client is selected, open the dropdown
-      setIsSecondBrainOpen(!isSecondBrainOpen)
-    }
-  }
-
-  const handleClientSelect = (clientName: string) => {
-    setSelectedClient(clientName)
-    setIsSecondBrainOpen(false)
-  }
-
   const handleUserMenuToggle = () => {
     setIsUserMenuOpen(!isUserMenuOpen)
   }
@@ -82,18 +62,6 @@ function Navigation({
     action()
     setIsUserMenuOpen(false)
   }
-
-  // Mock client names for Second Brain dropdown
-  const activeClients = [
-    'Miller Family',
-    'Davis Family',
-    'Thompson Family',
-    'Wilson Family',
-    'Johnson Family',
-    'Chen Family',
-    'Martinez Family',
-    'Williams Family',
-  ]
 
   return (
     <nav className="bg-white border-b border-gray-200 px-6 py-3 relative z-50">
@@ -204,52 +172,6 @@ function Navigation({
               </Button>
             </div>
           )}
-
-          {/* Second Brain Dropdown */}
-          <div className="relative">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSecondBrainToggle}
-              className={`flex items-center space-x-2 ${
-                selectedClient
-                  ? 'bg-[#3B7097] text-white hover:bg-[#2A5A7A]'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              <Brain className="size-4" />
-              <span>
-                {selectedClient
-                  ? `Second Brain: ${selectedClient}`
-                  : 'Second Brain'}
-              </span>
-              <ChevronDown className="size-3" />
-            </Button>
-
-            {isSecondBrainOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-                <div className="px-4 py-2 border-b border-gray-200">
-                  <p className="text-sm font-medium text-gray-900">
-                    Select Client
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Activate Second Brain for a specific client
-                  </p>
-                </div>
-                <div className="py-1 max-h-64 overflow-y-auto">
-                  {activeClients.map(client => (
-                    <button
-                      key={client}
-                      onClick={() => handleClientSelect(client)}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      {client}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       </div>
     </nav>

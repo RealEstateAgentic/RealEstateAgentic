@@ -27,8 +27,9 @@ initializeFormUrls();
 // Import and start JotForm polling service
 import { jotformPolling } from './jotform-polling';
 
+// TEMPORARILY DISABLED: JotForm polling to avoid API rate limits (1000 calls/day)
 // Start polling for form submissions
-jotformPolling.startPolling();
+// jotformPolling.startPolling();
 
 // Buyer workflow handler with Gmail API
 export async function startBuyerWorkflowWithGmail({ agentId, buyerEmail, buyerName, buyerPhone, senderEmail }: {

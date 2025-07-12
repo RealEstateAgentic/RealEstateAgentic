@@ -47,6 +47,7 @@ import {
   getClientDocuments,
   deleteDocument,
 } from '../../../lib/firebase/collections/documents'
+import { EmailHistory } from '../shared/email-history'
 
 interface ClientModalProps {
   client: {
@@ -867,6 +868,244 @@ export function ClientModal({
                       key={document.id}
                       className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                     >
+              </div>
+            </div>
+
+            {/* Widget C: Recent Notes */}
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="flex items-center mb-4">
+                <MessageCircle className="size-5 text-purple-600 mr-2" />
+                <h3 className="font-semibold text-gray-800">Recent Notes & Insights</h3>
+              </div>
+              <div className="space-y-3 max-h-32 overflow-y-auto">
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <p className="text-sm text-gray-700">{client.notes}</p>
+                  <span className="text-xs text-gray-500 mt-1">Manual Note • {formatDate(client.dateAdded)}</span>
+                </div>
+                <div className="bg-orange-50 p-3 rounded-lg">
+                  <p className="text-sm text-gray-700">AI Insight: Property appears to be well-maintained based on initial consultation.</p>
+                  <span className="text-xs text-gray-500 mt-1">AI Generated • 2 days ago</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Widget D: Next Event */}
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="flex items-center mb-4">
+                <Calendar className="size-5 text-orange-600 mr-2" />
+                <h3 className="font-semibold text-gray-800">Next Event</h3>
+              </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="text-center">
+                  <h4 className="text-lg font-semibold text-blue-800 mb-1">Listing Consultation</h4>
+                  <p className="text-sm text-blue-700 mb-2">{client.propertyAddress}</p>
+                  <div className="flex items-center justify-center text-sm text-blue-600">
+                    <Calendar className="size-4 mr-1" />
+                    <span>Tomorrow at 2:00 PM</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      case 'stage_details':
+        return getStageSpecificContent()
+      case 'summary':
+        return (
+          <div className="space-y-4">
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <h3 className="font-semibold text-gray-800 mb-4">Client Summary Preview</h3>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium text-gray-700">Property Overview</h4>
+                  <p className="text-sm text-gray-600">
+                    {client.propertyType} located at {client.propertyAddress}. 
+                    Property features {client.bedrooms} bedrooms and {client.bathrooms} bathrooms.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-700">Seller Motivation</h4>
+                  <p className="text-sm text-gray-600">
+                    Client's primary motivation: {client.reasonForSelling}. 
+                    Timeline: {client.timeline}. Priority level: {client.priority}.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-700">Lead Information</h4>
+                  <p className="text-sm text-gray-600">
+                    Lead source: {client.leadSource}. Added on {formatDate(client.dateAdded)}.
+                  </p>
+                </div>
+              </div>
+              <div className="flex space-x-2 mt-4">
+                <Button variant="outline">
+                  <Eye className="size-4 mr-2" />
+                  See Full Summary
+                </Button>
+                <Button variant="outline">
+                  <Download className="size-4 mr-2" />
+                  Download Full Summary
+                </Button>
+              </div>
+            </div>
+          </div>
+        )
+      case 'ai_lead_scoring':
+        return (
+          <LeadScoringDisplay
+            clientEmail={client.email}
+            clientName={client.name}
+          />
+        )
+      case 'offers':
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-gray-800">Received Offers</h3>
+              <Button className="bg-[#3B7097] hover:bg-[#3B7097]/90">
+                <TrendingUp className="size-4 mr-2" />
+                Analyze Offers
+              </Button>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="text-center py-8">
+                <DollarSign className="size-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">No offers received yet</p>
+                <p className="text-sm text-gray-400 mt-2">Offers will appear here when received</p>
+              </div>
+            </div>
+          </div>
+        )
+      case 'contingencies':
+        return (
+          <div className="space-y-4">
+            <h3 className="font-semibold text-gray-800">Buyer Contingencies</h3>
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <AlertCircle className="size-5 text-yellow-600" />
+                    <div>
+                      <div className="font-medium text-gray-800">Inspection Contingency</div>
+                      <div className="text-sm text-gray-600">Expires in 3 days</div>
+                    </div>
+                  </div>
+                  <span className="text-sm font-medium text-yellow-600">Pending</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <Clock className="size-5 text-gray-600" />
+                    <div>
+                      <div className="font-medium text-gray-800">Appraisal Contingency</div>
+                      <div className="text-sm text-gray-600">Expires in 10 days</div>
+                    </div>
+                  </div>
+                  <span className="text-sm font-medium text-gray-600">Pending</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <CheckCircle className="size-5 text-green-600" />
+                    <div>
+                      <div className="font-medium text-gray-800">Financing Contingency</div>
+                      <div className="text-sm text-gray-600">Approved</div>
+                    </div>
+                  </div>
+                  <span className="text-sm font-medium text-green-600">Complete</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      case 'content':
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-gray-800">Documents & Content</h3>
+              <Button variant="outline">
+                <Upload className="size-4 mr-2" />
+                Upload Content
+              </Button>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <FileText className="size-5 text-blue-600" />
+                    <div>
+                      <div className="font-medium text-gray-800">Seller Survey Results</div>
+                      <div className="text-sm text-gray-600">PDF • 2.3 MB</div>
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button size="sm" variant="outline">
+                      <Eye className="size-4 mr-1" />
+                      View
+                    </Button>
+                    <Button size="sm" variant="outline">
+                      <Download className="size-4 mr-1" />
+                      Download
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <FileText className="size-5 text-green-600" />
+                    <div>
+                      <div className="font-medium text-gray-800">Generated Briefing</div>
+                      <div className="text-sm text-gray-600">PDF • 1.8 MB</div>
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button size="sm" variant="outline">
+                      <Eye className="size-4 mr-1" />
+                      View
+                    </Button>
+                    <Button size="sm" variant="outline">
+                      <Download className="size-4 mr-1" />
+                      Download
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <FileText className="size-5 text-purple-600" />
+                    <div>
+                      <div className="font-medium text-gray-800">Generated Presentation (Gamma)</div>
+                      <div className="text-sm text-gray-600">Presentation • 5.2 MB</div>
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button size="sm" variant="outline">
+                      <Eye className="size-4 mr-1" />
+                      View
+                    </Button>
+                    <Button size="sm" variant="outline">
+                      <Download className="size-4 mr-1" />
+                      Download
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      case 'email_history':
+        return (
+          <EmailHistory
+            clientEmail={client.email}
+            clientName={client.name}
+          />
+        )
+      case 'calendar':
+        return (
+          <div className="space-y-4">
+            <h3 className="font-semibold text-gray-800">Calendar Events</h3>
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="space-y-6">
+                <div>
+                  <h4 className="font-medium text-gray-700 mb-3">Coming Events</h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
                       <div className="flex items-center space-x-3">
                         <FileText className="size-5 text-blue-600" />
                         <div>

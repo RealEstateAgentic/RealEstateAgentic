@@ -37,6 +37,7 @@ import {
 import { Button } from '../ui/button'
 import { DocumentGenerator } from '../documents/DocumentGenerator'
 import { LeadScoringDisplay } from '../shared/lead-scoring-display'
+import { EmailHistory } from '../shared/email-history'
 import type { AgentProfile } from '../../../shared/types'
 import { dummyData } from '../../data/dummy-data'
 import { gmailAuth } from '../../services/gmail-auth'
@@ -556,9 +557,538 @@ export function ClientModal({
     }
   }
 
+  const getStageSpecificContent = () => {
+    switch (client.stage) {
+      case 'new_leads':
+        return (
+          <div className="space-y-4">
+            <div className="bg-[#75BDE0]/10 p-4 rounded-lg border border-[#75BDE0]/30">
+              <h4 className="font-medium text-gray-800 mb-2">
+                Lead Information
+              </h4>
+              <div className="space-y-2 text-sm">
+                <div>
+                  <strong>Source:</strong> {client.leadSource}
+                </div>
+                <div>
+                  <strong>Priority:</strong> {client.priority}
+                </div>
+                <div>
+                  <strong>Date Added:</strong> {formatDate(client.dateAdded)}
+                </div>
+                <div>
+                  <strong>Last Contact:</strong>{' '}
+                  {formatDate(client.lastContact)}
+                </div>
+              </div>
+            </div>
+            <div className="bg-[#c05e51]/10 p-4 rounded-lg border border-[#c05e51]/30">
+              <h4 className="font-medium text-gray-800 mb-2">AI Briefing</h4>
+              <p className="text-sm text-gray-700">
+                {client.subStatus === 'to_initiate_contact' &&
+                  'Schedule initial consultation call'}
+                {client.subStatus === 'awaiting_survey' &&
+                  'Send buyer survey form'}
+                {client.subStatus === 'review_survey' &&
+                  'Review submitted survey and prepare briefing'}
+              </p>
+            </div>
+          </div>
+        )
+      case 'active_search':
+        return (
+          <div className="space-y-4">
+            <div className="bg-[#A9D09E]/10 p-4 rounded-lg border border-[#A9D09E]/30">
+              <h4 className="font-medium text-gray-800 mb-2">
+                Property Search
+              </h4>
+              <div className="space-y-2 text-sm">
+                <div>
+                  <strong>Favorited Properties:</strong>{' '}
+                  {client.favoritedProperties?.length || 0}
+                </div>
+                <div>
+                  <strong>Viewed Properties:</strong>{' '}
+                  {client.viewedProperties?.length || 0}
+                </div>
+                <div>
+                  <strong>Status:</strong> {client.subStatus.replace('_', ' ')}
+                </div>
+              </div>
+            </div>
+            {client.favoritedProperties &&
+              client.favoritedProperties.length > 0 && (
+                <div className="bg-[#F6E2BC]/50 p-4 rounded-lg border border-[#F6E2BC]">
+                  <h4 className="font-medium text-gray-800 mb-2">
+                    Favorited Properties
+                  </h4>
+                  <div className="space-y-1">
+                    {client.favoritedProperties.map((property, index) => (
+                      <div key={index} className="text-sm text-gray-700">
+                        • {property}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+          </div>
+        )
+      case 'under_contract':
+        return (
+          <div className="space-y-4">
+            {/* Transaction Timeline */}
+            <div className="bg-[#c05e51]/10 p-4 rounded-lg border border-[#c05e51]/30">
+              <h4 className="font-medium text-gray-800 mb-2">
+                Contract Details
+              </h4>
+              <div className="space-y-2 text-sm">
+                <div>
+                  <strong>Property:</strong> {client.contractProperty}
+                </div>
+                <div>
+                  <strong>Contract Date:</strong>{' '}
+                  {formatDate(client.contractDate)}
+                </div>
+                <div>
+                  <strong>Inspection Date:</strong>{' '}
+                  {formatDate(client.inspectionDate)}
+                </div>
+                <div>
+                  <strong>Appraisal Date:</strong>{' '}
+                  {formatDate(client.appraisalDate)}
+                </div>
+                <div>
+                  <strong>Closing Date:</strong>{' '}
+                  {formatDate(client.closingDate)}
+                </div>
+              </div>
+            </div>
+
+            {/* Option Period Deadline */}
+            <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+              <h4 className="font-medium text-red-800 mb-2 flex items-center">
+                <Clock className="size-4 mr-2" />
+                Option Period Deadline
+              </h4>
+              <p className="text-sm text-red-700">
+                Option period expires:{' '}
+                <strong>{formatDate(client.inspectionDate)}</strong>
+              </p>
+            </div>
+
+            {/* Inspection Hub */}
+            <div className="bg-[#A9D09E]/10 p-4 rounded-lg border border-[#A9D09E]/30">
+              <h4 className="font-medium text-gray-800 mb-2">Inspection Hub</h4>
+              <p className="text-sm text-gray-600 mb-3">
+                Manage inspection reports and repair estimates
+              </p>
+              <Button
+                onClick={handleUploadInspectionReport}
+                className="bg-[#3B7097] hover:bg-[#3B7097]/90"
+              >
+                <Upload className="size-4 mr-2" />
+                Upload Inspection Report
+              </Button>
+            </div>
+
+            {/* Key Contacts Widget */}
+            <div className="bg-[#F6E2BC]/10 p-4 rounded-lg border border-[#F6E2BC]/30">
+              <h4 className="font-medium text-gray-800 mb-3">Key Contacts</h4>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-sm">Lender</div>
+                    <div className="text-xs text-gray-500">Not assigned</div>
+                  </div>
+                  <Button size="sm" variant="outline">
+                    <User className="size-3 mr-1" />
+                    Add
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-sm">
+                      Title/Escrow Officer
+                    </div>
+                    <div className="text-xs text-gray-500">Not assigned</div>
+                  </div>
+                  <Button size="sm" variant="outline">
+                    <User className="size-3 mr-1" />
+                    Add
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-medium text-sm">
+                      Co-operating Agent
+                    </div>
+                    <div className="text-xs text-gray-500">Not assigned</div>
+                  </div>
+                  <Button size="sm" variant="outline">
+                    <User className="size-3 mr-1" />
+                    Add
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      default:
+        return (
+          <div className="space-y-4">
+            <div className="bg-[#A9D09E]/10 p-4 rounded-lg border border-[#A9D09E]/30">
+              <h4 className="font-medium text-gray-800 mb-2">
+                Stage Information
+              </h4>
+              <div className="space-y-2 text-sm">
+                <div>
+                  <strong>Current Stage:</strong> {getStageName(client.stage)}
+                </div>
+                <div>
+                  <strong>Status:</strong> {client.subStatus.replace('_', ' ')}
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+    }
+  }
+
+  // Define which tabs should be visible based on client stage
+  const getVisibleTabs = () => {
+    const baseTabs = [
+      { id: 'summary', label: 'Client Summary', icon: null },
+      { id: 'stage_details', label: 'Stage Details', icon: null },
+      { id: 'ai_lead_scoring', label: 'AI Lead Scoring', icon: TrendingUp },
+      { id: 'email_history', label: 'Email History', icon: History },
+    ]
+
+    const stageSpecificTabs = []
+
+    // Add Offers tab only for Active Search stage
+    if (client.stage === 'active_search') {
+      stageSpecificTabs.push({
+        id: 'offers',
+        label: 'Offers',
+        icon: DollarSign,
+      })
+    }
+
+    // Add Contingencies tab only for Under Contract stage
+    if (client.stage === 'under_contract') {
+      stageSpecificTabs.push({
+        id: 'contingencies',
+        label: 'Contingencies',
+        icon: Clock,
+      })
+    }
+
+    const alwaysVisibleTabs = [
+      { id: 'content', label: 'Content', icon: FolderOpen },
+      { id: 'calendar', label: 'Calendar', icon: CalendarDays },
+    ]
+
+    return [...baseTabs, ...stageSpecificTabs, ...alwaysVisibleTabs]
+  }
+
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'documents':
+      case 'summary':
+        return (
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-medium text-gray-800 mb-2">Client Notes</h3>
+              <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                {client.notes || 'No notes available'}
+              </p>
+            </div>
+            <div>
+              <h3 className="font-medium text-gray-800 mb-2">Client Details</h3>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <strong>Lead Source:</strong> {client.leadSource}
+                </div>
+                <div>
+                  <strong>Priority:</strong> {client.priority}
+                </div>
+                <div>
+                  <strong>Date Added:</strong> {formatDate(client.dateAdded)}
+                </div>
+                <div>
+                  <strong>Last Contact:</strong>{' '}
+                  {formatDate(client.lastContact)}
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+
+      case 'stage_details':
+        return getStageSpecificContent()
+
+      case 'ai_lead_scoring':
+        return (
+          <LeadScoringDisplay
+            clientEmail={client.email}
+            clientName={client.name}
+          />
+        )
+
+      case 'offers':
+        return (
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-medium text-gray-800 mb-3">Client Offers</h3>
+            </div>
+            <div className="space-y-3">
+              {/* Sample offer data - in real app this would come from database */}
+              <div className="border border-gray-200 rounded-lg p-4">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-medium text-gray-800">
+                      123 Main Street
+                    </h4>
+                    <p className="text-sm text-gray-600">
+                      Offer Price: $450,000
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Submitted: March 15, 2024
+                    </p>
+                  </div>
+                  <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                    Pending
+                  </span>
+                </div>
+              </div>
+              <div className="text-sm text-gray-500 text-center py-4">
+                No additional offers found for this client.
+              </div>
+            </div>
+          </div>
+        )
+
+      case 'contingencies':
+        return (
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-medium text-gray-800 mb-3">
+                Transaction Contingencies
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                Track and manage all major contingencies for this transaction.
+              </p>
+              <h4 className="font-medium text-gray-800 mb-2">
+                Closed Transaction
+              </h4>
+              <div className="space-y-2 text-sm">
+                <div>
+                  <strong>Property:</strong> {client.contractProperty}
+                </div>
+                <div>
+                  <strong>Sale Price:</strong> {client.soldPrice}
+                </div>
+                <div>
+                  <strong>Closing Date:</strong>{' '}
+                  {formatDate(client.closingDate)}
+                </div>
+                <div>
+                  <strong>Status:</strong> {client.subStatus.replace('_', ' ')}
+                </div>
+              </div>
+            </div>
+            <div className="bg-[#A9D09E]/10 p-4 rounded-lg border border-[#A9D09E]/30">
+              <h4 className="font-medium text-gray-800 mb-2">
+                Post-Closing Tasks
+              </h4>
+              <p className="text-sm text-gray-700">
+                {client.subStatus === 'post_closing_checklist' &&
+                  'Complete post-closing checklist and schedule follow-up'}
+                {client.subStatus === 'nurture_campaign_active' &&
+                  'Client in nurture campaign, potential referral source'}
+              </p>
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <input type="checkbox" id="inspection" className="rounded" />
+                  <label htmlFor="inspection" className="text-sm font-medium">
+                    Inspection Contingency
+                  </label>
+                </div>
+                <span className="text-xs text-gray-500">
+                  Due: {formatDate(client.inspectionDate)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <input type="checkbox" id="appraisal" className="rounded" />
+                  <label htmlFor="appraisal" className="text-sm font-medium">
+                    Appraisal Contingency
+                  </label>
+                </div>
+                <span className="text-xs text-gray-500">
+                  Due: {formatDate(client.appraisalDate)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <input type="checkbox" id="loan" className="rounded" />
+                  <label htmlFor="loan" className="text-sm font-medium">
+                    Loan Contingency
+                  </label>
+                </div>
+                <span className="text-xs text-gray-500">
+                  Due: {formatDate(client.closingDate)}
+                </span>
+              </div>
+            </div>
+          </div>
+        )
+
+      case 'content':
+        return (
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="font-medium text-gray-800">Document Repository</h3>
+              <Button size="sm" variant="outline">
+                <Plus className="size-4 mr-2" />
+                Upload Document
+              </Button>
+            </div>
+            <div className="space-y-3">
+              {/* Sample document data */}
+              <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <FileText className="size-4 text-gray-500" />
+                  <div>
+                    <div className="text-sm font-medium">
+                      Pre-approval Letter - ABC Bank.pdf
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Uploaded 2 days ago
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      handleViewDocument({
+                        id: 1,
+                        title: 'Pre-approval Letter - ABC Bank.pdf',
+                        type: 'pdf',
+                        uploadedDate: '2 days ago',
+                        content:
+                          'This is a sample pre-approval letter content. In a real application, this would display the actual document content or embed a PDF viewer.',
+                      })
+                    }
+                  >
+                    <Eye className="size-3 mr-1" />
+                    View
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      handleDownloadDocument({
+                        id: 1,
+                        title: 'Pre-approval Letter - ABC Bank.pdf',
+                      })
+                    }
+                  >
+                    <Download className="size-3 mr-1" />
+                    Download
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      handleRenameDocument({
+                        id: 1,
+                        title: 'Pre-approval Letter - ABC Bank.pdf',
+                      })
+                    }
+                  >
+                    <Edit className="size-3 mr-1" />
+                    Rename
+                  </Button>
+                </div>
+              </div>
+
+              {/* Additional sample document */}
+              <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <FileText className="size-4 text-gray-500" />
+                  <div>
+                    <div className="text-sm font-medium">
+                      Property Wish List - Notes.docx
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Uploaded 1 week ago
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      handleViewDocument({
+                        id: 2,
+                        title: 'Property Wish List - Notes.docx',
+                        type: 'docx',
+                        uploadedDate: '1 week ago',
+                        content:
+                          "Client's property wish list and preferences:\n\n• 3-4 bedrooms\n• 2+ bathrooms\n• Updated kitchen\n• Large backyard\n• Good school district\n• Near public transportation\n• Parking space\n• Modern appliances included",
+                      })
+                    }
+                  >
+                    <Eye className="size-3 mr-1" />
+                    View
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      handleDownloadDocument({
+                        id: 2,
+                        title: 'Property Wish List - Notes.docx',
+                      })
+                    }
+                  >
+                    <Download className="size-3 mr-1" />
+                    Download
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() =>
+                      handleRenameDocument({
+                        id: 2,
+                        title: 'Property Wish List - Notes.docx',
+                      })
+                    }
+                  >
+                    <Edit className="size-3 mr-1" />
+                    Rename
+                  </Button>
+                </div>
+              </div>
+
+              <div className="text-sm text-gray-500 text-center py-4">
+                No additional documents found.
+              </div>
+            </div>
+          </div>
+        )
+
+      case 'email_history':
+        return (
+          <EmailHistory clientEmail={client.email} clientName={client.name} />
+        )
+
+      case 'calendar':
         return (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -774,10 +1304,84 @@ export function ClientModal({
                   <X className="size-6" />
                 </button>
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-gray-700 whitespace-pre-wrap">
-                  {selectedDocument.content}
-                </p>
+              <div className="flex items-center">
+                <Mail className="size-4 text-gray-400 mr-2" />
+                <span className="text-sm">{client.email}</span>
+              </div>
+              <div className="flex items-center">
+                <DollarSign className="size-4 text-gray-400 mr-2" />
+                <span className="text-sm">{client.budget}</span>
+              </div>
+              <div className="flex items-center">
+                <MapPin className="size-4 text-gray-400 mr-2" />
+                <span className="text-sm">{client.location}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="border-b border-gray-200">
+            <nav className="flex space-x-8 px-6">
+              {getVisibleTabs().map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center space-x-2 py-4 px-1 text-sm font-medium border-b-2 ${
+                    activeTab === tab.id
+                      ? 'border-[#3B7097] text-[#3B7097]'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {tab.icon && <tab.icon className="size-4" />}
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {/* Content */}
+          <div className="p-6">{renderTabContent()}</div>
+
+          {/* Actions */}
+          <div className="p-6 border-t border-gray-200 bg-gray-50">
+            <div className="flex justify-between items-start">
+              {/* Stage-specific actions */}
+              <div className="flex-1">{getStageActions()}</div>
+
+              {/* Archive/Progress buttons or Unarchive button */}
+              <div className="flex gap-2 ml-4">
+                {isArchiveMode ? (
+                  // Archive mode: Show only Unarchive button
+                  <Button
+                    onClick={handleUnarchive}
+                    className="bg-[#A9D09E] hover:bg-[#A9D09E]/90 text-white"
+                  >
+                    <RotateCcw className="size-4 mr-2" />
+                    Unarchive
+                  </Button>
+                ) : (
+                  // Normal mode: Show Archive and Progress buttons
+                  <>
+                    {shouldShowProgressButton(client.stage) && (
+                      <Button
+                        onClick={handleProgress}
+                        className="bg-[#3B7097] hover:bg-[#3B7097]/90 text-white"
+                      >
+                        <ArrowRight className="size-4 mr-2" />
+                        {getProgressButtonText(client.stage)}
+                      </Button>
+                    )}
+
+                    <Button
+                      onClick={handleArchive}
+                      variant="outline"
+                      className="border-[#c05e51] text-[#c05e51] hover:bg-[#c05e51]/10"
+                    >
+                      <Archive className="size-4 mr-2" />
+                      Archive
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>

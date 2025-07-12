@@ -4,6 +4,7 @@
  */
 
 import { Button } from '../components/ui/button'
+import { Logo } from '../components/ui/logo'
 import {
   FileText,
   DollarSign,
@@ -26,7 +27,9 @@ export function MarketingLanding({ navigate }: MarketingLandingProps) {
       {/* Hero Section */}
       <section className="py-20 bg-gradient-to-br from-blue-50 to-indigo-100">
         <div className="max-w-7xl mx-auto px-6 text-center">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">AIgent Pro</h1>
+          <div className="flex justify-center mb-6">
+            <Logo className="scale-150" onClick={() => navigate('/')} />
+          </div>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
             The AI-powered platform that transforms how real estate agents
             manage clients, generate offers, and close deals. Streamline your

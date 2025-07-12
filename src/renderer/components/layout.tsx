@@ -3,9 +3,10 @@
  * Includes navigation bar and wraps page content
  */
 
-import { ReactNode, useState } from 'react'
-import { User, ChevronDown, LogOut } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { LogOut } from 'lucide-react'
 import { Button } from './ui/button'
+import { Logo } from './ui/logo'
 import type { AgentProfile } from '../../shared/types'
 
 interface LayoutProps {
@@ -44,12 +45,7 @@ function Navigation({
     <nav className="bg-white border-b border-gray-200 px-6 py-3 relative z-50">
       <div className="flex items-center justify-between max-w-full mx-auto">
         {/* Logo/Brand */}
-        <button
-          onClick={() => navigate('/')}
-          className="text-lg font-semibold text-gray-800 hover:text-[#3B7097] transition-colors"
-        >
-          AIgent Pro
-        </button>
+        <Logo onClick={() => navigate('/')} />
 
         {/* Main Navigation */}
         <div className="flex items-center space-x-6">

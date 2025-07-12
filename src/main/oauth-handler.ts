@@ -166,6 +166,7 @@ export function setupOAuthHandler(): void {
     }
   })
 
+
   // Intercept console logs to capture OAuth codes from failed loads
   const originalConsoleWarn = console.warn
   const originalConsoleError = console.error

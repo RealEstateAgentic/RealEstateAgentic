@@ -75,3 +75,63 @@ export async function getFormUrls(): Promise<{ buyerUrl: string, sellerUrl: stri
     };
   }
 }
+
+/**
+ * Fetches the form structure (questions) from JotForm API
+ */
+export async function fetchFormQuestions(formId: string): Promise<Record<string, string>> {
+  try {
+    console.log(`🔍 Fetching form questions for form ID: ${formId}`);
+    
+    const response = await fetch(`${JOTFORM_API_BASE}/form/${formId}/questions?apiKey=${JOTFORM_API_KEY}`);
+    const data: JotFormResponse = await response.json();
+    
+    if (data.responseCode !== 200) {
+      throw new Error(`JotForm API error: ${data.message}`);
+    }
+    
+    const fieldMapping: Record<string, string> = {};
+    
+    // Parse the questions structure
+    Object.entries(data.content).forEach(([fieldId, fieldData]: [string, any]) => {
+      if (fieldData && fieldData.text) {
+        // Clean up the question text
+        const questionText = fieldData.text
+          .replace(/<[^>]*>/g, '') // Remove HTML tags
+          .replace(/\s+/g, ' ')    // Normalize whitespace
+          .trim();
+        
+        fieldMapping[fieldId] = questionText;
+      }
+    });
+    
+    console.log(`✅ Fetched ${Object.keys(fieldMapping).length} questions for form ${formId}`, fieldMapping);
+    return fieldMapping;
+    
+  } catch (error) {
+    console.error('Failed to fetch form questions:', error);
+    return {};
+  }
+}
+
+/**
+ * Fetches questions for both buyer and seller forms
+ */
+export async function fetchAllFormQuestions(): Promise<{
+  buyerQuestions: Record<string, string>;
+  sellerQuestions: Record<string, string>;
+}> {
+  try {
+    const { buyerForm, sellerForm } = await getBuyerAndSellerForms();
+    
+    const [buyerQuestions, sellerQuestions] = await Promise.all([
+      buyerForm ? fetchFormQuestions(buyerForm.id) : fetchFormQuestions('243446517804154'),
+      sellerForm ? fetchFormQuestions(sellerForm.id) : fetchFormQuestions('243446518905158')
+    ]);
+    
+    return { buyerQuestions, sellerQuestions };
+  } catch (error) {
+    console.error('Failed to fetch all form questions:', error);
+    return { buyerQuestions: {}, sellerQuestions: {} };
+  }
+}

@@ -12,6 +12,7 @@ import {
   CheckCircle, AlertCircle, Settings, Star, TrendingUp, Users, Save
 } from 'lucide-react'
 import { Button } from '../ui/button'
+import { DocumentGenerator } from '../documents/DocumentGenerator'
 import { dummyData } from '../../data/dummy-data'
 
 interface ClientModalProps {
@@ -41,6 +42,7 @@ interface ClientModalProps {
   onProgress?: (client: any) => void
   onUnarchive?: (client: any) => void
   isArchiveMode?: boolean
+  currentUser?: any
 }
 
 export function ClientModal({ 
@@ -49,13 +51,15 @@ export function ClientModal({
   onArchive, 
   onProgress, 
   onUnarchive, 
-  isArchiveMode = false 
+  isArchiveMode = false,
+  currentUser
 }: ClientModalProps) {
   const [activeTab, setActiveTab] = useState(client.initialTab || 'summary')
   const [selectedDocument, setSelectedDocument] = useState<any>(null)
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
   const [isEditingContingencies, setIsEditingContingencies] = useState(false)
   const [isEditingDetails, setIsEditingDetails] = useState(false)
+  const [showDocumentGenerator, setShowDocumentGenerator] = useState(false)
   const [uploadForm, setUploadForm] = useState({
     file: null as File | null,
     title: '',
@@ -259,6 +263,92 @@ export function ClientModal({
     setIsEditingDetails(false)
   }
 
+  // Handler for Generate Documents button
+  const handleGenerateDocuments = () => {
+    if (!currentUser) {
+      alert('Please make sure you are logged in to generate documents.')
+      return
+    }
+
+    if (!currentUser.displayName) {
+      alert('Agent profile is incomplete. Please update your profile before generating documents.')
+      return
+    }
+
+    setShowDocumentGenerator(true)
+  }
+
+  // Create adapter for AgentProfile to match DocumentGenerator expectations
+  const createAgentProfileAdapter = (): any => {
+    if (!currentUser) return null
+
+    try {
+      // Parse agent name
+      const nameParts = (currentUser.displayName || '').trim().split(' ')
+      const firstName = nameParts[0] || 'Agent'
+      const lastName = nameParts.slice(1).join(' ') || 'Name'
+
+      return {
+        ...currentUser,
+        personalInfo: {
+          firstName,
+          lastName,
+          phone: currentUser.phoneNumber || 'Unknown Phone',
+        },
+        licenseInfo: {
+          brokerageName: currentUser.brokerage || 'Unknown Brokerage',
+          yearsExperience: currentUser.yearsExperience || 0,
+          licenseNumber: currentUser.licenseNumber || 'Unknown License',
+        },
+      }
+    } catch (error) {
+      console.error('Error creating agent profile adapter:', error)
+      return {
+        ...currentUser,
+        personalInfo: {
+          firstName: 'Agent',
+          lastName: 'Name',
+          phone: 'Unknown Phone',
+        },
+        licenseInfo: {
+          brokerageName: 'Unknown Brokerage',
+          yearsExperience: 0,
+          licenseNumber: 'Unknown License',
+        },
+      }
+    }
+  }
+
+  // Create client profile for Document Generator
+  const createClientProfile = () => {
+    const nameParts = client.name.trim().split(' ')
+    const firstName = nameParts[0] || 'Client'
+    const lastName = nameParts.slice(1).join(' ') || 'Name'
+
+    return {
+      personalInfo: {
+        firstName,
+        lastName,
+        city: 'Unknown City',
+        state: 'Unknown State', 
+        zipCode: 'Unknown Zip',
+      },
+      clientType: 'seller',
+      preferences: {
+        timeframe: client.timeline || '3-6 months',
+      },
+    }
+  }
+
+  const handleDocumentGenerated = (result: any) => {
+    console.log('Document generated:', result)
+    // Keep the modal open for user to review generated documents
+  }
+
+  const handleCancelDocumentGeneration = () => {
+    setShowDocumentGenerator(false)
+  }
+
   // Define which tabs should be visible based on client stage
   const getVisibleTabs = () => {
     const baseTabs = [
@@ -298,10 +388,6 @@ export function ClientModal({
               Send Survey
             </Button>
             <Button variant="outline">
-              <Calendar className="size-4 mr-2" />
-              Schedule Onboarding Appointment
-            </Button>
-            <Button variant="outline">
               <Download className="size-4 mr-2" />
               Download Meeting Materials
             </Button>
@@ -310,10 +396,13 @@ export function ClientModal({
       case 'pre_listing':
         return (
           <div className="flex flex-wrap gap-2">
-            {/* Removed "Generate Listing Description" button */}
-            <Button variant="outline">
-              <Calendar className="size-4 mr-2" />
-              Schedule Listing Appointment
+            {/* Removed "Schedule Listing Appointment" button per Task 4.2 */}
+            <Button 
+              onClick={handleGenerateDocuments}
+              className="bg-[#3B7097] hover:bg-[#3B7097]/90"
+            >
+              <FileText className="size-4 mr-2" />
+              Generate Documents
             </Button>
           </div>
         )
@@ -382,18 +471,24 @@ export function ClientModal({
         )
       case 'pre_listing':
         return (
-          <div className="space-y-4">
-            <div className="bg-[#A9D09E]/10 p-4 rounded-lg border border-[#A9D09E]/30">
-              <h4 className="font-medium text-gray-800 mb-2">CMA Status</h4>
-              <div className="space-y-2 text-sm">
+          <div className="space-y-6 min-h-full">
+            <div className="bg-[#A9D09E]/10 p-6 rounded-lg border border-[#A9D09E]/30 flex-1">
+              <h4 className="font-medium text-gray-800 mb-4">CMA Status</h4>
+              <div className="space-y-3 text-sm">
                 <div><strong>CMA Status:</strong> {client.subStatus === 'preparing_cma' ? 'In Progress' : 'Completed'}</div>
                 <div><strong>Market Analysis:</strong> Comparative analysis of 5 similar properties</div>
                 <div><strong>Suggested List Price:</strong> $425,000 - $450,000</div>
+                <div className="pt-4 space-y-2">
+                  <div><strong>Comparable Properties:</strong></div>
+                  <div className="text-xs text-gray-600">• 456 Oak Street - $445,000 (15 days on market)</div>
+                  <div className="text-xs text-gray-600">• 789 Pine Avenue - $430,000 (22 days on market)</div>
+                  <div className="text-xs text-gray-600">• 321 Maple Drive - $465,000 (8 days on market)</div>
+                </div>
               </div>
             </div>
-            <div className="bg-[#F6E2BC]/30 p-4 rounded-lg border border-[#F6E2BC]/50">
-              <h4 className="font-medium text-gray-800 mb-2">Listing Preparation</h4>
-              <div className="space-y-2 text-sm">
+            <div className="bg-[#F6E2BC]/30 p-6 rounded-lg border border-[#F6E2BC]/50 flex-1">
+              <h4 className="font-medium text-gray-800 mb-4">Listing Preparation</h4>
+              <div className="space-y-3 text-sm">
                 <div className="flex items-center justify-between">
                   <span>Property Photos</span>
                   <span className="text-orange-600">Scheduled</span>
@@ -405,6 +500,13 @@ export function ClientModal({
                 <div className="flex items-center justify-between">
                   <span>MLS Preparation</span>
                   <span className="text-gray-600">Pending</span>
+                </div>
+                <div className="pt-4 space-y-2">
+                  <div><strong>Next Steps:</strong></div>
+                  <div className="text-xs text-gray-600">• Schedule professional photography</div>
+                  <div className="text-xs text-gray-600">• Complete staging recommendations</div>
+                  <div className="text-xs text-gray-600">• Finalize MLS description and details</div>
+                  <div className="text-xs text-gray-600">• Set listing price and strategy</div>
                 </div>
               </div>
             </div>
@@ -537,109 +639,133 @@ export function ClientModal({
     switch (activeTab) {
       case 'summary':
         return (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Widget A: Property Details */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <div className="flex items-center mb-4">
-                <Home className="size-5 text-blue-600 mr-2" />
-                <h3 className="font-semibold text-gray-800">Property Details</h3>
+          <div className="h-full flex flex-col gap-6">
+            {/* First Row: Property Details and Seller Motivation */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Widget A: Property Details */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <Home className="size-5 text-blue-600 mr-2" />
+                  <h3 className="font-semibold text-gray-800">Property Details</h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Address:</span>
+                    <span className="text-sm text-gray-900">{isEditingDetails ? editableDetails.propertyAddress : client.propertyAddress}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Property Type:</span>
+                    <span className="text-sm text-gray-900">{isEditingDetails ? editableDetails.propertyType : client.propertyType}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Bed/Bath:</span>
+                    <span className="text-sm text-gray-900">{isEditingDetails ? editableDetails.bedrooms : client.bedrooms}bd/{isEditingDetails ? editableDetails.bathrooms : client.bathrooms}ba</span>
+                  </div>
+                </div>
               </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Address:</span>
-                  <span className="text-sm text-gray-900">{isEditingDetails ? editableDetails.propertyAddress : client.propertyAddress}</span>
+
+              {/* Widget B: Seller Motivation with Price Range */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <TrendingUp className="size-5 text-green-600 mr-2" />
+                  <h3 className="font-semibold text-gray-800">Seller Motivation</h3>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Property Type:</span>
-                  <span className="text-sm text-gray-900">{isEditingDetails ? editableDetails.propertyType : client.propertyType}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Bed/Bath:</span>
-                  <span className="text-sm text-gray-900">{isEditingDetails ? editableDetails.bedrooms : client.bedrooms}bd/{isEditingDetails ? editableDetails.bathrooms : client.bathrooms}ba</span>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Timeline:</span>
+                    <span className="text-sm text-gray-900">{isEditingDetails ? editableDetails.timeline : client.timeline}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Reason for Selling:</span>
+                    <span className="text-sm text-gray-900">{isEditingDetails ? editableDetails.reasonForSelling : client.reasonForSelling}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Expected Price Range:</span>
+                    <span className="text-sm text-gray-900">$425,000 - $450,000</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Priority:</span>
+                    <span className={`text-sm px-2 py-1 rounded-full text-xs font-medium border ${
+                      (isEditingDetails ? editableDetails.priority : client.priority) === 'High' ? 'bg-[#c05e51]/10 text-[#c05e51] border-[#c05e51]/20' :
+                      (isEditingDetails ? editableDetails.priority : client.priority) === 'Medium' ? 'bg-[#F6E2BC]/30 text-[#8B7355] border-[#F6E2BC]/50' :
+                      'bg-[#A9D09E]/20 text-[#5a7c50] border-[#A9D09E]/40'
+                    }`}>
+                      {isEditingDetails ? editableDetails.priority : client.priority}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Widget B: Seller Motivation with Price Range */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <div className="flex items-center mb-4">
-                <TrendingUp className="size-5 text-green-600 mr-2" />
-                <h3 className="font-semibold text-gray-800">Seller Motivation</h3>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Timeline:</span>
-                  <span className="text-sm text-gray-900">{isEditingDetails ? editableDetails.timeline : client.timeline}</span>
+            {/* Second Row: Recent Notes and Next Event - Expanded to fill remaining space */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1">
+              {/* Widget C: Recent Notes (Removed AI functionality) */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6 flex flex-col h-full">
+                <div className="flex items-center mb-4">
+                  <MessageCircle className="size-5 text-purple-600 mr-2" />
+                  <h3 className="font-semibold text-gray-800">Recent Notes</h3>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Reason for Selling:</span>
-                  <span className="text-sm text-gray-900">{isEditingDetails ? editableDetails.reasonForSelling : client.reasonForSelling}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Expected Price Range:</span>
-                  <span className="text-sm text-gray-900">$425,000 - $450,000</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Priority:</span>
-                  <span className={`text-sm px-2 py-1 rounded-full text-xs font-medium border ${
-                    (isEditingDetails ? editableDetails.priority : client.priority) === 'High' ? 'bg-[#c05e51]/10 text-[#c05e51] border-[#c05e51]/20' :
-                    (isEditingDetails ? editableDetails.priority : client.priority) === 'Medium' ? 'bg-[#F6E2BC]/30 text-[#8B7355] border-[#F6E2BC]/50' :
-                    'bg-[#A9D09E]/20 text-[#5a7c50] border-[#A9D09E]/40'
-                  }`}>
-                    {isEditingDetails ? editableDetails.priority : client.priority}
-                  </span>
+                <div className="space-y-3 flex-1 overflow-y-auto">
+                  <div className="bg-blue-50 p-3 rounded-lg">
+                    <p className="text-sm text-gray-700">{isEditingDetails ? editableDetails.notes : client.notes}</p>
+                    <span className="text-xs text-gray-500 mt-1">Manual Note • {formatDate(client.dateAdded)}</span>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-sm text-gray-700">Initial contact established. Client expressed interest in listing within the next 3 months.</p>
+                    <span className="text-xs text-gray-500 mt-1">Note • 3 days ago</span>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-sm text-gray-700">Discussed preferred listing timeframe and market conditions.</p>
+                    <span className="text-xs text-gray-500 mt-1">Note • 1 week ago</span>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-sm text-gray-700">Reviewed comparable sales in the neighborhood.</p>
+                    <span className="text-xs text-gray-500 mt-1">Note • 2 weeks ago</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Widget C: Recent Notes (Removed AI functionality) */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <div className="flex items-center mb-4">
-                <MessageCircle className="size-5 text-purple-600 mr-2" />
-                <h3 className="font-semibold text-gray-800">Recent Notes</h3>
-              </div>
-              <div className="space-y-3 max-h-32 overflow-y-auto">
-                <div className="bg-blue-50 p-3 rounded-lg">
-                  <p className="text-sm text-gray-700">{isEditingDetails ? editableDetails.notes : client.notes}</p>
-                  <span className="text-xs text-gray-500 mt-1">Manual Note • {formatDate(client.dateAdded)}</span>
+              {/* Widget D: Next Event (Connected to Calendar) */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6 flex flex-col h-full">
+                <div className="flex items-center mb-4">
+                  <Calendar className="size-5 text-orange-600 mr-2" />
+                  <h3 className="font-semibold text-gray-800">Next Event</h3>
                 </div>
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-sm text-gray-700">Initial contact established. Client expressed interest in listing within the next 3 months.</p>
-                  <span className="text-xs text-gray-500 mt-1">Note • 3 days ago</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Widget D: Next Event (Connected to Calendar) */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <div className="flex items-center mb-4">
-                <Calendar className="size-5 text-orange-600 mr-2" />
-                <h3 className="font-semibold text-gray-800">Next Event</h3>
-              </div>
-              {nextEvent ? (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="text-center">
-                    <h4 className="text-lg font-semibold text-blue-800 mb-1">{nextEvent.title}</h4>
-                    <p className="text-sm text-blue-700 mb-2">{nextEvent.location || client.propertyAddress}</p>
-                    <div className="flex items-center justify-center text-sm text-blue-600">
-                      <Calendar className="size-4 mr-1" />
-                      <span>{new Date(nextEvent.date).toLocaleDateString('en-US', { 
-                        weekday: 'long', 
-                        month: 'short', 
-                        day: 'numeric' 
-                      })} at {nextEvent.time}</span>
+                <div className="flex-1 flex items-center justify-center">
+                  {nextEvent ? (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 w-full">
+                      <div className="text-center">
+                        <h4 className="text-lg font-semibold text-blue-800 mb-2">{nextEvent.title}</h4>
+                        <p className="text-sm text-blue-700 mb-4">{nextEvent.location || client.propertyAddress}</p>
+                        <div className="flex items-center justify-center text-sm text-blue-600">
+                          <Calendar className="size-4 mr-1" />
+                          <span>{new Date(nextEvent.date).toLocaleDateString('en-US', { 
+                            weekday: 'long', 
+                            month: 'short', 
+                            day: 'numeric' 
+                          })} at {nextEvent.time}</span>
+                        </div>
+                        {nextEvent.description && (
+                          <p className="text-xs text-blue-600 mt-3 opacity-75">{nextEvent.description}</p>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 w-full">
+                      <div className="text-center text-gray-500">
+                        <Calendar className="size-12 mx-auto mb-3 text-gray-400" />
+                        <p className="text-sm font-medium mb-1">No upcoming events scheduled</p>
+                        <p className="text-xs text-gray-400 mb-4">Keep your client engaged with regular touchpoints</p>
+                        <div className="text-xs text-gray-400 space-y-1">
+                          <p>• Schedule property consultation</p>
+                          <p>• Plan market analysis meeting</p>
+                          <p>• Set listing preparation timeline</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                  <div className="text-center text-gray-500">
-                    <Calendar className="size-8 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm">No upcoming events scheduled</p>
-                    <p className="text-xs text-gray-400">Add events in the Calendar tab</p>
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
           </div>
         )
@@ -1333,6 +1459,33 @@ export function ClientModal({
           </div>
         </div>
       </div>
+
+      {/* Document Generator Modal */}
+      {showDocumentGenerator && currentUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">
+                  Generate Documents for {client.name}
+                </h2>
+                <button
+                  onClick={handleCancelDocumentGeneration}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="size-6" />
+                </button>
+              </div>
+              <DocumentGenerator
+                agentProfile={createAgentProfileAdapter()}
+                clientProfile={createClientProfile()}
+                onDocumentGenerated={handleDocumentGenerated}
+                onCancel={handleCancelDocumentGeneration}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 } 

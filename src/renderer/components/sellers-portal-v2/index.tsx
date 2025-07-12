@@ -333,6 +333,7 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
           onArchive={handleArchive}
           onProgress={handleProgress}
           onUnarchive={handleUnarchive}
+          currentUser={currentUser}
         />
       )}
 

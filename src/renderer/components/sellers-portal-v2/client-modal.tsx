@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { LeadScoringDisplay } from '../shared/lead-scoring-display'
+import { EmailHistory } from '../shared/email-history'
 
 interface ClientModalProps {
   client: {
@@ -739,35 +740,10 @@ export function ClientModal({
         )
       case 'email_history':
         return (
-          <div className="space-y-4">
-            <h3 className="font-semibold text-gray-800">Email History</h3>
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg cursor-pointer hover:bg-blue-100">
-                  <div className="flex items-center space-x-3">
-                    <Mail className="size-5 text-blue-600" />
-                    <div>
-                      <div className="font-medium text-gray-800">Survey Response</div>
-                      <div className="text-sm text-gray-600">From: {client.email}</div>
-                      <div className="text-xs text-gray-500">2 days ago</div>
-                    </div>
-                  </div>
-                  <ArrowRight className="size-4 text-gray-400" />
-                </div>
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100">
-                  <div className="flex items-center space-x-3">
-                    <Mail className="size-5 text-gray-600" />
-                    <div>
-                      <div className="font-medium text-gray-800">Initial Contact</div>
-                      <div className="text-sm text-gray-600">To: {client.email}</div>
-                      <div className="text-xs text-gray-500">1 week ago</div>
-                    </div>
-                  </div>
-                  <ArrowRight className="size-4 text-gray-400" />
-                </div>
-              </div>
-            </div>
-          </div>
+          <EmailHistory
+            clientEmail={client.email}
+            clientName={client.name}
+          />
         )
       case 'calendar':
         return (

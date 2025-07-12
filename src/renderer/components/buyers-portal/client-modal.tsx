@@ -27,6 +27,7 @@ import {
 import { Button } from '../ui/button'
 import { DocumentGenerator } from '../documents/DocumentGenerator'
 import { LeadScoringDisplay } from '../shared/lead-scoring-display'
+import { EmailHistory } from '../shared/email-history'
 import type { AgentProfile } from '../../../shared/types'
 
 // Define ClientProfile interface locally since it's not in shared types
@@ -735,10 +736,10 @@ export function ClientModal({
   // Define which tabs should be visible based on client stage
   const getVisibleTabs = () => {
     const baseTabs = [
-      { id: 'overview', label: 'Overview', icon: null },
+      { id: 'summary', label: 'Client Summary', icon: null },
       { id: 'stage_details', label: 'Stage Details', icon: null },
       { id: 'ai_lead_scoring', label: 'AI Lead Scoring', icon: TrendingUp },
-      { id: 'summary', label: 'Summary', icon: null },
+      { id: 'email_history', label: 'Email History', icon: History },
     ]
 
     const stageSpecificTabs = []
@@ -755,7 +756,6 @@ export function ClientModal({
 
     const alwaysVisibleTabs = [
       { id: 'content', label: 'Content', icon: FolderOpen },
-      { id: 'email_history', label: 'Email History', icon: History },
       { id: 'calendar', label: 'Calendar', icon: CalendarDays },
     ]
 
@@ -764,21 +764,36 @@ export function ClientModal({
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'overview':
+      case 'summary':
         return (
           <div className="space-y-4">
             <div>
-              <h3 className="font-medium text-gray-800 mb-3">Client Profile Summary</h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <ul className="space-y-2 text-sm">
-                  <li>• {client.budget} budget for home purchase in {client.location}</li>
-                  <li>• {client.priority} priority lead from {client.leadSource}</li>
-                  <li>• Currently in {getStageName(client.stage)} stage</li>
-                  <li>• Last contacted: {formatDate(client.lastContact)}</li>
-                  {client.favoritedProperties && client.favoritedProperties.length > 0 && (
-                    <li>• Has favorited {client.favoritedProperties.length} properties</li>
-                  )}
-                </ul>
+              <h3 className="font-medium text-gray-800 mb-2">
+                Client Notes
+              </h3>
+              <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                {client.notes || 'No notes available'}
+              </p>
+            </div>
+            <div>
+              <h3 className="font-medium text-gray-800 mb-2">
+                Client Details
+              </h3>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <strong>Lead Source:</strong> {client.leadSource}
+                </div>
+                <div>
+                  <strong>Priority:</strong> {client.priority}
+                </div>
+                <div>
+                  <strong>Date Added:</strong>{' '}
+                  {formatDate(client.dateAdded)}
+                </div>
+                <div>
+                  <strong>Last Contact:</strong>{' '}
+                  {formatDate(client.lastContact)}
+                </div>
               </div>
             </div>
           </div>
@@ -786,37 +801,6 @@ export function ClientModal({
       
       case 'stage_details':
         return getStageSpecificContent()
-      
-      case 'summary':
-        return (
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-medium text-gray-800 mb-3">AI-Generated Client Summary</h3>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="text-sm text-gray-700 mb-3">
-                  Comprehensive summary derived from all available client data including surveys, emails, meeting transcripts, and notes.
-                </p>
-                <ul className="space-y-1 text-sm text-gray-600">
-                  <li>• Lead source analysis and engagement pattern</li>
-                  <li>• Communication preferences and response history</li>
-                  <li>• Property preferences and search criteria</li>
-                  <li>• Budget considerations and financing status</li>
-                  <li>• Timeline expectations and urgency factors</li>
-                </ul>
-              </div>
-            </div>
-            <div className="flex gap-2 pt-4 border-t border-gray-200">
-              <Button variant="outline" onClick={handleSeeFullSummary}>
-                <FileText className="size-4 mr-2" />
-                See Full Summary
-              </Button>
-              <Button variant="outline" onClick={handleDownloadFullSummary}>
-                <Download className="size-4 mr-2" />
-                Download Full Summary
-              </Button>
-            </div>
-          </div>
-        )
       
       case 'ai_lead_scoring':
         return (
@@ -1033,111 +1017,10 @@ export function ClientModal({
       
       case 'email_history':
         return (
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-medium text-gray-800 mb-3">Email Correspondence</h3>
-            </div>
-            <div className="space-y-3">
-              {/* Sample email thread data */}
-              <div 
-                className="p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50"
-                onClick={() => handleEmailThreadClick({
-                  id: 1,
-                  subject: "Property Inquiry - 123 Main Street",
-                  preview: "Hi, I'm very interested in scheduling a showing for this property...",
-                  messageCount: 3,
-                  lastMessage: "2 hours ago",
-                  messages: [
-                    {
-                      id: 1,
-                      sender: client.name,
-                      senderEmail: client.email,
-                      timestamp: "2024-03-15 10:30 AM",
-                      content: "Hi, I'm very interested in scheduling a showing for this property at 123 Main Street. When would be a good time this week? I'm available Tuesday through Thursday afternoons. Looking forward to hearing from you!"
-                    },
-                    {
-                      id: 2,
-                      sender: "Agent",
-                      senderEmail: "agent@realestate.com",
-                      timestamp: "2024-03-15 11:15 AM",
-                      content: "Hi! Thanks for your interest in 123 Main Street. I'd be happy to schedule a showing for you. How about Tuesday at 2:00 PM? The property has some great features I think you'll love, including the updated kitchen and large backyard."
-                    },
-                    {
-                      id: 3,
-                      sender: client.name,
-                      senderEmail: client.email,
-                      timestamp: "2024-03-15 11:45 AM",
-                      content: "Perfect! Tuesday at 2:00 PM works great for me. Should I meet you at the property or would you prefer to meet somewhere else first? Also, is there anything specific I should prepare or bring along?"
-                    }
-                  ]
-                })}
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">Property Inquiry - 123 Main Street</div>
-                    <div className="text-sm text-gray-600 mt-1">
-                      Hi, I'm very interested in scheduling a showing for this property...
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full flex items-center">
-                      <MessageCircle className="size-3 mr-1" />
-                      3
-                    </span>
-                  </div>
-                </div>
-                <div className="text-xs text-gray-500 mt-2">Last message: 2 hours ago</div>
-              </div>
-
-              {/* Additional sample email thread */}
-              <div 
-                className="p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50"
-                onClick={() => handleEmailThreadClick({
-                  id: 2,
-                  subject: "Follow-up on Property Search",
-                  preview: "I wanted to follow up on our conversation about my property search criteria...",
-                  messageCount: 2,
-                  lastMessage: "1 day ago",
-                  messages: [
-                    {
-                      id: 1,
-                      sender: client.name,
-                      senderEmail: client.email,
-                      timestamp: "2024-03-14 3:30 PM",
-                      content: "I wanted to follow up on our conversation about my property search criteria. After thinking about it more, I'd like to expand the search area to include neighborhoods within 15 minutes of downtown. Also, I'm now open to considering properties that need minor renovations if the price is right."
-                    },
-                    {
-                      id: 2,
-                      sender: "Agent",
-                      senderEmail: "agent@realestate.com",
-                      timestamp: "2024-03-14 4:45 PM",
-                      content: "That's great to hear! Expanding the search area will definitely give us more options. I'll update your criteria in our system and send you some new listings that match your updated preferences. There are some really good opportunities in those neighborhoods."
-                    }
-                  ]
-                })}
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">Follow-up on Property Search</div>
-                    <div className="text-sm text-gray-600 mt-1">
-                      I wanted to follow up on our conversation about my property search criteria...
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full flex items-center">
-                      <MessageCircle className="size-3 mr-1" />
-                      2
-                    </span>
-                  </div>
-                </div>
-                <div className="text-xs text-gray-500 mt-2">Last message: 1 day ago</div>
-              </div>
-
-              <div className="text-sm text-gray-500 text-center py-4">
-                No additional email threads found.
-              </div>
-            </div>
-          </div>
+          <EmailHistory
+            clientEmail={client.email}
+            clientName={client.name}
+          />
         )
       
       case 'calendar':
@@ -1263,84 +1146,26 @@ export function ClientModal({
           {/* Tabs */}
           <div className="border-b border-gray-200">
             <nav className="flex space-x-8 px-6">
-              <button
-                onClick={() => setActiveTab('summary')}
-                className={`py-4 px-1 text-sm font-medium border-b-2 ${
-                  activeTab === 'summary'
-                    ? 'border-[#3B7097] text-[#3B7097]'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Client Summary
-              </button>
-              <button
-                onClick={() => setActiveTab('details')}
-                className={`py-4 px-1 text-sm font-medium border-b-2 ${
-                  activeTab === 'details'
-                    ? 'border-[#3B7097] text-[#3B7097]'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                Stage Details
-              </button>
-              <button
-                onClick={() => setActiveTab('ai_lead_scoring')}
-                className={`flex items-center space-x-2 py-4 px-1 text-sm font-medium border-b-2 ${
-                  activeTab === 'ai_lead_scoring'
-                    ? 'border-[#3B7097] text-[#3B7097]'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                <TrendingUp className="size-4" />
-                <span>AI Lead Scoring</span>
-              </button>
+              {getVisibleTabs().map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center space-x-2 py-4 px-1 text-sm font-medium border-b-2 ${
+                    activeTab === tab.id
+                      ? 'border-[#3B7097] text-[#3B7097]'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {tab.icon && <tab.icon className="size-4" />}
+                  <span>{tab.label}</span>
+                </button>
+              ))}
             </nav>
           </div>
 
           {/* Content */}
           <div className="p-6">
-            {activeTab === 'summary' && (
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-medium text-gray-800 mb-2">
-                    Client Notes
-                  </h3>
-                  <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
-                    {client.notes || 'No notes available'}
-                  </p>
-                </div>
-                <div>
-                  <h3 className="font-medium text-gray-800 mb-2">
-                    Client Details
-                  </h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <strong>Lead Source:</strong> {client.leadSource}
-                    </div>
-                    <div>
-                      <strong>Priority:</strong> {client.priority}
-                    </div>
-                    <div>
-                      <strong>Date Added:</strong>{' '}
-                      {formatDate(client.dateAdded)}
-                    </div>
-                    <div>
-                      <strong>Last Contact:</strong>{' '}
-                      {formatDate(client.lastContact)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'details' && getStageSpecificContent()}
-            
-            {activeTab === 'ai_lead_scoring' && (
-              <LeadScoringDisplay
-                clientEmail={client.email}
-                clientName={client.name}
-              />
-            )}
+            {renderTabContent()}
           </div>
 
           {/* Actions */}

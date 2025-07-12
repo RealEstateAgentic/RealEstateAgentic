@@ -1,13 +1,13 @@
 {
-  "displayName": "My Electron App",
-  "name": "my-electron-app",
-  "description": "Your awesome app description",
+  "displayName": "AIgent Pro",
+  "name": "aigent-pro",
+  "description": "AI-powered real estate agent platform",
   "version": "0.0.0",
   "main": "./node_modules/.dev/main/index.js",
   "resources": "src/resources",
   "author": {
-    "name": "Dalton Menezes",
-    "email": "daltonmenezes@outlook.com"
+    "name": "AIgent Pro Team",
+    "email": "hello@aigentpro.com"
   },
   "license": "MIT",
   "scripts": {

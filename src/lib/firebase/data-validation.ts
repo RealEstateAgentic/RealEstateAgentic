@@ -1,9 +1,6 @@
 /**
- * Data Validation Utilities for Real Estate Agentic Application
- *
- * Provides comprehensive validation for all new schemas in the offer preparation
- * and negotiation system. These validators work with Firebase security rules
- * to ensure data integrity at the application level.
+ * Data Validation Utilities for AIgent Pro Application
+ * Provides validation functions for real estate data structures
  */
 
 import type {

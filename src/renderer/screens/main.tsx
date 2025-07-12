@@ -1,6 +1,6 @@
 /**
- * Main screen of the Real Estate Agentic application
- * Dashboard with all key widgets for real estate agents
+ * Main screen of the AIgent Pro application
+ * Displays the agent dashboard with all key features
  */
 
 import { Calendar } from '../components/dashboard/calendar'

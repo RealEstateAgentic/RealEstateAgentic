@@ -1,4 +1,4 @@
-# Product Context: Real Estate Agentic
+# Product Context: AIgent Pro
 
 ## Why This Project Exists
 

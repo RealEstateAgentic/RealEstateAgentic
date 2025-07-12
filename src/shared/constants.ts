@@ -1,10 +1,8 @@
 /**
- * Shared constants for the entire application
- * Including Electron IPC channels for secure communication
+ * Shared constants used across the application
  */
 
-// Application constants
-export const APP_NAME = 'Real Estate Agentic'
+export const APP_NAME = 'AIgent Pro'
 export const APP_VERSION = '1.0.0'
 
 // Environment constants

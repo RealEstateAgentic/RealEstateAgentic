@@ -1,6 +1,6 @@
-# 🧪 **Real Estate Agentic - Workflow Testing Guide**
+# 🧪 **AIgent Pro - Workflow Testing Guide**
 
-This guide provides step-by-step instructions for testing all workflow automations in the Real Estate Agentic application.
+This guide provides step-by-step instructions for testing all workflow automations in the AIgent Pro application.
 
 ## 📋 **Pre-Testing Setup**
 

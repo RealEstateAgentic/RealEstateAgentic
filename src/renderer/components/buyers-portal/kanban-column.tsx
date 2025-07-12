@@ -31,9 +31,9 @@ export function KanbanColumn({ title, stage, clients, onClientClick }: KanbanCol
   const getColumnColor = (stage: string) => {
     switch (stage) {
       case 'new_leads': return 'bg-[#75BDE0]/10 border-[#75BDE0]/30'
-      case 'active_search': return 'bg-[#A9D09E]/10 border-[#A9D09E]/30'
-      case 'under_contract': return 'bg-[#3B7097]/10 border-[#3B7097]/30'
-      case 'closed': return 'bg-[#F6E2BC]/30 border-[#F6E2BC]/50'
+      case 'active_search': return 'bg-[#F6E2BC]/30 border-[#F6E2BC]/50'
+      case 'under_contract': return 'bg-[#c05e51]/10 border-[#c05e51]/30'
+      case 'closed': return 'bg-[#A9D09E]/10 border-[#A9D09E]/30'
       default: return 'bg-gray-50 border-gray-200'
     }
   }

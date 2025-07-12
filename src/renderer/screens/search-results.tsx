@@ -40,7 +40,7 @@ interface SearchResult {
   documentId?: string
   eventId?: number
   clientStage?: string
-  priority?: 'low' | 'medium' | 'high' | 'critical'
+  priority?: 'Low' | 'Medium' | 'High' | 'Critical'
   date?: string
   metadata?: Record<string, any>
 }
@@ -88,7 +88,7 @@ export function SearchResultsScreen({ navigate, currentUser, userType }: SearchR
           portal: 'buyers',
           clientId: client.id,
           clientStage: client.stage,
-          priority: client.priority as 'low' | 'medium' | 'high' | 'critical',
+          priority: client.priority as 'Low' | 'Medium' | 'High' | 'Critical',
           date: client.dateAdded,
           metadata: {
             email: client.email,
@@ -116,7 +116,7 @@ export function SearchResultsScreen({ navigate, currentUser, userType }: SearchR
         timeline: "3-6 months",
         reasonForSelling: "Relocating",
         leadSource: "Website Form",
-        priority: "high",
+        priority: "High",
         dateAdded: "2024-01-10",
         lastContact: "2024-01-14",
         notes: "Motivated sellers, open to negotiations"
@@ -135,7 +135,7 @@ export function SearchResultsScreen({ navigate, currentUser, userType }: SearchR
         timeline: "ASAP",
         reasonForSelling: "Investment liquidation",
         leadSource: "Referral",
-        priority: "medium",
+        priority: "Medium",
         dateAdded: "2024-01-08",
         lastContact: "2024-01-13",
         notes: "Investment property, needs staging"
@@ -159,7 +159,7 @@ export function SearchResultsScreen({ navigate, currentUser, userType }: SearchR
           portal: 'sellers',
           clientId: client.id,
           clientStage: client.stage,
-          priority: client.priority as 'low' | 'medium' | 'high' | 'critical',
+          priority: client.priority as 'Low' | 'Medium' | 'High' | 'Critical',
           date: client.dateAdded,
           metadata: {
             email: client.email,
@@ -245,7 +245,7 @@ export function SearchResultsScreen({ navigate, currentUser, userType }: SearchR
           description: new Date(comm.timestamp).toLocaleString(),
           portal: clientPortal,
           clientId: client?.id,
-          priority: comm.priority as 'low' | 'medium' | 'high' | 'critical',
+          priority: comm.priority as 'Low' | 'Medium' | 'High' | 'Critical',
           date: comm.timestamp,
           metadata: {
             type: comm.type,
@@ -260,7 +260,7 @@ export function SearchResultsScreen({ navigate, currentUser, userType }: SearchR
     results.sort((a, b) => {
       // First sort by priority if it exists
       if (a.priority && b.priority) {
-        const priorityOrder = { critical: 4, high: 3, medium: 2, low: 1 }
+        const priorityOrder = { Critical: 4, High: 3, Medium: 2, Low: 1 }
         const priorityDiff = priorityOrder[b.priority] - priorityOrder[a.priority]
         if (priorityDiff !== 0) return priorityDiff
       }
@@ -325,13 +325,13 @@ export function SearchResultsScreen({ navigate, currentUser, userType }: SearchR
 
   const getPriorityColor = (priority?: string) => {
     switch (priority) {
-      case 'critical':
+      case 'Critical':
         return 'text-red-600'
-      case 'high':
+      case 'High':
         return 'text-orange-600'
-      case 'medium':
+      case 'Medium':
         return 'text-blue-600'
-      case 'low':
+      case 'Low':
         return 'text-gray-600'
       default:
         return 'text-gray-600'

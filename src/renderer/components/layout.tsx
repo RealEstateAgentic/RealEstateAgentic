@@ -4,16 +4,8 @@
  */
 
 import { ReactNode, useState } from 'react'
-import {
-  Bell,
-  User,
-  ChevronDown,
-  LogOut,
-  TrendingUp,
-  Target,
-} from 'lucide-react'
+import { User, ChevronDown, LogOut, TrendingUp, Target } from 'lucide-react'
 import { Button } from './ui/button'
-import { dummyData } from '../data/dummy-data'
 import type { AgentProfile } from '../../shared/types'
 
 interface LayoutProps {
@@ -50,19 +42,6 @@ function Navigation({
     { path: '/repair-estimator', label: 'Repair Estimator' },
   ]
 
-  const unreadNotifications = dummyData.notifications.filter(
-    n => !n.read
-  ).length
-
-  const handleUserMenuToggle = () => {
-    setIsUserMenuOpen(!isUserMenuOpen)
-  }
-
-  const handleUserMenuItemClick = (action: () => void) => {
-    action()
-    setIsUserMenuOpen(false)
-  }
-
   return (
     <nav className="bg-white border-b border-gray-200 px-6 py-3 relative z-50">
       <div className="flex items-center justify-between max-w-full mx-auto">
@@ -93,18 +72,6 @@ function Navigation({
 
         {/* Right Side Actions */}
         <div className="flex items-center space-x-4">
-          {/* Notifications */}
-          <div className="relative">
-            <Button variant="ghost" size="icon">
-              <Bell className="size-4" />
-              {unreadNotifications > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {unreadNotifications}
-                </span>
-              )}
-            </Button>
-          </div>
-
           {/* User Profile */}
           {isAuthenticated && currentUser ? (
             <div className="relative">

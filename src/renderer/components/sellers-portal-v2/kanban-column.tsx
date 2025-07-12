@@ -5,6 +5,7 @@
 
 import { useDroppable } from '@dnd-kit/core'
 import { useDraggable } from '@dnd-kit/core'
+import { GripVertical } from 'lucide-react'
 import { ClientCard } from './client-card'
 
 interface KanbanColumnProps {
@@ -34,7 +35,17 @@ function DraggableClientCard({ client, onClick }: DraggableClientCardProps) {
     : undefined
 
   return (
-    <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+    <div ref={setNodeRef} style={style} className="relative">
+      {/* Drag Handle */}
+      <div
+        {...listeners}
+        {...attributes}
+        className="absolute top-2 right-2 z-10 p-1 rounded hover:bg-gray-200 cursor-grab active:cursor-grabbing"
+        onMouseDown={e => e.stopPropagation()}
+      >
+        <GripVertical className="size-4 text-gray-400" />
+      </div>
+
       <ClientCard client={client} onClick={onClick} isDragging={isDragging} />
     </div>
   )
@@ -94,7 +105,7 @@ export function KanbanColumn({
         {/* Loading State */}
         {isLoading && (
           <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3B7097] mx-auto mb-2"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3B7097] mx-auto mb-2" />
             <p className="text-gray-500 text-sm">Loading...</p>
           </div>
         )}

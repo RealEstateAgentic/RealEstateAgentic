@@ -89,19 +89,7 @@ export function ClientModal({
   const [showDocumentGenerator, setShowDocumentGenerator] = useState(false)
   const [isEditingDetails, setIsEditingDetails] = useState(false)
   const [isSendingSurvey, setIsSendingSurvey] = useState(false)
-  const [isEditingContingencies, setIsEditingContingencies] = useState(false)
-  const [contingencyDates, setContingencyDates] = useState({
-    inspection: '2024-01-15',
-    appraisal: '2024-01-25',
-    finance: '2024-02-01'
-  })
-  const [contingencyDetails, setContingencyDetails] = useState('')
-  const [contractDetails, setContractDetails] = useState({
-    contractPrice: '',
-    sellerAgent: '',
-    closingDate: '',
-    contractDate: ''
-  })
+
   const [editableDetails, setEditableDetails] = useState({
     name: client.name,
     email: client.email,
@@ -270,57 +258,6 @@ export function ClientModal({
     }
   }
 
-  const handleSaveContingencies = () => {
-    console.log('Saving contingency dates:', contingencyDates)
-    console.log('Additional details:', contingencyDetails)
-    console.log('Contract details:', contractDetails)
-    
-    // Task 6.5: Auto-create calendar events from contingency dates
-    try {
-      // Create calendar events for each contingency deadline
-      const events = [
-        {
-          title: 'Inspection Period Deadline',
-          date: contingencyDates.inspection,
-          time: '17:00', // 5:00 PM
-          description: `Inspection period deadline for buyer ${client.name}`,
-          clientType: 'buyer',
-          clientId: client.id.toString(),
-          priority: 'high',
-          eventType: 'inspection_deadline'
-        },
-        {
-          title: 'Appraisal Deadline',
-          date: contingencyDates.appraisal,
-          time: '17:00',
-          description: `Appraisal deadline for buyer ${client.name}`,
-          clientType: 'buyer',
-          clientId: client.id.toString(),
-          priority: 'high',
-          eventType: 'appraisal_deadline'
-        },
-        {
-          title: 'Financing Deadline',
-          date: contingencyDates.finance,
-          time: '17:00',
-          description: `Financing deadline for buyer ${client.name}`,
-          clientType: 'buyer',
-          clientId: client.id.toString(),
-          priority: 'high',
-          eventType: 'financing_deadline'
-        }
-      ]
-      
-      console.log('Auto-created calendar events for contingency deadlines:', events)
-      // In a real application, these would be saved to the calendar system
-      
-    } catch (error) {
-      console.error('Error creating calendar events:', error)
-    }
-    
-    setIsEditingContingencies(false)
-  }
-
   const handleRepairEstimator = () => {
     if (navigate) {
       navigate('/repair-estimator')
@@ -441,14 +378,10 @@ export function ClientModal({
 
     const stageSpecificTabs = []
     
-    // Add Contingencies tab only for Under Contract stage
-    if (client.stage === 'under_contract') {
-      stageSpecificTabs.push({ id: 'contingencies', label: 'Contingencies', icon: Clock })
-    }
+    // Removed Contingencies tab - no longer needed
 
     const alwaysVisibleTabs = [
       { id: 'documents', label: 'Documents and Content', icon: FolderOpen },
-      { id: 'calendar', label: 'Calendar', icon: CalendarDays },
     ]
 
     return [...baseTabs, ...stageSpecificTabs, ...alwaysVisibleTabs]
@@ -501,13 +434,6 @@ export function ClientModal({
               <FileText className="size-4 mr-2" />
               Generate Documents
             </Button>
-            <Button 
-              onClick={() => setIsEditingContingencies(true)}
-              className="bg-[#3B7097] hover:bg-[#3B7097]/90"
-            >
-              <Edit className="size-4 mr-2" />
-              Edit Contingencies
-            </Button>
           </div>
         )
       case 'closed':
@@ -519,20 +445,6 @@ export function ClientModal({
       default:
         return null
     }
-  }
-
-  // Get next event for this client
-  const getNextEvent = () => {
-    const clientEvents = dummyData.calendarEvents.filter(event => 
-      event.clientType === 'buyer' && event.clientId === client.id.toString()
-    )
-    const today = new Date()
-    const upcomingEvents = clientEvents.filter(event => {
-      const eventDate = new Date(event.date)
-      return eventDate >= today
-    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    
-    return upcomingEvents.length > 0 ? upcomingEvents[0] : null
   }
 
   const renderTabContent = () => {
@@ -627,7 +539,7 @@ export function ClientModal({
                     <CheckCircle className="size-4 text-green-600" />
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Move-in Ready</span>
+                    <span className="text-sm font-medium text-gray-700">Move-in Complete</span>
                     <CheckCircle className="size-4 text-green-600" />
                   </div>
                 </div>
@@ -635,32 +547,43 @@ export function ClientModal({
             </div>
           )
         }
-        
-        // Regular summary for other stages
+
+        // Default summary for non-closed stages
         return (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Widget A: Client Details */}
+            {/* Widget A: Buyer Profile */}
             <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <div className="flex items-center mb-4">
-                <Home className="size-5 text-blue-600 mr-2" />
-                <h3 className="font-semibold text-gray-800">Client Details</h3>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <User className="size-5 text-blue-600 mr-2" />
+                  <h3 className="font-semibold text-gray-800">Buyer Profile</h3>
+                </div>
+                <Button
+                  onClick={() => setIsEditingDetails(true)}
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                >
+                  <Edit className="size-3 mr-1" />
+                  Edit
+                </Button>
               </div>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Looking for:</span>
-                  <span className="text-sm text-gray-900">Single Family Home</span>
+                  <span className="text-sm font-medium text-gray-700">Budget:</span>
+                  <span className="text-sm text-gray-900">{client.budget}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Zipcode(s):</span>
+                  <span className="text-sm font-medium text-gray-700">Location:</span>
                   <span className="text-sm text-gray-900">{client.location}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Property Type Desired:</span>
-                  <span className="text-sm text-gray-900">Single Family</span>
+                  <span className="text-sm font-medium text-gray-700">Priority:</span>
+                  <span className="text-sm text-gray-900">{client.priority}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Bed/Bath:</span>
-                  <span className="text-sm text-gray-900">3bd/2ba</span>
+                  <span className="text-sm font-medium text-gray-700">Source:</span>
+                  <span className="text-sm text-gray-900">{client.leadSource}</span>
                 </div>
               </div>
             </div>
@@ -677,16 +600,16 @@ export function ClientModal({
                   <span className="text-sm text-gray-900">Next 3-6 months</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Reason for Buying:</span>
+                  <span className="text-sm font-medium text-gray-700">Reason:</span>
                   <span className="text-sm text-gray-900">First-time buyer</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Expected Price Range:</span>
-                  <span className="text-sm text-gray-900">{client.budget}</span>
+                  <span className="text-sm font-medium text-gray-700">Date Added:</span>
+                  <span className="text-sm text-gray-900">{formatDate(client.dateAdded)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Priority:</span>
-                  <span className="text-sm text-gray-900">{client.priority}</span>
+                  <span className="text-sm font-medium text-gray-700">Last Contact:</span>
+                  <span className="text-sm text-gray-900">{formatDate(client.lastContact)}</span>
                 </div>
               </div>
             </div>
@@ -703,34 +626,6 @@ export function ClientModal({
                 </div>
               </div>
             </div>
-
-            {/* Widget D: Next Event */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <div className="flex items-center mb-4">
-                <Calendar className="size-5 text-purple-600 mr-2" />
-                <h3 className="font-semibold text-gray-800">Next Event</h3>
-              </div>
-              <div className="space-y-3">
-                {(() => {
-                  const nextEvent = getNextEvent()
-                  if (nextEvent) {
-                    return (
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">{nextEvent.title}</div>
-                        <div className="text-sm text-gray-600">
-                          {formatDate(nextEvent.date)} at {nextEvent.time}
-                        </div>
-                        <div className="text-sm text-gray-500">{nextEvent.location}</div>
-                      </div>
-                    )
-                  } else {
-                    return (
-                      <div className="text-sm text-gray-500">No upcoming events scheduled</div>
-                    )
-                  }
-                })()}
-              </div>
-            </div>
           </div>
         )
 
@@ -740,190 +635,6 @@ export function ClientModal({
             clientEmail={client.email}
             clientName={client.name}
           />
-        )
-
-      case 'contingencies':
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-800">Buyer Contingencies</h3>
-              {isEditingContingencies && (
-                <div className="flex space-x-2">
-                  <Button
-                    onClick={handleSaveContingencies}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    <Save className="size-4 mr-2" />
-                    Save
-                  </Button>
-                  <Button
-                    onClick={() => setIsEditingContingencies(false)}
-                    variant="outline"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              )}
-            </div>
-            
-            {/* Contract Details Section */}
-            <div className="mb-6 p-4 bg-[#3B7097]/5 rounded-lg border border-[#3B7097]/20">
-              <h4 className="font-semibold text-gray-800 mb-4">Contract Details</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Contract Price</label>
-                  {isEditingContingencies ? (
-                    <input
-                      type="text"
-                      value={contractDetails.contractPrice}
-                      onChange={(e) => setContractDetails({...contractDetails, contractPrice: e.target.value})}
-                      placeholder="e.g., $435,000"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-800 font-medium">
-                      {contractDetails.contractPrice || <span className="text-gray-500 italic">Not entered</span>}
-                    </div>
-                  )}
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Seller Agent</label>
-                  {isEditingContingencies ? (
-                    <input
-                      type="text"
-                      value={contractDetails.sellerAgent}
-                      onChange={(e) => setContractDetails({...contractDetails, sellerAgent: e.target.value})}
-                      placeholder="e.g., Jane Smith, ABC Realty"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-800 font-medium">
-                      {contractDetails.sellerAgent || <span className="text-gray-500 italic">Not entered</span>}
-                    </div>
-                  )}
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Closing Date</label>
-                  {isEditingContingencies ? (
-                    <input
-                      type="date"
-                      value={contractDetails.closingDate}
-                      onChange={(e) => setContractDetails({...contractDetails, closingDate: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-800 font-medium">
-                      {contractDetails.closingDate ? formatDate(contractDetails.closingDate) : <span className="text-gray-500 italic">Not set</span>}
-                    </div>
-                  )}
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Contract Date</label>
-                  {isEditingContingencies ? (
-                    <input
-                      type="date"
-                      value={contractDetails.contractDate}
-                      onChange={(e) => setContractDetails({...contractDetails, contractDate: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
-                    />
-                  ) : (
-                    <div className="text-sm text-gray-800 font-medium">
-                      {contractDetails.contractDate ? formatDate(contractDetails.contractDate) : <span className="text-gray-500 italic">Not set</span>}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-            
-            {/* Contingencies Section */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <AlertCircle className="size-5 text-yellow-600" />
-                  <div>
-                    <div className="font-medium text-gray-800">Inspection Contingency</div>
-                    {isEditingContingencies ? (
-                      <input
-                        type="date"
-                        value={contingencyDates.inspection}
-                        onChange={(e) => setContingencyDates({...contingencyDates, inspection: e.target.value})}
-                        className="text-sm border rounded px-2 py-1"
-                      />
-                    ) : (
-                      <div className="text-sm text-gray-600">Due: {formatDate(contingencyDates.inspection)}</div>
-                    )}
-                  </div>
-                </div>
-                <span className="text-sm font-medium text-yellow-600">Pending</span>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <Clock className="size-5 text-gray-600" />
-                  <div>
-                    <div className="font-medium text-gray-800">Appraisal Contingency</div>
-                    {isEditingContingencies ? (
-                      <input
-                        type="date"
-                        value={contingencyDates.appraisal}
-                        onChange={(e) => setContingencyDates({...contingencyDates, appraisal: e.target.value})}
-                        className="text-sm border rounded px-2 py-1"
-                      />
-                    ) : (
-                      <div className="text-sm text-gray-600">Due: {formatDate(contingencyDates.appraisal)}</div>
-                    )}
-                  </div>
-                </div>
-                <span className="text-sm font-medium text-gray-600">Pending</span>
-              </div>
-              
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <CheckCircle className="size-5 text-green-600" />
-                  <div>
-                    <div className="font-medium text-gray-800">Finance Contingency</div>
-                    {isEditingContingencies ? (
-                      <input
-                        type="date"
-                        value={contingencyDates.finance}
-                        onChange={(e) => setContingencyDates({...contingencyDates, finance: e.target.value})}
-                        className="text-sm border rounded px-2 py-1"
-                      />
-                    ) : (
-                      <div className="text-sm text-gray-600">Due: {formatDate(contingencyDates.finance)}</div>
-                    )}
-                  </div>
-                </div>
-                <span className="text-sm font-medium text-green-600">Complete</span>
-              </div>
-              
-              {/* Additional details field */}
-              {isEditingContingencies && (
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Additional Details
-                  </label>
-                  <textarea
-                    value={contingencyDetails}
-                    onChange={(e) => setContingencyDetails(e.target.value)}
-                    rows={3}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
-                    placeholder="Enter any additional contingency details or notes..."
-                  />
-                </div>
-              )}
-              
-              {contingencyDetails && !isEditingContingencies && (
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                  <div className="text-sm font-medium text-gray-800 mb-1">Additional Details:</div>
-                  <div className="text-sm text-gray-600">{contingencyDetails}</div>
-                </div>
-              )}
-            </div>
-          </div>
         )
 
       case 'documents':
@@ -969,48 +680,6 @@ export function ClientModal({
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
-        )
-
-      case 'calendar':
-        return (
-          <div className="space-y-6">
-            <h3 className="text-lg font-semibold text-gray-800">Calendar Events</h3>
-            <div className="space-y-4">
-              {(() => {
-                const clientEvents = dummyData.calendarEvents.filter(event => 
-                  event.clientType === 'buyer' && event.clientId === client.id.toString()
-                )
-                
-                if (clientEvents.length === 0) {
-                  return (
-                    <div className="text-center py-8 text-gray-500">
-                      <Calendar className="size-12 mx-auto mb-4 text-gray-400" />
-                      <p>No events scheduled for this client</p>
-                    </div>
-                  )
-                }
-
-                return clientEvents.map((event: any) => (
-                  <div key={event.id} className="bg-white border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h4 className="font-medium text-gray-900">{event.title}</h4>
-                        <p className="text-sm text-gray-600">{event.location}</p>
-                        <p className="text-sm text-gray-500">
-                          {formatDate(event.date)} at {event.time}
-                        </p>
-                      </div>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        event.priority === 'high' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {event.priority}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              })()}
             </div>
           </div>
         )

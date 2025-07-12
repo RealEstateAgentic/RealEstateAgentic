@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import type React from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Card } from '../ui/card'
 import { Button } from '../ui/button'
 import { Progress } from '../ui/progress'
@@ -31,15 +32,15 @@ import {
   Download,
   Filter,
 } from 'lucide-react'
-import { successRateCalculator } from '../../lib/analytics/success-rate-calculator'
+import { successRateCalculator } from '../../../lib/analytics/success-rate-calculator'
 import type {
   SuccessRateAnalytics,
   AnalyticsReport,
   AnalyticsQuery,
   PerformanceTrend,
   StrategySuccessRate,
-} from '../../shared/types/analytics'
-import { useAuth } from '../hooks/useAuth'
+} from '../../../shared/types/analytics'
+import { useAuth } from '../../hooks/useAuth'
 
 interface AnalyticsReportsProps {
   className?: string

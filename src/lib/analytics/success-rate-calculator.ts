@@ -859,7 +859,7 @@ export class SuccessRateCalculator {
       sortBy: query?.sortBy,
     })
 
-    return `analytics_${agentId}_${Buffer.from(queryString).toString('base64').slice(0, 32)}`
+    return `analytics_${agentId}_${btoa(queryString).slice(0, 32)}`
   }
 
   /**

@@ -120,7 +120,7 @@ const generateCacheKey = (
     groupBy: queryParams.groupBy,
     sortBy: queryParams.sortBy,
   }
-  return `analytics_${agentId}_${Buffer.from(JSON.stringify(params)).toString('base64')}`
+  return `analytics_${agentId}_${btoa(JSON.stringify(params))}`
 }
 
 // ========== VALIDATION FUNCTIONS ==========

@@ -1169,7 +1169,7 @@ export class StrategyRecommender {
       priceRange: context.priceRange,
     })
 
-    return `recommendations_${agentId}_${Buffer.from(contextString).toString('base64').slice(0, 32)}`
+    return `recommendations_${agentId}_${btoa(contextString).slice(0, 32)}`
   }
 
   /**

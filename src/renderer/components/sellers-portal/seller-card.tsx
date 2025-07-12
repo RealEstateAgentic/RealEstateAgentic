@@ -1,33 +1,41 @@
-import { useState } from 'react';
-import { Send, Loader2, Phone, Mail, MapPin, DollarSign, Calendar, User } from 'lucide-react';
-import { startSellerWorkflow } from '../../services/automation';
+import { useState } from 'react'
+import {
+  Send,
+  Loader2,
+  Phone,
+  Mail,
+  MapPin,
+  DollarSign,
+  Calendar,
+  User,
+} from 'lucide-react'
+import { startSellerWorkflow } from '../../services/automation'
 
 interface SellerCardProps {
   seller: {
-    id: number;
-    name: string;
-    email: string;
-    phone: string;
-    propertyAddress: string;
-    stage: string;
-    subStatus: string;
-    estimatedValue: string;
-    listingPrice?: string;
-    leadSource: string;
-    priority: 'high' | 'medium' | 'low';
-    dateAdded: string;
-    lastContact: string | null;
-    notes: string;
-  };
+    id: number
+    name: string
+    email: string
+    phone: string
+    propertyAddress: string
+    stage: string
+    subStatus: string
+    estimatedValue: string
+    listingPrice?: string
+    leadSource: string
+    dateAdded: string
+    lastContact: string | null
+    notes: string
+  }
 }
 
 export function SellerCard({ seller }: SellerCardProps) {
-  const [isSending, setIsSending] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSendSurvey = async () => {
-    setIsSending(true);
-    setError(null);
+    setIsSending(true)
+    setError(null)
 
     try {
       const result = await startSellerWorkflow({
@@ -35,38 +43,25 @@ export function SellerCard({ seller }: SellerCardProps) {
         sellerEmail: seller.email,
         sellerName: seller.name,
         sellerPhone: seller.phone,
-        propertyAddress: seller.propertyAddress
-      });
+        propertyAddress: seller.propertyAddress,
+      })
 
-      console.log('Survey sent successfully:', result);
+      console.log('Survey sent successfully:', result)
     } catch (err) {
-      console.error('Failed to send survey:', err);
-      setError('Failed to send survey. Please try again.');
+      console.error('Failed to send survey:', err)
+      setError('Failed to send survey. Please try again.')
     } finally {
-      setIsSending(false);
+      setIsSending(false)
     }
-  };
-
-  const priorityColors = {
-    high: 'border-red-200 bg-red-50',
-    medium: 'border-yellow-200 bg-yellow-50',
-    low: 'border-green-200 bg-green-50'
-  };
+  }
 
   return (
-    <div className={`p-4 rounded-lg border-2 ${priorityColors[seller.priority]} bg-white shadow-sm hover:shadow-md transition-shadow`}>
+    <div className="p-4 rounded-lg border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <User className="size-4 text-gray-500" />
           <h3 className="font-semibold text-gray-900">{seller.name}</h3>
         </div>
-        <span className={`px-2 py-1 rounded text-xs font-medium ${
-          seller.priority === 'high' ? 'bg-red-100 text-red-800' :
-          seller.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-          'bg-green-100 text-green-800'
-        }`}>
-          {seller.priority}
-        </span>
       </div>
 
       {/* Send Survey Button for new leads */}
@@ -89,9 +84,7 @@ export function SellerCard({ seller }: SellerCardProps) {
               </>
             )}
           </button>
-          {error && (
-            <p className="text-red-600 text-sm mt-1">{error}</p>
-          )}
+          {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
         </div>
       )}
 
@@ -129,14 +122,13 @@ export function SellerCard({ seller }: SellerCardProps) {
           <span className="font-medium">Source:</span> {seller.leadSource}
         </p>
         <p className="text-xs text-gray-500 mb-2">
-          <span className="font-medium">Status:</span> {seller.subStatus.replace(/_/g, ' ')}
+          <span className="font-medium">Status:</span>{' '}
+          {seller.subStatus.replace(/_/g, ' ')}
         </p>
         {seller.notes && (
-          <p className="text-xs text-gray-600 italic">
-            "{seller.notes}"
-          </p>
+          <p className="text-xs text-gray-600 italic">"{seller.notes}"</p>
         )}
       </div>
     </div>
-  );
+  )
 }

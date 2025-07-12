@@ -3,7 +3,7 @@
  * Displays individual client information within kanban columns
  */
 
-import { MapPin, Phone, Mail, Home, Calendar, AlertCircle } from 'lucide-react'
+import { MapPin, Phone, Mail, Home, Calendar } from 'lucide-react'
 import { dummyData } from '../../data/dummy-data'
 
 interface ClientCardProps {
@@ -21,7 +21,6 @@ interface ClientCardProps {
     timeline: string
     reasonForSelling: string
     leadSource: string
-    priority: string
     dateAdded: string
     lastContact: string | null
     notes: string
@@ -34,36 +33,26 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Never'
     const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric'
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
     })
-  }
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'High':
-        return 'bg-[#c05e51]/10 text-[#c05e51] border border-[#c05e51]/20'
-      case 'Medium':
-        return 'bg-[#F6E2BC]/30 text-[#8B7355] border border-[#F6E2BC]/50'
-      case 'Low':
-        return 'bg-[#A9D09E]/20 text-[#5a7c50] border border-[#A9D09E]/40'
-      default:
-        return 'bg-gray-100 text-gray-800 border border-gray-200'
-    }
   }
 
   // Get next event for this client
   const getNextEvent = () => {
-    const clientEvents = dummyData.calendarEvents.filter(event => 
-      event.clientType === 'seller' && event.clientId === client.id.toString()
+    const clientEvents = dummyData.calendarEvents.filter(
+      event =>
+        event.clientType === 'seller' && event.clientId === client.id.toString()
     )
     const today = new Date()
-    const upcomingEvents = clientEvents.filter(event => {
-      const eventDate = new Date(event.date)
-      return eventDate >= today
-    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    
+    const upcomingEvents = clientEvents
+      .filter(event => {
+        const eventDate = new Date(event.date)
+        return eventDate >= today
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
     return upcomingEvents.length > 0 ? upcomingEvents[0] : null
   }
 
@@ -78,14 +67,6 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-2">
           <h4 className="font-semibold text-gray-800">{client.name}</h4>
-          {client.priority === 'High' && (
-            <AlertCircle className="size-4 text-red-500" />
-          )}
-        </div>
-        <div className="flex items-center space-x-2">
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(client.priority)}`}>
-            {client.priority}
-          </span>
         </div>
       </div>
 
@@ -93,9 +74,11 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
       <div className="space-y-2 mb-3">
         <div className="flex items-start space-x-2">
           <MapPin className="size-4 text-gray-500 mt-0.5 flex-shrink-0" />
-          <p className="text-sm text-gray-700 leading-tight">{client.propertyAddress}</p>
+          <p className="text-sm text-gray-700 leading-tight">
+            {client.propertyAddress}
+          </p>
         </div>
-        
+
         <div className="flex items-center space-x-2">
           <Home className="size-4 text-gray-500" />
           <span className="text-sm text-gray-600">
@@ -115,9 +98,7 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
           <Calendar className="size-4 text-gray-500" />
           <span className="text-sm text-gray-600">{client.timeline}</span>
         </div>
-        <div className="text-xs text-gray-500">
-          {client.reasonForSelling}
-        </div>
+        <div className="text-xs text-gray-500">{client.reasonForSelling}</div>
       </div>
 
       {/* Contact Information */}
@@ -125,14 +106,14 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
         <div className="flex items-center space-x-3">
           <a
             href={`tel:${client.phone}`}
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
             className="text-gray-400 hover:text-[#3B7097] transition-colors"
           >
             <Phone className="size-4" />
           </a>
           <a
             href={`mailto:${client.email}`}
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
             className="text-gray-400 hover:text-[#3B7097] transition-colors"
           >
             <Mail className="size-4" />
@@ -151,13 +132,14 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
             <span>Next: {nextEvent.title}</span>
           </div>
           <div className="text-xs text-gray-400 ml-4">
-            {new Date(nextEvent.date).toLocaleDateString('en-US', { 
-              month: 'short', 
-              day: 'numeric' 
-            })} at {nextEvent.time}
+            {new Date(nextEvent.date).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+            })}{' '}
+            at {nextEvent.time}
           </div>
         </div>
       )}
     </div>
   )
-} 
+}

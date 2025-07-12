@@ -754,42 +754,7 @@ export function ClientModal({
     }
   }
 
-  // Define which tabs should be visible based on client stage
-  const getVisibleTabs = () => {
-    const baseTabs = [
-      { id: 'summary', label: 'Client Summary', icon: null },
-      { id: 'stage_details', label: 'Stage Details', icon: null },
-      { id: 'ai_lead_scoring', label: 'AI Lead Scoring', icon: TrendingUp },
-      { id: 'email_history', label: 'Email History', icon: History },
-    ]
-
-    const stageSpecificTabs = []
-
-    // Add Offers tab only for Active Search stage
-    if (client.stage === 'active_search') {
-      stageSpecificTabs.push({
-        id: 'offers',
-        label: 'Offers',
-        icon: DollarSign,
-      })
-    }
-
-    // Add Contingencies tab only for Under Contract stage
-    if (client.stage === 'under_contract') {
-      stageSpecificTabs.push({
-        id: 'contingencies',
-        label: 'Contingencies',
-        icon: Clock,
-      })
-    }
-
-    const alwaysVisibleTabs = [
-      { id: 'content', label: 'Content', icon: FolderOpen },
-      { id: 'calendar', label: 'Calendar', icon: CalendarDays },
-    ]
-
-    return [...baseTabs, ...stageSpecificTabs, ...alwaysVisibleTabs]
-  }
+  // Duplicate getVisibleTabs function removed - using the one defined earlier
 
   const renderTabContent = () => {
     switch (activeTab) {

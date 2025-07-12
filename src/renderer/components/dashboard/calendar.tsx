@@ -46,29 +46,29 @@ export function Calendar() {
     return date.toDateString() === today.toDateString()
   }
 
-  // Updated color coding system as per requirements
+  // Updated color coding system using proper UI design rules palette
   const getEventTypeColor = (type: string, priority?: string, clientType?: string) => {
     // Priority-based coloring for deadlines
     if (type === 'deadline') {
-      return priority === 'high' ? 'bg-red-500 text-white' : 'bg-yellow-500 text-white'
+      return priority === 'high' ? 'bg-[#c05e51]/20 text-black border border-[#c05e51]/40' : 'bg-[#F6E2BC]/60 text-black border border-[#F6E2BC]'
     }
     
     // Client-based coloring for events
     if (clientType === 'buyer') {
-      return 'bg-blue-500 text-white' // Blue: Buyer Events
+      return 'bg-[#75BDE0]/20 text-black border border-[#75BDE0]/40' // Sky Blue: Buyer Events
     } else if (clientType === 'seller') {
-      return 'bg-green-500 text-white' // Green: Seller Events
+      return 'bg-[#A9D09E]/20 text-black border border-[#A9D09E]/40' // Sage Green: Seller Events
     }
     
     // Legacy types for backward compatibility
     switch (type) {
-      case 'showing': return 'bg-blue-500 text-white' // Default to buyer events
-      case 'consultation': return 'bg-green-500 text-white' // Default to seller events
-      case 'closing': return 'bg-red-500 text-white' // High priority deadline
-      case 'inspection': return 'bg-yellow-500 text-white' // Low priority deadline
-      case 'listing': return 'bg-green-500 text-white' // Seller events
-      case 'custom': return 'bg-gray-500 text-white'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'showing': return 'bg-[#75BDE0]/20 text-black border border-[#75BDE0]/40' // Buyer events
+      case 'consultation': return 'bg-[#A9D09E]/20 text-black border border-[#A9D09E]/40' // Seller events
+      case 'closing': return 'bg-[#c05e51]/20 text-black border border-[#c05e51]/40' // High priority deadline
+      case 'inspection': return 'bg-[#F6E2BC]/60 text-black border border-[#F6E2BC]' // Medium priority deadline
+      case 'listing': return 'bg-[#A9D09E]/20 text-black border border-[#A9D09E]/40' // Seller events
+      case 'custom': return 'bg-[#3B7097]/20 text-black border border-[#3B7097]/40' // Primary accent
+      default: return 'bg-gray-100 text-gray-800 border border-gray-200'
     }
   }
 
@@ -172,8 +172,8 @@ export function Calendar() {
       time: formatTime(formData.time),
       type: formData.eventType,
       location: formData.description || 'TBD',
-      clientType: formData.clientType || null,
-      clientId: formData.clientId || null,
+      clientType: formData.clientType || '',
+      clientId: formData.clientId || '',
       priority: formData.priority
     }
 
@@ -207,8 +207,8 @@ export function Calendar() {
       time: formatTime(formData.time),
       type: formData.eventType,
       location: formData.description || 'TBD',
-      clientType: formData.clientType || null,
-      clientId: formData.clientId || null,
+      clientType: formData.clientType || '',
+      clientId: formData.clientId || '',
       priority: formData.priority
     }
 
@@ -401,50 +401,53 @@ export function Calendar() {
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 w-full flex flex-col">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-full flex flex-col">
         {/* Fixed Header */}
         <div className="p-6 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-800">This Week's Calendar</h3>
+            <h3 className="text-xl font-semibold text-gray-800">This Week's Calendar</h3>
             <Button
               onClick={handleAddEvent}
-              className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm px-3 py-1.5 h-auto"
+              className="bg-[#3B7097] hover:bg-[#3B7097]/90 text-white text-sm px-4 py-2 h-auto"
             >
-              <Plus className="size-4 mr-1" />
+              <Plus className="size-4 mr-2" />
               Add Event
             </Button>
           </div>
         </div>
         
-        {/* Scrollable Content */}
+        {/* Calendar Content - Full Height */}
         <div className="flex-1 p-6 overflow-hidden">
-          <div className="grid grid-cols-7 gap-2 h-full">
+          <div className="grid grid-cols-7 gap-4 h-full">
             {days.map((day, index) => (
               <div key={index} className="text-center flex flex-col h-full">
-                <div className={`p-2 rounded-t-lg border-b flex-shrink-0 ${
-                  isToday(day) ? 'bg-[#3B7097] text-white' : 'bg-gray-50 text-gray-700'
+                <div className={`p-3 rounded-t-lg border-b-2 flex-shrink-0 ${
+                  isToday(day) ? 'bg-[#3B7097] text-white border-[#3B7097]' : 'bg-gray-50 text-gray-700 border-gray-200'
                 }`}>
-                  <div className="text-xs font-medium">
+                  <div className="text-sm font-semibold">
                     {formatDate(day)}
                   </div>
                 </div>
-                <div className="flex-1 p-2 space-y-1 overflow-y-auto min-h-0">
+                <div className="flex-1 p-3 space-y-2 overflow-y-auto min-h-0 bg-gray-50/50 rounded-b-lg">
                   {getEventsForDate(day).length === 0 ? (
-                    <div className="text-xs text-gray-400 italic py-4">No events</div>
+                    <div className="text-xs text-gray-400 italic py-8 text-center">No events</div>
                   ) : (
                     getEventsForDate(day).map((event) => (
                       <div 
                         key={event.id}
                         onClick={() => handleEventClick(event)}
-                        className={`p-2 rounded text-xs ${getEventTypeColor(event.type, event.priority, event.clientType)} mb-1 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity`}
+                        className={`p-3 rounded-lg text-sm ${getEventTypeColor(event.type, event.priority, event.clientType)} cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-[1.02]`}
                       >
-                        <div className="font-medium flex items-center justify-between">
-                          <span>{event.time}</span>
+                        <div className="font-semibold flex items-center justify-between mb-1">
+                          <span className="text-xs">{event.time}</span>
                           {event.priority === 'high' && (
-                            <AlertCircle className="size-3" />
+                            <AlertCircle className="size-3 text-[#c05e51]" />
                           )}
                         </div>
-                        <div className="truncate leading-tight">{event.title}</div>
+                        <div className="font-medium leading-tight text-sm">{event.title}</div>
+                        {event.location && (
+                          <div className="text-xs text-gray-600 mt-1 truncate">{event.location}</div>
+                        )}
                       </div>
                     ))
                   )}
@@ -492,7 +495,7 @@ export function Calendar() {
                   {getEventTypeLabel(selectedEvent.type)}
                 </span>
                 {selectedEvent.priority === 'high' && (
-                  <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded font-medium">
+                  <span className="px-2 py-1 bg-[#c05e51]/20 text-[#c05e51] text-xs rounded font-medium border border-[#c05e51]/40">
                     High Priority
                   </span>
                 )}

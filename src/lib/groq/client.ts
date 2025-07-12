@@ -1,8 +1,6 @@
 /**
- * Groq API Client for Real Estate Agentic Application
- *
- * Provides a configured Groq client for document generation, analysis,
- * and AI-powered features in the offer preparation and negotiation system.
+ * Groq API Client for AIgent Pro Application
+ * Provides AI-powered document generation and analysis using Groq's Llama models
  */
 
 import Groq from 'groq-sdk'

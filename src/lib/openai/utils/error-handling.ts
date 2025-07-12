@@ -204,7 +204,7 @@ export class OpenAIErrorClassifier {
       retryAfter,
       context: {
         originalError: error,
-        userAgent: 'RealEstateAgentic/1.0',
+        userAgent: 'AIgentPro/1.0',
       },
       timestamp,
       attempts: 1,

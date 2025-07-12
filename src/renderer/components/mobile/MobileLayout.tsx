@@ -20,16 +20,16 @@ import {
   MapPin,
   Camera,
   Mic,
-  Search,
+  Calculator,
 } from 'lucide-react'
 import { Button } from '../ui/button'
-import type { AgentProfile, ClientProfile } from '../../../shared/types'
+import type { AgentProfile } from '../../../shared/types'
 
 // ========== MOBILE LAYOUT TYPES ==========
 
 interface MobileLayoutProps {
   children: React.ReactNode
-  currentUser: AgentProfile | ClientProfile | null
+  currentUser: AgentProfile | null
   userType: 'agent' | 'client' | null
   navigate: (path: string, params?: any) => void
   goBack: () => void
@@ -231,7 +231,7 @@ const QuickAction: React.FC<QuickActionProps> = ({
 interface MobileSidebarProps {
   isOpen: boolean
   onClose: () => void
-  currentUser: AgentProfile | ClientProfile | null
+  currentUser: AgentProfile | null
   userType: 'agent' | 'client' | null
   navigate: (path: string) => void
   onLogout: () => void
@@ -263,7 +263,7 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({
           {
             label: 'Appraisal Tools',
             path: '/appraisal-scenarios',
-            icon: Search,
+            icon: Calculator,
           },
           { label: 'Settings', path: '/settings', icon: User },
         ]
@@ -395,7 +395,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
       case '/appraisal-scenarios':
         return 'Appraisal Tools'
       default:
-        return 'Real Estate Agentic'
+        return 'AIgent Pro'
     }
   }
 
@@ -467,13 +467,6 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
           currentPath !== '/client-dashboard'
             ? goBack
             : undefined
-        }
-        actions={
-          <div className="flex items-center space-x-2">
-            <button className="p-2 text-gray-600 hover:text-gray-900">
-              <Search className="w-5 h-5" />
-            </button>
-          </div>
         }
       />
 

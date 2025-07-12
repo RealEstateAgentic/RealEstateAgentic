@@ -13,6 +13,42 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "buyers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "agentId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dateAdded",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "sellers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "agentId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "isArchived",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dateAdded",
+          "order": "DESCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []

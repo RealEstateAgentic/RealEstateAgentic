@@ -1,9 +1,6 @@
 /**
- * OpenAI API Client for Real Estate Agentic Application
- *
- * This file provides a configured LangChain OpenAI client. It is designed as a
- * singleton to ensure a single, consistent client instance is used throughout the
- * application.
+ * OpenAI API Client for AIgent Pro Application
+ * Provides AI-powered document generation and analysis
  */
 
 import { ChatOpenAI } from '@langchain/openai'
@@ -126,7 +123,7 @@ class OpenAIClient {
    * This is the primary way to interact with the model when tools are needed.
    */
   public withTools(
-    tools: StructuredToolInterface[],
+    tools: StructuredToolInterface[]
   ): Runnable<BaseMessage[], BaseMessage> {
     return this.client.bind({ tools })
   }
@@ -175,7 +172,7 @@ export const createPrompt = (
   instruction: string,
   context?: Record<string, any>,
   examples?: string[],
-  constraints?: string[],
+  constraints?: string[]
 ): string => {
   let prompt = `${instruction}\\n\\n`
 
@@ -204,7 +201,7 @@ export const createPrompt = (
 export const createRealEstateSystemPrompt = (
   userRole: 'agent' | 'buyer' | 'seller',
   documentType: string,
-  jurisdiction?: string,
+  jurisdiction?: string
 ): string => {
   const basePrompt = `You are an expert real estate assistant specialized in ${documentType} documents. `
 

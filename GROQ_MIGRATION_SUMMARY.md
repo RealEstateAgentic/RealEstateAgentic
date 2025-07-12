@@ -1,8 +1,7 @@
-# Groq Migration Summary
+# GROQ Migration Summary
 
 ## Overview
-
-Successfully migrated the Real Estate Agentic application from OpenAI to Groq for document generation and AI processing. All document generation services now use Groq's Llama models instead of OpenAI's GPT models.
+Successfully migrated the AIgent Pro application from OpenAI to Groq for document generation and AI processing. All document generation services now use Groq's Llama models instead of OpenAI's GPT models.
 
 ## Changes Made
 

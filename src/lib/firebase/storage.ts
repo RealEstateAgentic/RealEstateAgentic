@@ -1,6 +1,6 @@
 /**
- * Firebase Storage Service
- * Handles file uploads and management for the Real Estate Agentic application
+ * Firebase Storage service
+ * Handles file uploads and management for the AIgent Pro application
  */
 
 import {
@@ -29,6 +29,7 @@ const STORAGE_PATHS = {
   PROPERTY_DOCUMENTS: 'property-documents',
   USER_AVATARS: 'user-avatars',
   REPAIR_PHOTOS: 'repair-photos',
+  CLIENT_DOCUMENTS: 'client-documents',
 } as const
 
 /**
@@ -392,5 +393,121 @@ export const deleteFile = async (filePath: string): Promise<void> => {
     await deleteObject(fileRef)
   } catch (error) {
     throw new Error(`Failed to delete file: ${error}`)
+  }
+}
+
+// ========== CLIENT DOCUMENT OPERATIONS ==========
+
+/**
+ * Upload client document (buyer or seller)
+ */
+export const uploadClientDocument = async (
+  clientId: string,
+  clientType: 'buyer' | 'seller',
+  file: File,
+  onProgress?: UploadProgressCallback
+): Promise<FileUploadResult> => {
+  try {
+    const userId = getCurrentUserId()
+
+    // Validate file - allow documents and images
+    validateFileType(file, [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'image/jpeg',
+      'image/png',
+      'image/webp'
+    ])
+    validateFileSize(file, 10) // 10MB limit
+
+    // Generate file path - use users/{userId} structure to match storage rules
+    const fileName = generateFileName(file.name)
+    const filePath = `users/${userId}/${STORAGE_PATHS.CLIENT_DOCUMENTS}/${clientType}s/${clientId}/${fileName}`
+    const storageRef = ref(storage, filePath)
+
+    // Upload file
+    if (onProgress) {
+      const uploadTask = uploadBytesResumable(storageRef, file)
+
+      return new Promise((resolve, reject) => {
+        uploadTask.on(
+          'state_changed',
+          snapshot => {
+            const progress =
+              (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+            onProgress(progress)
+          },
+          error => {
+            reject(new Error(`Upload failed: ${error.message}`))
+          },
+          async () => {
+            try {
+              const url = await getDownloadURL(uploadTask.snapshot.ref)
+              const metadata = await getMetadata(uploadTask.snapshot.ref)
+
+              resolve({
+                url,
+                path: filePath,
+                fileName: file.name, // Use original filename
+                size: metadata.size,
+                contentType: metadata.contentType || '',
+                uploadedAt: new Date(metadata.timeCreated),
+              })
+            } catch (error) {
+              reject(new Error(`Failed to get download URL: ${error}`))
+            }
+          }
+        )
+      })
+    } else {
+      const snapshot = await uploadBytes(storageRef, file)
+      const downloadURL = await getDownloadURL(snapshot.ref)
+      const metadata = await getMetadata(snapshot.ref)
+
+      return {
+        url: downloadURL,
+        path: filePath,
+        fileName: file.name, // Use original filename
+        size: metadata.size,
+        contentType: metadata.contentType || '',
+        uploadedAt: new Date(metadata.timeCreated),
+      }
+    }
+  } catch (error) {
+    throw new Error(`Failed to upload client document: ${error}`)
+  }
+}
+
+/**
+ * Upload multiple client documents
+ */
+export const uploadClientDocuments = async (
+  clientId: string,
+  clientType: 'buyer' | 'seller',
+  files: File[],
+  onProgress?: (fileIndex: number, progress: number) => void
+): Promise<FileUploadResult[]> => {
+  try {
+    const results: FileUploadResult[] = []
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      const progressCallback = onProgress
+        ? (progress: number) => onProgress(i, progress)
+        : undefined
+
+      const result = await uploadClientDocument(
+        clientId,
+        clientType,
+        file,
+        progressCallback
+      )
+      results.push(result)
+    }
+
+    return results
+  } catch (error) {
+    throw new Error(`Failed to upload client documents: ${error}`)
   }
 }

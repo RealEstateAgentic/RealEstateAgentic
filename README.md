@@ -1,6 +1,24 @@
-# RealEstateAgentic
+# AIgent Pro
 
-Gauntlet AI Cohort 2 Week 4 Open Source project. 
+🏠 **AI-Powered Real Estate Agent Platform**
+
+A comprehensive desktop application designed to empower real estate agents with AI-driven document generation, offer analysis, and negotiation support.
+
+## Features
+
+- **AI Document Generation**: Create cover letters, negotiation strategies, and explanation memos
+- **Offer Analysis**: Comprehensive property and financial analysis
+- **Client Management**: Track buyers and sellers through the sales process
+- **Repair Estimation**: Generate detailed repair reports and cost estimates
+- **Market Analytics**: AI-powered market analysis and insights
+
+## Quick Start
+
+```bash
+git clone https://github.com/RealEstateAgentic/RealEstateAgentic.git
+cd RealEstateAgentic
+```
+
 ## Prerequisites
 
 - **Node.js** (v16 or later) - [Download here](https://nodejs.org/)

@@ -117,12 +117,41 @@ interface SellersPortalV2Props {
   userType?: string
 }
 
+/**
+ * Get the next stage in the seller workflow
+ */
+function getNextStage(currentStage: string): string | null {
+  switch (currentStage) {
+    case 'new_lead': return 'pre_listing'
+    case 'pre_listing': return 'active_listing'
+    case 'active_listing': return 'under_contract'
+    case 'under_contract': return 'closed'
+    case 'closed': return null
+    default: return null
+  }
+}
+
+/**
+ * Get default sub-status for a given stage
+ */
+function getDefaultSubStatus(stage: string): string {
+  switch (stage) {
+    case 'new_lead': return 'to_initiate_contact'
+    case 'pre_listing': return 'preparing_cma'
+    case 'active_listing': return 'accepting_showings'
+    case 'under_contract': return 'awaiting_inspection'
+    case 'closed': return 'post_closing_checklist'
+    default: return 'unknown'
+  }
+}
+
 export function SellersPortalV2({ navigate, currentUser, userType }: SellersPortalV2Props) {
   const [selectedClient, setSelectedClient] = useState<any>(null)
-  const [sellerClients, setSellerClients] = useState(mockSellerClients)
+  const [sellerClients, setSellerClients] = useState<any[]>([])
   const [archivedClients, setArchivedClients] = useState<any[]>([])
   const [showNewLeadModal, setShowNewLeadModal] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState<string | null>(null)
   const [newLeadForm, setNewLeadForm] = useState({
     name: '',
@@ -134,6 +163,35 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
     notes: '',
     documents: [] as File[]
   })
+
+  // Set up real-time listener for seller clients
+  useEffect(() => {
+    if (!currentUser?.uid) {
+      setIsLoading(false)
+      return
+    }
+
+    console.log('Setting up real-time listener for sellers')
+    const unsubscribe = firebaseCollections.getSellersRealTime(
+      currentUser.uid,
+      (sellers) => {
+        console.log('Received real-time sellers update:', sellers.length)
+        setSellerClients(sellers)
+        setIsLoading(false)
+        setHasError(null)
+      },
+      (error) => {
+        console.error('Real-time sellers error:', error)
+        setHasError('Failed to load sellers—please refresh')
+        setIsLoading(false)
+      }
+    )
+
+    return () => {
+      console.log('Cleaning up sellers real-time listener')
+      unsubscribe()
+    }
+  }, [currentUser?.uid])
 
   // Handle URL parameters for direct client access and new lead action
   useEffect(() => {
@@ -185,23 +243,39 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
     }
   }
 
-  const handleArchive = (clientId: number) => {
-    const clientToArchive = sellerClients.find(c => c.id === clientId)
-    if (clientToArchive) {
-      setArchivedClients(prev => [...prev, clientToArchive])
-      setSellerClients(prev => prev.filter(c => c.id !== clientId))
+  const handleArchive = async (client: any) => {
+    if (!currentUser?.uid) {
+      setHasError('User not authenticated')
+      return
+    }
+
+    try {
+      await firebaseCollections.archiveSeller(client.id, client.stage)
+    } catch (error) {
+      console.error('Error archiving client:', error)
+      setHasError('Failed to archive client. Please try again.')
     }
     setSelectedClient(null)
   }
 
-  const handleProgress = (clientId: number, newStage: string) => {
-    setSellerClients(prev => 
-      prev.map(c => 
-        c.id === clientId 
-          ? { ...c, stage: newStage, subStatus: getDefaultSubStatus(newStage) }
-          : c
-      )
-    )
+  const handleProgress = async (client: any) => {
+    if (!currentUser?.uid) {
+      setHasError('User not authenticated')
+      return
+    }
+
+    try {
+      const nextStage = getNextStage(client.stage)
+      if (nextStage) {
+        await firebaseCollections.updateSeller(client.id, {
+          stage: nextStage,
+          subStatus: getDefaultSubStatus(nextStage)
+        })
+      }
+    } catch (error) {
+      console.error('Error progressing client:', error)
+      setHasError('Failed to progress client. Please try again.')
+    }
     setSelectedClient(null)
   }
 
@@ -216,11 +290,21 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
     }
   }
 
-  const handleUnarchive = (clientId: number) => {
-    const clientToUnarchive = archivedClients.find(c => c.id === clientId)
-    if (clientToUnarchive) {
-      setSellerClients(prev => [...prev, clientToUnarchive])
-      setArchivedClients(prev => prev.filter(c => c.id !== clientId))
+  const handleUnarchive = async (client: any) => {
+    if (!currentUser?.uid) {
+      setHasError('User not authenticated')
+      return
+    }
+
+    try {
+      await firebaseCollections.updateSeller(client.id, {
+        isArchived: false,
+        archivedDate: null,
+        archivedFromStage: null
+      })
+    } catch (error) {
+      console.error('Error unarchiving client:', error)
+      setHasError('Failed to unarchive client. Please try again.')
     }
     setSelectedClient(null)
   }
@@ -361,6 +445,8 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
                 stage={stage.stage}
                 clients={sellerClients}
                 onClientClick={handleClientClick}
+                isLoading={isLoading}
+                hasError={hasError}
               />
             ))}
           </div>

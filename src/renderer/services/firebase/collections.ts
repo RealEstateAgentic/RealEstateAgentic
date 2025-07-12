@@ -1,5 +1,5 @@
 // Firebase service for storing client and workflow data
-import { collection, addDoc, updateDoc, doc, getDocs, query, where } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, getDocs, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from './config';
 
 interface BuyerData {
@@ -84,6 +84,25 @@ interface WorkflowData {
   formId?: string;
 }
 
+/**
+ * Get default sub-status for a given stage
+ */
+function getDefaultSubStatus(stage: string): string {
+  switch (stage) {
+    case 'new_lead': return 'to_initiate_contact';
+    case 'pre_listing': return 'preparing_cma';
+    case 'active_listing': return 'active';
+    case 'under_contract': return 'pending_inspection';
+    case 'closed': return 'completed';
+    case 'qualified': return 'searching';
+    case 'showing': return 'viewing_properties';
+    case 'offer_made': return 'negotiating';
+    case 'under_contract_buyer': return 'pending_inspection';
+    case 'closed_buyer': return 'completed';
+    default: return 'unknown';
+  }
+}
+
 export const firebaseCollections = {
   async createBuyer(data: BuyerData) {
     console.log('💾 Creating buyer in Firebase:', data.name);
@@ -162,6 +181,12 @@ export const firebaseCollections = {
     
     try {
       const docRef = doc(db, 'buyers', buyerId);
+      
+      // If updating stage, ensure subStatus is set
+      if (updates.stage && !updates.subStatus) {
+        updates.subStatus = getDefaultSubStatus(updates.stage);
+      }
+      
       await updateDoc(docRef, updates);
       
       console.log('✅ Buyer updated:', buyerId);
@@ -172,17 +197,65 @@ export const firebaseCollections = {
     }
   },
 
+  async archiveBuyer(buyerId: string, currentStage: string) {
+    console.log('💾 Archiving buyer in Firebase:', buyerId);
+    
+    try {
+      const docRef = doc(db, 'buyers', buyerId);
+      const archiveData = {
+        isArchived: true,
+        archivedDate: new Date().toISOString(),
+        archivedFromStage: currentStage
+      };
+      
+      await updateDoc(docRef, archiveData);
+      
+      console.log('✅ Buyer archived:', buyerId);
+      return { id: buyerId, ...archiveData };
+    } catch (error) {
+      console.error('❌ Error archiving buyer:', error);
+      throw error;
+    }
+  },
+
   async updateSeller(sellerId: string, updates: Partial<SellerData>) {
     console.log('💾 Updating seller in Firebase:', sellerId);
     
     try {
       const docRef = doc(db, 'sellers', sellerId);
+      
+      // If updating stage, ensure subStatus is set
+      if (updates.stage && !updates.subStatus) {
+        updates.subStatus = getDefaultSubStatus(updates.stage);
+      }
+      
       await updateDoc(docRef, updates);
       
       console.log('✅ Seller updated:', sellerId);
       return { id: sellerId, ...updates };
     } catch (error) {
       console.error('❌ Error updating seller:', error);
+      throw error;
+    }
+  },
+
+  async archiveSeller(sellerId: string, currentStage: string) {
+    console.log('💾 Archiving seller in Firebase:', sellerId);
+    
+    try {
+      const docRef = doc(db, 'sellers', sellerId);
+      const archiveData = {
+        isArchived: true,
+        archivedDate: new Date().toISOString(),
+        archivedFromStage: currentStage
+      };
+      
+      await updateDoc(docRef, archiveData);
+      
+      console.log('✅ Seller archived:', sellerId);
+      return { id: sellerId, ...archiveData };
+    } catch (error) {
+      console.error('❌ Error archiving seller:', error);
       throw error;
     }
   },
@@ -292,6 +365,43 @@ export const firebaseCollections = {
     }
   },
 
+  getBuyersRealTime(agentId: string, onUpdate: (buyers: (BuyerData & { id: string })[]) => void, onError: (error: Error) => void) {
+    console.log('💾 Setting up real-time buyers listener for agent:', agentId);
+    
+    try {
+      const buyersCollection = collection(db, 'buyers');
+      const q = query(
+        buyersCollection, 
+        where('agentId', '==', agentId), 
+        where('isArchived', '==', false),
+        orderBy('dateAdded', 'desc')
+      );
+      
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const buyers: (BuyerData & { id: string })[] = [];
+        
+        querySnapshot.forEach((doc) => {
+          buyers.push({
+            id: doc.id,
+            ...doc.data()
+          } as BuyerData & { id: string });
+        });
+        
+        console.log('✅ Real-time update: Retrieved', buyers.length, 'buyers');
+        onUpdate(buyers);
+      }, (error) => {
+        console.error('❌ Error in buyers real-time listener:', error);
+        onError(error);
+      });
+      
+      return unsubscribe;
+    } catch (error) {
+      console.error('❌ Error setting up buyers real-time listener:', error);
+      onError(error as Error);
+      return () => {}; // Return empty unsubscribe function
+    }
+  },
+
   async getSellers(agentId?: string) {
     console.log('💾 Getting sellers from Firebase', agentId ? `for agent: ${agentId}` : '(all)');
     
@@ -318,6 +428,43 @@ export const firebaseCollections = {
     } catch (error) {
       console.error('❌ Error getting sellers:', error);
       throw error;
+    }
+  },
+
+  getSellersRealTime(agentId: string, onUpdate: (sellers: (SellerData & { id: string })[]) => void, onError: (error: Error) => void) {
+    console.log('💾 Setting up real-time sellers listener for agent:', agentId);
+    
+    try {
+      const sellersCollection = collection(db, 'sellers');
+      const q = query(
+        sellersCollection, 
+        where('agentId', '==', agentId), 
+        where('isArchived', '==', false),
+        orderBy('dateAdded', 'desc')
+      );
+      
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const sellers: (SellerData & { id: string })[] = [];
+        
+        querySnapshot.forEach((doc) => {
+          sellers.push({
+            id: doc.id,
+            ...doc.data()
+          } as SellerData & { id: string });
+        });
+        
+        console.log('✅ Real-time update: Retrieved', sellers.length, 'sellers');
+        onUpdate(sellers);
+      }, (error) => {
+        console.error('❌ Error in sellers real-time listener:', error);
+        onError(error);
+      });
+      
+      return unsubscribe;
+    } catch (error) {
+      console.error('❌ Error setting up sellers real-time listener:', error);
+      onError(error as Error);
+      return () => {}; // Return empty unsubscribe function
     }
   },
 

@@ -48,6 +48,7 @@ import {
   deleteDocument,
 } from '../../../lib/firebase/collections/documents'
 import { EmailHistory } from '../shared/email-history'
+import { useFormData, extractFormField, getFieldLabel } from '../../hooks/useFormData'
 
 interface ClientModalProps {
   client: {
@@ -115,6 +116,7 @@ export function ClientModal({
     priority: client.priority,
     notes: client.notes,
   })
+<<<<<<< HEAD
   // Documents state for seller
   const [documents, setDocuments] = useState<any[]>([])
   const [loadingDocuments, setLoadingDocuments] = useState(false)
@@ -160,6 +162,30 @@ export function ClientModal({
       setDocuments([])
     } finally {
       setLoadingDocuments(false)
+=======
+
+  // Fetch form data and GPT analysis
+  const { formData, aiSummary, submissionDate, loading: formLoading, error: formError, formQuestions } = useFormData(client.email, 'seller')
+
+  const [documents, setDocuments] = useState([
+    {
+      id: 1,
+      title: 'Seller Survey Results',
+      type: 'PDF',
+      size: '2.3 MB',
+      uploadDate: '2024-01-10',
+      description: 'Initial seller questionnaire responses',
+      tags: 'survey, initial'
+    },
+    {
+      id: 2,
+      title: 'Generated Briefing',
+      type: 'PDF',
+      size: '1.8 MB',
+      uploadDate: '2024-01-08',
+      description: 'AI-generated client briefing document',
+      tags: 'briefing, ai-generated'
+>>>>>>> 650f207 (feat: integrate JotForm client information with real-time question mapping)
     }
   }
 
@@ -482,8 +508,14 @@ export function ClientModal({
     // Removed Contingencies tab - no longer needed
 
     const alwaysVisibleTabs = [
+      { id: 'form_details', label: 'Form Details', icon: FileText },
       { id: 'documents', label: 'Documents and Content', icon: FolderOpen }, // Renamed from 'content'
+<<<<<<< HEAD
       // Removed 'email_history' tab as requested
+=======
+      { id: 'email_history', label: 'Email History', icon: History },
+      { id: 'calendar', label: 'Calendar', icon: CalendarDays },
+>>>>>>> 650f207 (feat: integrate JotForm client information with real-time question mapping)
     ]
 
     return [...alwaysVisibleTabs]
@@ -961,6 +993,119 @@ export function ClientModal({
             </div>
           </div>
         )
+
+      case 'email_history':
+        return (
+          <EmailHistory 
+            clientEmail={client.email} 
+            clientName={client.name}
+            className="bg-white"
+          />
+        )
+
+      case 'form_details':
+        return (
+          <div className="space-y-6">
+            {formLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
+                <span className="text-gray-600">Loading form data...</span>
+              </div>
+            ) : formError ? (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-center">
+                  <AlertCircle className="size-5 text-red-600 mr-2" />
+                  <span className="text-red-800 font-medium">Error loading form data</span>
+                </div>
+                <p className="text-red-700 text-sm mt-1">{formError}</p>
+              </div>
+            ) : Object.keys(formData).length === 0 ? (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div className="flex items-center">
+                  <AlertCircle className="size-5 text-yellow-600 mr-2" />
+                  <span className="text-yellow-800 font-medium">No form data available</span>
+                </div>
+                <p className="text-yellow-700 text-sm mt-1">
+                  This client hasn't completed the seller questionnaire yet.
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Form Data Section */}
+                <div className="bg-white border border-gray-200 rounded-lg p-6">
+                  <div className="flex items-center mb-4">
+                    <FileText className="size-5 text-blue-600 mr-2" />
+                    <h3 className="font-semibold text-gray-800">Completed Form Responses</h3>
+                  </div>
+                  {submissionDate && (
+                    <p className="text-sm text-gray-500 mb-4">
+                      Submitted on {new Date(submissionDate).toLocaleDateString()}
+                    </p>
+                  )}
+                  <div className="space-y-6">
+                    {/* Contact Information Section */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-200">
+                        Contact Information
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {Object.entries(formData)
+                          .filter(([key]) => ['2', '3', '4'].includes(key))
+                          .map(([key, value]) => {
+                            if (!value || typeof value !== 'object' || !value.answer) return null;
+                            const displayLabel = getFieldLabel(key, 'seller', formQuestions);
+                            return (
+                              <div key={key} className="flex justify-between items-start py-2">
+                                <dt className="text-sm font-medium text-gray-600 w-1/2">{displayLabel}:</dt>
+                                <dd className="text-sm text-gray-900 w-1/2 text-right font-medium">{value.answer}</dd>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </div>
+
+                    {/* Property & Selling Details */}
+                    <div>
+                      <h4 className="text-sm font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-200">
+                        Property & Selling Details
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {Object.entries(formData)
+                          .filter(([key]) => !['2', '3', '4'].includes(key))
+                          .map(([key, value]) => {
+                            if (!value || typeof value !== 'object' || !value.answer) return null;
+                            const displayLabel = getFieldLabel(key, 'seller', formQuestions);
+                            return (
+                              <div key={key} className="flex justify-between items-start py-2">
+                                <dt className="text-sm font-medium text-gray-600 w-1/2">{displayLabel}:</dt>
+                                <dd className="text-sm text-gray-900 w-1/2 text-right font-medium">{value.answer}</dd>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* AI Summary Section */}
+                {aiSummary && (
+                  <div className="bg-white border border-gray-200 rounded-lg p-6">
+                    <div className="flex items-center mb-4">
+                      <TrendingUp className="size-5 text-green-600 mr-2" />
+                      <h3 className="font-semibold text-gray-800">AI Analysis Summary</h3>
+                    </div>
+                    <div className="prose max-w-none">
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <p className="text-gray-800 whitespace-pre-wrap">{aiSummary}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )
+
       default:
         return (
           <div className="space-y-4">

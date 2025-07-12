@@ -35,6 +35,15 @@ function Navigation({
 }) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
 
+  const handleUserMenuToggle = () => {
+    setIsUserMenuOpen(!isUserMenuOpen)
+  }
+
+  const handleUserMenuItemClick = (action: () => void) => {
+    action()
+    setIsUserMenuOpen(false)
+  }
+
   const navItems = [
     { path: '/', label: 'Home' },
     { path: '/buyers-portal', label: 'Buyers Portal' },

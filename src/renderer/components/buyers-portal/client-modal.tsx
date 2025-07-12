@@ -84,7 +84,7 @@ export function ClientModal({
   currentUser,
   navigate,
 }: ClientModalProps) {
-  const [activeTab, setActiveTab] = useState(client.initialTab || 'summary')
+  const [activeTab, setActiveTab] = useState(client.initialTab || 'ai_lead_scoring')
   const [selectedDocument, setSelectedDocument] = useState<any>(null)
   const [showDocumentGenerator, setShowDocumentGenerator] = useState(false)
   const [isEditingDetails, setIsEditingDetails] = useState(false)
@@ -373,7 +373,6 @@ export function ClientModal({
   const getVisibleTabs = () => {
     const baseTabs = [
       { id: 'ai_lead_scoring', label: 'AI Lead Scoring', icon: TrendingUp },
-      { id: 'summary', label: 'Summary', icon: null },
     ]
 
     const stageSpecificTabs = []
@@ -449,185 +448,6 @@ export function ClientModal({
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'summary':
-        if (client.stage === 'closed') {
-          // Phase 7: Closed stage specific design matching seller implementation
-          return (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Purchase Summary Widget */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="flex items-center mb-4">
-                  <Home className="size-5 text-green-600 mr-2" />
-                  <h3 className="font-semibold text-gray-800">Purchase Summary</h3>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Final Purchase Price:</span>
-                    <span className="text-sm text-gray-900">$432,000</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Closing Date:</span>
-                    <span className="text-sm text-gray-900">February 12, 2024</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Days to Close:</span>
-                    <span className="text-sm text-gray-900">45 days</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Property Address:</span>
-                    <span className="text-sm text-gray-900">123 Elm Street</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Buyer Motivation Widget - updated for closed */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="flex items-center mb-4">
-                  <TrendingUp className="size-5 text-green-600 mr-2" />
-                  <h3 className="font-semibold text-gray-800">Buyer Motivation</h3>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Original Timeline:</span>
-                    <span className="text-sm text-gray-900">Next 3-6 months</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Reason for Buying:</span>
-                    <span className="text-sm text-gray-900">First-time buyer</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Original Budget:</span>
-                    <span className="text-sm text-gray-900">{client.budget}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Priority Level:</span>
-                    <span className="text-sm text-gray-900">{client.priority}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Recent Notes Widget */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="flex items-center mb-4">
-                  <MessageCircle className="size-5 text-orange-600 mr-2" />
-                  <h3 className="font-semibold text-gray-800">Final Notes</h3>
-                </div>
-                <div className="space-y-3">
-                  <div className="text-sm text-gray-700">
-                    {client.notes || 'Successful home purchase completed. Client expressed satisfaction with the process and property selection.'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Post-Closing Status Widget */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="flex items-center mb-4">
-                  <CheckCircle className="size-5 text-green-600 mr-2" />
-                  <h3 className="font-semibold text-gray-800">Post-Closing Status</h3>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Keys Received</span>
-                    <CheckCircle className="size-4 text-green-600" />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Final Walkthrough</span>
-                    <CheckCircle className="size-4 text-green-600" />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Utilities Connected</span>
-                    <CheckCircle className="size-4 text-green-600" />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Move-in Complete</span>
-                    <CheckCircle className="size-4 text-green-600" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          )
-        }
-
-        // Default summary for non-closed stages
-        return (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Widget A: Buyer Profile */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center">
-                  <User className="size-5 text-blue-600 mr-2" />
-                  <h3 className="font-semibold text-gray-800">Buyer Profile</h3>
-                </div>
-                <Button
-                  onClick={() => setIsEditingDetails(true)}
-                  variant="outline"
-                  size="sm"
-                  className="text-xs"
-                >
-                  <Edit className="size-3 mr-1" />
-                  Edit
-                </Button>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Budget:</span>
-                  <span className="text-sm text-gray-900">{client.budget}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Location:</span>
-                  <span className="text-sm text-gray-900">{client.location}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Priority:</span>
-                  <span className="text-sm text-gray-900">{client.priority}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Source:</span>
-                  <span className="text-sm text-gray-900">{client.leadSource}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Widget B: Buyer Motivation */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <div className="flex items-center mb-4">
-                <TrendingUp className="size-5 text-green-600 mr-2" />
-                <h3 className="font-semibold text-gray-800">Buyer Motivation</h3>
-              </div>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Timeline:</span>
-                  <span className="text-sm text-gray-900">Next 3-6 months</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Reason:</span>
-                  <span className="text-sm text-gray-900">First-time buyer</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Date Added:</span>
-                  <span className="text-sm text-gray-900">{formatDate(client.dateAdded)}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Last Contact:</span>
-                  <span className="text-sm text-gray-900">{formatDate(client.lastContact)}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Widget C: Recent Notes */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <div className="flex items-center mb-4">
-                <MessageCircle className="size-5 text-orange-600 mr-2" />
-                <h3 className="font-semibold text-gray-800">Recent Notes</h3>
-              </div>
-              <div className="space-y-3">
-                <div className="text-sm text-gray-700">
-                  {client.notes || 'No notes available'}
-                </div>
-              </div>
-            </div>
-          </div>
-        )
 
       case 'ai_lead_scoring':
         return (

@@ -55,7 +55,7 @@ export function ClientModal({
   isArchiveMode = false,
   currentUser
 }: ClientModalProps) {
-  const [activeTab, setActiveTab] = useState(client.initialTab || 'summary')
+  const [activeTab, setActiveTab] = useState(client.initialTab || 'ai_lead_scoring')
   const [selectedDocument, setSelectedDocument] = useState<any>(null)
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
   const [isEditingDetails, setIsEditingDetails] = useState(false)
@@ -76,6 +76,7 @@ export function ClientModal({
     bathrooms: client.bathrooms,
     timeline: client.timeline,
     reasonForSelling: client.reasonForSelling,
+    leadSource: client.leadSource,
     priority: client.priority,
     notes: client.notes
   })
@@ -247,6 +248,7 @@ export function ClientModal({
       bathrooms: client.bathrooms,
       timeline: client.timeline,
       reasonForSelling: client.reasonForSelling,
+      leadSource: client.leadSource,
       priority: client.priority,
       notes: client.notes
     })
@@ -344,10 +346,9 @@ export function ClientModal({
     const baseTabs = [
       // Removed 'overview' and 'stage_details' tabs per Phase 2 requirements
       { id: 'ai_lead_scoring', label: 'AI Lead Scoring', icon: TrendingUp },
-      { id: 'summary', label: 'Summary', icon: null },
     ]
 
-    const stageSpecificTabs = []
+    const stageSpecificTabs: any[] = []
     
     // Removed Offers tab from Active Listing stage per Phase 5 Task 5.3
     // Removed Contingencies tab - no longer needed
@@ -598,209 +599,7 @@ export function ClientModal({
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'summary':
-        return (
-          <div className="h-full flex flex-col gap-6">
-            {/* First Row: Property Details and Seller Motivation */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Widget A: Property Details */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center">
-                    <Home className="size-5 text-indigo-600 mr-2" />
-                    <h3 className="font-semibold text-gray-800">Property Details</h3>
-                  </div>
-                  <Button
-                    onClick={() => setIsEditingDetails(true)}
-                    variant="outline"
-                    size="sm"
-                    className="text-xs"
-                  >
-                    <Edit className="size-3 mr-1" />
-                    Edit
-                  </Button>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Property Address:</span>
-                    <span className="text-sm text-gray-900">{isEditingDetails ? (
-                      <input
-                        type="text"
-                        value={editableDetails.propertyAddress}
-                        onChange={(e) => setEditableDetails({...editableDetails, propertyAddress: e.target.value})}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                      />
-                    ) : client.propertyAddress}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Property Type:</span>
-                    <span className="text-sm text-gray-900">{isEditingDetails ? (
-                      <select
-                        value={editableDetails.propertyType}
-                        onChange={(e) => setEditableDetails({...editableDetails, propertyType: e.target.value})}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                      >
-                        <option value="Single Family">Single Family</option>
-                        <option value="Condo">Condo</option>
-                        <option value="Townhouse">Townhouse</option>
-                        <option value="Multi-Family">Multi-Family</option>
-                      </select>
-                    ) : client.propertyType}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Bedrooms:</span>
-                    <span className="text-sm text-gray-900">{isEditingDetails ? (
-                      <input
-                        type="number"
-                        value={editableDetails.bedrooms}
-                        onChange={(e) => setEditableDetails({...editableDetails, bedrooms: parseInt(e.target.value)})}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                      />
-                    ) : client.bedrooms}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Bathrooms:</span>
-                    <span className="text-sm text-gray-900">{isEditingDetails ? (
-                      <input
-                        type="number"
-                        value={editableDetails.bathrooms}
-                        onChange={(e) => setEditableDetails({...editableDetails, bathrooms: parseInt(e.target.value)})}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                      />
-                    ) : client.bathrooms}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Timeline:</span>
-                    <span className="text-sm text-gray-900">{isEditingDetails ? (
-                      <select
-                        value={editableDetails.timeline}
-                        onChange={(e) => setEditableDetails({...editableDetails, timeline: e.target.value})}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                      >
-                        <option value="Immediate">Immediate</option>
-                        <option value="1-3 months">1-3 months</option>
-                        <option value="3-6 months">3-6 months</option>
-                        <option value="6+ months">6+ months</option>
-                      </select>
-                    ) : client.timeline}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Priority:</span>
-                    <span className="text-sm text-gray-900">{isEditingDetails ? (
-                      <select
-                        value={editableDetails.priority}
-                        onChange={(e) => setEditableDetails({...editableDetails, priority: e.target.value})}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                      >
-                        <option value="High">High</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Low">Low</option>
-                      </select>
-                    ) : client.priority}</span>
-                  </div>
-                </div>
-                {isEditingDetails && (
-                  <div className="flex space-x-2 mt-4">
-                    <Button
-                      onClick={handleSaveDetails}
-                      className="bg-green-600 hover:bg-green-700"
-                      size="sm"
-                    >
-                      <Save className="size-3 mr-1" />
-                      Save
-                    </Button>
-                    <Button
-                      onClick={handleCancelEditDetails}
-                      variant="outline"
-                      size="sm"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                )}
-              </div>
 
-              {/* Widget B: Seller Motivation */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="flex items-center mb-4">
-                  <TrendingUp className="size-5 text-blue-600 mr-2" />
-                  <h3 className="font-semibold text-gray-800">Seller Motivation</h3>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Reason for Selling:</span>
-                    <span className="text-sm text-gray-900">{isEditingDetails ? (
-                      <input
-                        type="text"
-                        value={editableDetails.reasonForSelling}
-                        onChange={(e) => setEditableDetails({...editableDetails, reasonForSelling: e.target.value})}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                      />
-                    ) : client.reasonForSelling}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Lead Source:</span>
-                    <span className="text-sm text-gray-900">{isEditingDetails ? (
-                      <select
-                        value={editableDetails.leadSource}
-                        onChange={(e) => setEditableDetails({...editableDetails, leadSource: e.target.value})}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                      >
-                        <option value="Referral">Referral</option>
-                        <option value="Website">Website</option>
-                        <option value="Social Media">Social Media</option>
-                        <option value="Open House">Open House</option>
-                        <option value="Cold Call">Cold Call</option>
-                        <option value="Other">Other</option>
-                      </select>
-                    ) : client.leadSource}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Priority Level:</span>
-                    <span className="text-sm text-gray-900">{client.priority}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Date Added:</span>
-                    <span className="text-sm text-gray-900">{formatDate(client.dateAdded)}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Last Contact:</span>
-                    <span className="text-sm text-gray-900">{formatDate(client.lastContact)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Second Row: Recent Notes */}
-            <div className="grid grid-cols-1 gap-6 flex-1">
-              {/* Widget C: Recent Notes (Removed AI functionality) */}
-              <div className="bg-white border border-gray-200 rounded-lg p-6 flex flex-col h-full">
-                <div className="flex items-center mb-4">
-                  <MessageCircle className="size-5 text-purple-600 mr-2" />
-                  <h3 className="font-semibold text-gray-800">Recent Notes</h3>
-                </div>
-                <div className="space-y-3 flex-1 overflow-y-auto">
-                  <div className="bg-blue-50 p-3 rounded-lg">
-                    <p className="text-sm text-gray-700">{isEditingDetails ? editableDetails.notes : client.notes}</p>
-                    <span className="text-xs text-gray-500 mt-1">Manual Note • {formatDate(client.dateAdded)}</span>
-                  </div>
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-sm text-gray-700">Initial contact established. Client expressed interest in listing within the next 3 months.</p>
-                    <span className="text-xs text-gray-500 mt-1">Note • 3 days ago</span>
-                  </div>
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-sm text-gray-700">Discussed preferred listing timeframe and market conditions.</p>
-                    <span className="text-xs text-gray-500 mt-1">Note • 1 week ago</span>
-                  </div>
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-sm text-gray-700">Reviewed comparable sales in the neighborhood.</p>
-                    <span className="text-xs text-gray-500 mt-1">Note • 2 weeks ago</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )
       case 'ai_lead_scoring':
         return (
           <LeadScoringDisplay

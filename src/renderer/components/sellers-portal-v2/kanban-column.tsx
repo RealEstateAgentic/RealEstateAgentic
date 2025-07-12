@@ -90,7 +90,7 @@ export function KanbanColumn({
   }
 
   return (
-    <div className="w-80 flex-shrink-0">
+    <div className="flex-1 min-w-0">
       <div
         className={`rounded-lg border-2 ${getStageColor(stage)} ${isOver ? 'ring-2 ring-blue-500' : ''} p-4`}
       >

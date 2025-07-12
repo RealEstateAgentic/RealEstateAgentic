@@ -398,7 +398,7 @@ export function BuyersPortalScreen({
             onDragEnd={handleDragEnd}
             onDragCancel={handleDragCancel}
           >
-            <div className="flex gap-6 min-w-max">
+            <div className="flex gap-4 w-full">
               {kanbanStages.map(stage => (
                 <KanbanColumn
                   key={stage.id}

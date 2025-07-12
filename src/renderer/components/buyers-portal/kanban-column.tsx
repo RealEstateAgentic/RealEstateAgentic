@@ -127,7 +127,7 @@ export function KanbanColumn({
 
   return (
     <div
-      className={`flex-1 min-w-80 rounded-lg border-2 ${getColumnColor(stage)} ${isOver ? 'ring-2 ring-blue-500' : ''}`}
+      className={`flex-1 min-w-0 rounded-lg border-2 ${getColumnColor(stage)} ${isOver ? 'ring-2 ring-blue-500' : ''}`}
     >
       {/* Column Header */}
       <div className="p-4 border-b border-gray-200">

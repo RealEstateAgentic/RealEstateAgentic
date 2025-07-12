@@ -57,7 +57,9 @@ export function ClientModal({
   isArchiveMode = false,
   currentUser
 }: ClientModalProps) {
-  const [activeTab, setActiveTab] = useState(client.initialTab || 'summary')
+  const [activeTab, setActiveTab] = useState(
+    client.initialTab || 'ai_lead_scoring'
+  )
   const [selectedDocument, setSelectedDocument] = useState<any>(null)
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
   const [isEditingContingencies, setIsEditingContingencies] = useState(false)
@@ -695,6 +697,14 @@ export function ClientModal({
 
   const renderTabContent = () => {
     switch (activeTab) {
+      case 'ai_lead_scoring':
+        return (
+          <LeadScoringDisplay
+            clientEmail={client.email}
+            clientName={client.name}
+          />
+        )
+
       case 'summary':
         return (
           <div className="h-full flex flex-col gap-6">
@@ -1014,11 +1024,12 @@ export function ClientModal({
             </div>
           </div>
         )
+
       case 'documents':
         return (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-800">Documents & Content</h3>
+              <h3 className="font-semibold text-gray-800">Documents and Content</h3>
               <Button
                 onClick={() => setIsUploadModalOpen(true)}
                 variant="outline"
@@ -1027,15 +1038,23 @@ export function ClientModal({
                 Upload Content
               </Button>
             </div>
+
             <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <div className="space-y-3">
-                {documents.map((document) => (
-                  <div key={document.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="space-y-4">
+                {documents.map(document => (
+                  <div
+                    key={document.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
                     <div className="flex items-center space-x-3">
                       <FileText className="size-5 text-blue-600" />
                       <div>
-                        <div className="font-medium text-gray-800">{document.title}</div>
-                        <div className="text-sm text-gray-600">{document.type} • {document.size}</div>
+                        <div className="font-medium text-gray-800">
+                          {document.title}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {document.type} • {document.uploadDate}
+                        </div>
                         {document.description && (
                           <div className="text-xs text-gray-500 mt-1">{document.description}</div>
                         )}

@@ -86,7 +86,9 @@ export function ClientModal({
   currentUser,
   navigate,
 }: ClientModalProps) {
-  const [activeTab, setActiveTab] = useState(client.initialTab || 'summary')
+  const [activeTab, setActiveTab] = useState(
+    client.initialTab || 'ai_lead_scoring'
+  )
   const [selectedDocument, setSelectedDocument] = useState<any>(null)
   const [showDocumentGenerator, setShowDocumentGenerator] = useState(false)
   const [isEditingDetails, setIsEditingDetails] = useState(false)
@@ -1056,6 +1058,7 @@ export function ClientModal({
             )}
           </div>
         )
+
 
       case 'documents':
         return (

@@ -1477,6 +1477,9 @@ export function ClientModal({
           <div className="flex items-center space-x-4">
             <div>
               <h2 className="text-xl font-semibold text-gray-800">{isEditingDetails ? editableDetails.name : client.name}</h2>
+              <div className="flex items-center space-x-2 text-sm text-gray-600 mt-1">
+                <span>{getStageName(client.stage)}</span>
+              </div>
               <div className="flex items-center space-x-2 text-sm text-gray-600">
                 <MapPin className="size-4" />
                 <span>{isEditingDetails ? editableDetails.propertyAddress : client.propertyAddress}</span>

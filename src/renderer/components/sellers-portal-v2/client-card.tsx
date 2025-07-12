@@ -22,13 +22,20 @@ interface ClientCardProps {
     leadSource: string
   }
   onClick: () => void
+  isDragging?: boolean
 }
 
-export function ClientCard({ client, onClick }: ClientCardProps) {
+export function ClientCard({
+  client,
+  onClick,
+  isDragging = false,
+}: ClientCardProps) {
   return (
     <div
       onClick={onClick}
-      className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-shadow"
+      className={`bg-white p-4 rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-shadow ${
+        isDragging ? 'opacity-50 rotate-2' : ''
+      }`}
     >
       {/* Client Header */}
       <div className="flex items-center justify-between mb-3">
@@ -41,9 +48,11 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
       <div className="space-y-2 mb-3">
         <div className="flex items-start space-x-2">
           <MapPin className="size-4 text-gray-500 mt-0.5 flex-shrink-0" />
-          <p className="text-sm text-gray-700 leading-tight">{client.propertyAddress}</p>
+          <p className="text-sm text-gray-700 leading-tight">
+            {client.propertyAddress}
+          </p>
         </div>
-        
+
         <div className="flex items-center space-x-2">
           <Home className="size-4 text-gray-500" />
           <span className="text-sm text-gray-600">
@@ -63,9 +72,7 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
           <Calendar className="size-4 text-gray-500" />
           <span className="text-sm text-gray-600">{client.timeline}</span>
         </div>
-        <div className="text-xs text-gray-500">
-          {client.reasonForSelling}
-        </div>
+        <div className="text-xs text-gray-500">{client.reasonForSelling}</div>
       </div>
 
       {/* Contact Information */}
@@ -73,14 +80,14 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
         <div className="flex items-center space-x-3">
           <a
             href={`tel:${client.phone}`}
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
             className="text-gray-400 hover:text-[#3B7097] transition-colors"
           >
             <Phone className="size-4" />
           </a>
           <a
             href={`mailto:${client.email}`}
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
             className="text-gray-400 hover:text-[#3B7097] transition-colors"
           >
             <Mail className="size-4" />
@@ -89,4 +96,4 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
       </div>
     </div>
   )
-} 
+}

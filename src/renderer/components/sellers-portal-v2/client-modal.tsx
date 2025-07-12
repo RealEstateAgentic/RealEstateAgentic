@@ -81,7 +81,9 @@ export function ClientModal({
   isArchiveMode = false,
   currentUser,
 }: ClientModalProps) {
-  const [activeTab, setActiveTab] = useState(client.initialTab || 'ai_lead_scoring')
+  const [activeTab, setActiveTab] = useState(
+    client.initialTab || 'ai_lead_scoring'
+  )
   const [selectedDocument, setSelectedDocument] = useState<any>(null)
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false)
   const [isEditingDetails, setIsEditingDetails] = useState(false)
@@ -374,7 +376,6 @@ export function ClientModal({
 
   // Define which tabs should be visible based on client stage
   const getVisibleTabs = () => {
-    
     // Removed Offers tab from Active Listing stage per Phase 5 Task 5.3
     // Removed Contingencies tab - no longer needed
 
@@ -709,12 +710,13 @@ export function ClientModal({
 
   const renderTabContent = () => {
     switch (activeTab) {
-
       case 'documents':
         return (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-800">Documents and Content</h3>
+              <h3 className="font-semibold text-gray-800">
+                Documents and Content
+              </h3>
               <Button
                 onClick={handleUploadDocument}
                 className="bg-green-500 hover:bg-green-600 text-white text-sm px-3 py-1.5 h-auto"
@@ -723,10 +725,10 @@ export function ClientModal({
                 Upload Content
               </Button>
             </div>
-            
+
             <div className="bg-white border border-gray-200 rounded-lg p-6">
               <div className="space-y-4">
-                {documents.map((document) => (
+                {documents.map(document => (
                   <div
                     key={document.id}
                     className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
@@ -734,8 +736,12 @@ export function ClientModal({
                     <div className="flex items-center space-x-3">
                       <FileText className="size-5 text-blue-600" />
                       <div>
-                        <div className="font-medium text-gray-800">{document.title}</div>
-                        <div className="text-sm text-gray-600">{document.type} • {document.uploadDate}</div>
+                        <div className="font-medium text-gray-800">
+                          {document.title}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {document.type} • {document.uploadDate}
+                        </div>
                       </div>
                     </div>
                     <div className="flex space-x-2">
@@ -1232,38 +1238,14 @@ export function ClientModal({
                 Unarchive
               </Button>
             ) : (
-              <>
-                <Button
-                  onClick={handleArchive}
-                  variant="outline"
-                  className="border-red-300 text-red-600 hover:bg-red-50"
-                >
-                  <Archive className="size-4 mr-2" />
-                  Archive
-                </Button>
-
-                {/* Progress Button */}
-                {shouldShowProgressButton(client.stage) && (
-                  <Button
-                    onClick={handleProgress}
-                    className="bg-[#A9D09E] hover:bg-[#A9D09E]/90"
-                  >
-                    <ArrowRight className="size-4 mr-2" />
-                    {getProgressButtonText(client.stage)}
-                  </Button>
-                )}
-
-                {/* Return to Previous Stage Button */}
-                {getPreviousStageText(client.stage) && (
-                  <Button
-                    onClick={handleReturnToPreviousStage}
-                    variant="outline"
-                  >
-                    <RotateCcw className="size-4 mr-2" />
-                    {getPreviousStageText(client.stage)}
-                  </Button>
-                )}
-              </>
+              <Button
+                onClick={handleArchive}
+                variant="outline"
+                className="border-red-300 text-red-600 hover:bg-red-50"
+              >
+                <Archive className="size-4 mr-2" />
+                Archive
+              </Button>
             )}
           </div>
         </div>

@@ -1,4 +1,13 @@
-import { Phone, Mail, MapPin, DollarSign, Send, Loader2, FileText, X } from 'lucide-react'
+import {
+  Phone,
+  Mail,
+  MapPin,
+  DollarSign,
+  Send,
+  Loader2,
+  FileText,
+  X,
+} from 'lucide-react'
 import { useState } from 'react'
 import { gmailAuth } from '../../services/gmail-auth'
 import { DocumentGenerator } from '../documents/DocumentGenerator'
@@ -24,42 +33,50 @@ interface ClientCardProps {
   }
   onClick: () => void
   navigate?: (path: string) => void
+  isDragging?: boolean
 }
 
-export function ClientCard({ client, onClick, navigate }: ClientCardProps) {
+export function ClientCard({
+  client,
+  onClick,
+  navigate,
+  isDragging = false,
+}: ClientCardProps) {
   const [isSending, setIsSending] = useState(false)
-  const [isGmailConnected, setIsGmailConnected] = useState(gmailAuth.isAuthenticated())
+  const [isGmailConnected, setIsGmailConnected] = useState(
+    gmailAuth.isAuthenticated()
+  )
   const [showDocumentGenerator, setShowDocumentGenerator] = useState(false)
-  
+
   const handleSendSurvey = async (e: React.MouseEvent) => {
     e.stopPropagation() // Prevent card click event
-    
+
     if (isSending) return // Prevent multiple clicks
-    
+
     setIsSending(true)
-    
+
     try {
       console.log('Sending survey to:', client.name, client.email)
-      
+
       // Check if Gmail is authenticated
       if (!gmailAuth.isAuthenticated()) {
         console.log('🔑 Gmail not authenticated, starting OAuth flow...')
-        
+
         const authResult = await gmailAuth.authenticate()
-        
+
         if (!authResult.success) {
           throw new Error(`Gmail authentication failed: ${authResult.error}`)
         }
-        
+
         setIsGmailConnected(true)
         console.log('✅ Gmail authenticated:', authResult.userEmail)
       }
-      
+
       // Import and use the automation service with Gmail API
       const { startBuyerWorkflowWithGmail } = await import(
         '../../services/automation'
       )
-      
+
       const result = await startBuyerWorkflowWithGmail({
         agentId: 'agent-1', // TODO: Get actual agent ID
         buyerEmail: client.email,
@@ -67,7 +84,7 @@ export function ClientCard({ client, onClick, navigate }: ClientCardProps) {
         buyerPhone: client.phone,
         senderEmail: gmailAuth.getUserEmail() || undefined,
       })
-      
+
       if (result.success) {
         alert(
           `✅ Survey sent successfully to ${client.name} from your Gmail account!\n\nForm URL: ${result.formUrl}`
@@ -151,7 +168,7 @@ export function ClientCard({ client, onClick, navigate }: ClientCardProps) {
         location: client.location,
       },
       createdAt: '2024-01-01',
-      updatedAt: '2024-01-01'
+      updatedAt: '2024-01-01',
     }
   }
 
@@ -159,7 +176,9 @@ export function ClientCard({ client, onClick, navigate }: ClientCardProps) {
     <>
       <div
         onClick={onClick}
-        className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-shadow"
+        className={`bg-white p-4 rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-shadow ${
+          isDragging ? 'opacity-50 rotate-2' : ''
+        }`}
       >
         {/* Client Header */}
         <div className="flex items-center justify-between mb-3">
@@ -223,7 +242,7 @@ export function ClientCard({ client, onClick, navigate }: ClientCardProps) {
             <DollarSign className="size-4 text-gray-500" />
             <span className="text-sm text-gray-700">{client.budget}</span>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <MapPin className="size-4 text-gray-500" />
             <span className="text-sm text-gray-700">{client.location}</span>
@@ -241,7 +260,9 @@ export function ClientCard({ client, onClick, navigate }: ClientCardProps) {
         {client.contractProperty && (
           <div className="mt-2 p-2 bg-[#75BDE0]/10 rounded text-xs">
             <span className="font-medium text-[#3B7097]">Contract:</span>
-            <span className="text-[#3B7097] ml-1">{client.contractProperty}</span>
+            <span className="text-[#3B7097] ml-1">
+              {client.contractProperty}
+            </span>
           </div>
         )}
 
@@ -250,14 +271,14 @@ export function ClientCard({ client, onClick, navigate }: ClientCardProps) {
           <div className="flex items-center space-x-3">
             <a
               href={`tel:${client.phone}`}
-              onClick={(e) => e.stopPropagation()}
+              onClick={e => e.stopPropagation()}
               className="text-gray-400 hover:text-[#3B7097] transition-colors"
             >
               <Phone className="size-4" />
             </a>
             <a
               href={`mailto:${client.email}`}
-              onClick={(e) => e.stopPropagation()}
+              onClick={e => e.stopPropagation()}
               className="text-gray-400 hover:text-[#3B7097] transition-colors"
             >
               <Mail className="size-4" />
@@ -294,4 +315,4 @@ export function ClientCard({ client, onClick, navigate }: ClientCardProps) {
       )}
     </>
   )
-} 
+}

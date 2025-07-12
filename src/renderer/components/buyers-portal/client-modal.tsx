@@ -84,7 +84,9 @@ export function ClientModal({
   currentUser,
   navigate,
 }: ClientModalProps) {
-  const [activeTab, setActiveTab] = useState(client.initialTab || 'ai_lead_scoring')
+  const [activeTab, setActiveTab] = useState(
+    client.initialTab || 'ai_lead_scoring'
+  )
   const [selectedDocument, setSelectedDocument] = useState<any>(null)
   const [showDocumentGenerator, setShowDocumentGenerator] = useState(false)
   const [isEditingDetails, setIsEditingDetails] = useState(false)
@@ -381,10 +383,6 @@ export function ClientModal({
   }
 
   const getVisibleTabs = () => {
-    
-
-  
-    
     // Removed Contingencies tab - no longer needed
 
     const alwaysVisibleTabs = [
@@ -456,7 +454,6 @@ export function ClientModal({
 
   const renderTabContent = () => {
     switch (activeTab) {
-
       case 'documents':
         return (
           <div className="space-y-6">
@@ -823,38 +820,14 @@ export function ClientModal({
                 Unarchive
               </Button>
             ) : (
-              <>
-                <Button
-                  onClick={handleArchive}
-                  variant="outline"
-                  className="border-red-300 text-red-600 hover:bg-red-50"
-                >
-                  <Archive className="size-4 mr-2" />
-                  Archive
-                </Button>
-
-                {/* Progress Button */}
-                {shouldShowProgressButton(client.stage) && (
-                  <Button
-                    onClick={handleProgress}
-                    className="bg-[#A9D09E] hover:bg-[#A9D09E]/90"
-                  >
-                    <ArrowRight className="size-4 mr-2" />
-                    {getProgressButtonText(client.stage)}
-                  </Button>
-                )}
-
-                {/* Return to Previous Stage Button */}
-                {getPreviousStageText(client.stage) && (
-                  <Button
-                    onClick={() => {}} // Implement previous stage logic
-                    variant="outline"
-                  >
-                    <RotateCcw className="size-4 mr-2" />
-                    {getPreviousStageText(client.stage)}
-                  </Button>
-                )}
-              </>
+              <Button
+                onClick={handleArchive}
+                variant="outline"
+                className="border-red-300 text-red-600 hover:bg-red-50"
+              >
+                <Archive className="size-4 mr-2" />
+                Archive
+              </Button>
             )}
           </div>
         </div>

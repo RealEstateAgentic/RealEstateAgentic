@@ -452,7 +452,6 @@ export const dummyData = {
       budget: "$520,000",
       location: "Eastside",
       leadSource: "Past Client",
-      contractProperty: "321 Willow St",
       contractDate: "2024-01-10",
       closingDate: "2024-02-15"
     },
@@ -466,7 +465,6 @@ export const dummyData = {
       budget: "$475,000",
       location: "Southside",
       leadSource: "Referral",
-      contractProperty: "789 Poplar Ave",
       contractDate: "2024-01-08",
       closingDate: "2024-02-20"
     },
@@ -480,7 +478,6 @@ export const dummyData = {
       budget: "$380,000",
       location: "Central",
       leadSource: "Walk-in",
-      contractProperty: "123 Hickory Ln",
       contractDate: "2024-01-05",
       closingDate: "2024-02-10"
     },
@@ -495,7 +492,6 @@ export const dummyData = {
       budget: "$425,000",
       location: "Northwest",
       leadSource: "Social Media",
-      contractProperty: "456 Sycamore St",
       contractDate: "2023-12-20",
       closingDate: "2024-01-12",
       soldPrice: "$420,000"
@@ -510,7 +506,6 @@ export const dummyData = {
       budget: "$350,000",
       location: "Westside",
       leadSource: "Past Client",
-      contractProperty: "654 Maple Dr",
       contractDate: "2023-12-15",
       closingDate: "2024-01-08",
       soldPrice: "$345,000"
@@ -592,7 +587,6 @@ export const dummyData = {
       budget: "$550,000",
       location: "Westside",
       leadSource: "Website Form",
-      contractProperty: "505 Valley Rd",
       contractDate: "2023-12-15",
       inspectionDate: "2024-01-03",
       archivedDate: "2024-01-03T14:15:00Z",

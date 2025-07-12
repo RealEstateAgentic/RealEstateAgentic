@@ -15,7 +15,6 @@ interface KanbanColumnProps {
     leadSource: string
     favoritedProperties?: string[]
     viewedProperties?: string[]
-    contractProperty?: string
     contractDate?: string
     closingDate?: string
     soldPrice?: string

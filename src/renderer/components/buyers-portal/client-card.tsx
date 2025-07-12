@@ -17,7 +17,6 @@ interface ClientCardProps {
     leadSource: string
     favoritedProperties?: string[]
     viewedProperties?: string[]
-    contractProperty?: string
     contractDate?: string
     closingDate?: string
     soldPrice?: string
@@ -229,14 +228,6 @@ export function ClientCard({ client, onClick, navigate }: ClientCardProps) {
             <span className="text-sm text-gray-700">{client.location}</span>
           </div>
         </div>
-
-        {/* Contract Property (if applicable) */}
-        {client.contractProperty && (
-          <div className="mt-2 p-2 bg-[#75BDE0]/10 rounded text-xs">
-            <span className="font-medium text-[#3B7097]">Contract:</span>
-            <span className="text-[#3B7097] ml-1">{client.contractProperty}</span>
-          </div>
-        )}
 
         {/* Contact Information */}
         <div className="flex items-center justify-between pt-2 border-t border-gray-100">

@@ -3,6 +3,8 @@
  * Displays clients in a specific stage column
  */
 
+import { useDroppable } from '@dnd-kit/core'
+import { useDraggable } from '@dnd-kit/core'
 import { ClientCard } from './client-card'
 
 interface KanbanColumnProps {
@@ -14,11 +16,49 @@ interface KanbanColumnProps {
   hasError?: string | null
 }
 
-export function KanbanColumn({ title, stage, clients, onClientClick, isLoading, hasError }: KanbanColumnProps) {
+interface DraggableClientCardProps {
+  client: any
+  onClick: () => void
+}
+
+function DraggableClientCard({ client, onClick }: DraggableClientCardProps) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } =
+    useDraggable({
+      id: client.id.toString(),
+    })
+
+  const style = transform
+    ? {
+        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+      }
+    : undefined
+
+  return (
+    <div ref={setNodeRef} style={style} {...listeners} {...attributes}>
+      <ClientCard client={client} onClick={onClick} isDragging={isDragging} />
+    </div>
+  )
+}
+
+export function KanbanColumn({
+  title,
+  stage,
+  clients,
+  onClientClick,
+  isLoading,
+  hasError,
+}: KanbanColumnProps) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: stage,
+  })
+
   // Filter clients for this stage and sort by dateAdded descending (newest first)
   const stageClients = clients
     .filter(client => client.stage === stage)
-    .sort((a, b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime())
+    .sort(
+      (a, b) =>
+        new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime()
+    )
 
   // Define stage colors based on seller stages - using professional color scheme
   const getStageColor = (stage: string) => {
@@ -40,7 +80,9 @@ export function KanbanColumn({ title, stage, clients, onClientClick, isLoading, 
 
   return (
     <div className="w-80 flex-shrink-0">
-      <div className={`rounded-lg border-2 ${getStageColor(stage)} p-4`}>
+      <div
+        className={`rounded-lg border-2 ${getStageColor(stage)} ${isOver ? 'ring-2 ring-blue-500' : ''} p-4`}
+      >
         {/* Column Header */}
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-gray-800">{title}</h3>
@@ -66,9 +108,9 @@ export function KanbanColumn({ title, stage, clients, onClientClick, isLoading, 
 
         {/* Client Cards */}
         {!isLoading && !hasError && (
-          <div className="space-y-3">
+          <div ref={setNodeRef} className="space-y-3">
             {stageClients.map(client => (
-              <ClientCard
+              <DraggableClientCard
                 key={client.id}
                 client={client}
                 onClick={() => onClientClick(client)}
@@ -79,11 +121,11 @@ export function KanbanColumn({ title, stage, clients, onClientClick, isLoading, 
 
         {/* Empty State */}
         {!isLoading && !hasError && stageClients.length === 0 && (
-          <div className="text-center py-8">
+          <div ref={setNodeRef} className="text-center py-8">
             <p className="text-gray-500 text-sm">No clients in this stage</p>
           </div>
         )}
       </div>
     </div>
   )
-} 
+}

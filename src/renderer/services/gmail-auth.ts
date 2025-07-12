@@ -4,9 +4,10 @@
  */
 
 // Google OAuth configuration
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID_HERE'
-const GMAIL_SCOPES = [
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID_HERE'
+const GOOGLE_API_SCOPES = [
   'https://www.googleapis.com/auth/gmail.send',
+  'https://www.googleapis.com/auth/gmail.readonly',
   'https://www.googleapis.com/auth/userinfo.email',
   'https://www.googleapis.com/auth/userinfo.profile'
 ]
@@ -224,6 +225,68 @@ class GmailAuthService {
   }
 
   /**
+   * Get email threads between agent and client
+   */
+  public async getEmailHistory(clientEmail: string, maxResults: number = 50): Promise<any[]> {
+    try {
+      const accessToken = await this.getAccessToken()
+      if (!accessToken) {
+        throw new Error('No valid Gmail access token available')
+      }
+
+      // Search for emails involving the client
+      const query = `from:${clientEmail} OR to:${clientEmail}`
+      
+      // Get list of threads
+      const threadsResponse = await fetch(
+        `https://gmail.googleapis.com/gmail/v1/users/me/threads?q=${encodeURIComponent(query)}&maxResults=${maxResults}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        }
+      )
+
+      if (!threadsResponse.ok) {
+        const error = await threadsResponse.text()
+        throw new Error(`Gmail API error: ${threadsResponse.status} ${error}`)
+      }
+
+      const threadsData = await threadsResponse.json()
+      
+      if (!threadsData.threads || threadsData.threads.length === 0) {
+        return []
+      }
+
+      // Get detailed thread data
+      const detailedThreads = await Promise.all(
+        threadsData.threads.map(async (thread: any) => {
+          const threadResponse = await fetch(
+            `https://gmail.googleapis.com/gmail/v1/users/me/threads/${thread.id}`,
+            {
+              headers: {
+                'Authorization': `Bearer ${accessToken}`
+              }
+            }
+          )
+
+          if (threadResponse.ok) {
+            const threadData = await threadResponse.json()
+            return this.formatEmailThread(threadData, clientEmail)
+          }
+          return null
+        })
+      )
+
+      return detailedThreads.filter(thread => thread !== null)
+
+    } catch (error) {
+      console.error('❌ Failed to fetch email history:', error)
+      throw error
+    }
+  }
+
+  /**
    * Send email using Gmail API
    */
   public async sendEmail(to: string, subject: string, htmlBody: string): Promise<boolean> {
@@ -263,14 +326,193 @@ class GmailAuthService {
     }
   }
 
+  /**
+   * Format Gmail thread data for display
+   */
+  private formatEmailThread(threadData: any, clientEmail: string): any {
+    try {
+      const messages = threadData.messages || []
+      const lastMessage = messages[messages.length - 1]
+      
+      if (!lastMessage) return null
+
+      // Extract subject from the first message
+      const firstMessage = messages[0]
+      const subjectHeader = firstMessage.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'subject')
+      const subject = subjectHeader?.value || 'No Subject'
+
+      // Extract snippet and get thread info
+      const snippet = lastMessage.snippet || ''
+      const threadId = threadData.id
+
+      // Get last message timestamp
+      const lastTimestamp = parseInt(lastMessage.internalDate)
+      const lastDate = new Date(lastTimestamp)
+
+      // Count messages and determine participants
+      const messageCount = messages.length
+      const participants = new Set()
+      
+      messages.forEach((msg: any) => {
+        const fromHeader = msg.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'from')
+        const toHeader = msg.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'to')
+        
+        if (fromHeader?.value) {
+          const fromEmail = this.extractEmailFromHeader(fromHeader.value)
+          participants.add(fromEmail)
+        }
+        if (toHeader?.value) {
+          const toEmails = this.extractEmailsFromHeader(toHeader.value)
+          toEmails.forEach((email: string) => participants.add(email))
+        }
+      })
+
+      // Format messages for detailed view
+      const formattedMessages = messages.map((msg: any) => {
+        const fromHeader = msg.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'from')
+        const dateHeader = msg.payload?.headers?.find((h: any) => h.name.toLowerCase() === 'date')
+        
+        const senderEmail = this.extractEmailFromHeader(fromHeader?.value || '')
+        const senderName = this.extractNameFromHeader(fromHeader?.value || '')
+        const timestamp = parseInt(msg.internalDate)
+        const date = new Date(timestamp)
+
+        // Extract email body
+        let body = msg.snippet || ''
+        if (msg.payload?.body?.data) {
+          body = this.decodeBase64(msg.payload.body.data)
+        } else if (msg.payload?.parts) {
+          // Handle multipart messages
+          const textPart = this.findTextPart(msg.payload.parts)
+          if (textPart && textPart.body?.data) {
+            body = this.decodeBase64(textPart.body.data)
+          }
+        }
+
+        // Clean HTML from email body
+        body = this.stripHtmlTags(body)
+
+        return {
+          id: msg.id,
+          sender: senderName || senderEmail,
+          senderEmail,
+          timestamp: date.toISOString(),
+          content: body,
+          isFromClient: senderEmail.toLowerCase() === clientEmail.toLowerCase()
+        }
+      })
+
+      return {
+        id: threadId,
+        subject,
+        snippet,
+        messageCount,
+        lastMessage: this.formatRelativeTime(lastDate),
+        lastTimestamp: lastDate.toISOString(),
+        participants: Array.from(participants),
+        messages: formattedMessages
+      }
+
+    } catch (error) {
+      console.error('Error formatting email thread:', error)
+      return null
+    }
+  }
+
+  private extractEmailFromHeader(header: string): string {
+    const match = header.match(/<([^>]+)>/)
+    return match ? match[1] : header.split(' ')[0]
+  }
+
+  private extractEmailsFromHeader(header: string): string[] {
+    const emails = header.split(',').map(email => this.extractEmailFromHeader(email.trim()))
+    return emails
+  }
+
+  private extractNameFromHeader(header: string): string {
+    const match = header.match(/^([^<]+)</)
+    return match ? match[1].trim().replace(/['"]/g, '') : ''
+  }
+
+  private decodeBase64(data: string): string {
+    try {
+      // Gmail API returns base64url encoded data
+      const base64 = data.replace(/-/g, '+').replace(/_/g, '/')
+      const padding = '='.repeat((4 - base64.length % 4) % 4)
+      return decodeURIComponent(escape(atob(base64 + padding)))
+    } catch (error) {
+      console.error('Error decoding base64 email content:', error)
+      return data
+    }
+  }
+
+  private findTextPart(parts: any[]): any {
+    for (const part of parts) {
+      if (part.mimeType === 'text/plain' || part.mimeType === 'text/html') {
+        return part
+      }
+      if (part.parts) {
+        const found = this.findTextPart(part.parts)
+        if (found) return found
+      }
+    }
+    return null
+  }
+
+  private formatRelativeTime(date: Date): string {
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMinutes = Math.floor(diffMs / (1000 * 60))
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+    if (diffMinutes < 60) {
+      return `${diffMinutes} minutes ago`
+    } else if (diffHours < 24) {
+      return `${diffHours} hours ago`
+    } else if (diffDays < 7) {
+      return `${diffDays} days ago`
+    } else {
+      return date.toLocaleDateString()
+    }
+  }
+
+  private stripHtmlTags(html: string): string {
+    try {
+      // Remove HTML tags and decode HTML entities
+      let text = html
+        // Remove HTML tags
+        .replace(/<[^>]*>/g, '')
+        // Replace common HTML entities
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&apos;/g, "'")
+        // Replace multiple whitespace with single space
+        .replace(/\s+/g, ' ')
+        // Remove leading/trailing whitespace
+        .trim()
+
+      return text
+    } catch (error) {
+      console.error('Error stripping HTML tags:', error)
+      return html
+    }
+  }
+
   // Private methods
 
   private buildAuthUrl(): string {
+    console.log('🔑 Building OAuth URL with CLIENT_ID:', GOOGLE_CLIENT_ID ? `${GOOGLE_CLIENT_ID.substring(0, 20)}...` : 'NOT SET')
+    
     const params = new URLSearchParams({
       client_id: GOOGLE_CLIENT_ID,
       redirect_uri: 'http://localhost:8080/oauth/callback', // Use localhost for Electron
       response_type: 'code',
-      scope: GMAIL_SCOPES.join(' '),
+      scope: GOOGLE_API_SCOPES.join(' '),
       access_type: 'offline',
       prompt: 'consent'
     })

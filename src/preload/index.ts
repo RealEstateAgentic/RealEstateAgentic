@@ -172,7 +172,8 @@ const emailAPI = {
   
   refreshOAuthTokens: async (refreshToken: string) => {
     return await ipcRenderer.invoke('refresh-oauth-tokens', refreshToken)
-  }
+  },
+  
 }
 
 contextBridge.exposeInMainWorld('App', API)

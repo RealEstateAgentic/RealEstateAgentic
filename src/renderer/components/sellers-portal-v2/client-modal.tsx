@@ -36,11 +36,17 @@ import {
   TrendingUp,
   Users,
   Save,
+  Trash2,
+  RefreshCw,
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { DocumentGenerator } from '../documents/DocumentGenerator'
 import { dummyData } from '../../data/dummy-data'
 import { LeadScoringDisplay } from '../shared/lead-scoring-display'
+import {
+  getClientDocuments,
+  deleteDocument,
+} from '../../../lib/firebase/collections/documents'
 
 interface ClientModalProps {
   client: {
@@ -108,32 +114,123 @@ export function ClientModal({
     priority: client.priority,
     notes: client.notes,
   })
-  const [documents, setDocuments] = useState([
-    {
-      id: 1,
-      title: 'Seller Survey Results',
-      type: 'PDF',
-      size: '2.3 MB',
-      uploadDate: '2024-01-10',
-      description: 'Initial seller questionnaire responses',
-      tags: 'survey, initial',
-    },
-    {
-      id: 2,
-      title: 'Generated Briefing',
-      type: 'PDF',
-      size: '1.8 MB',
-      uploadDate: '2024-01-08',
-      description: 'AI-generated client briefing document',
-      tags: 'briefing, ai-generated',
-    },
-  ])
+  // Documents state for seller
+  const [documents, setDocuments] = useState<any[]>([])
+  const [loadingDocuments, setLoadingDocuments] = useState(false)
+  const [deletingAllDocuments, setDeletingAllDocuments] = useState(false)
+
+  // Load documents for this client
+  const loadClientDocuments = async () => {
+    setLoadingDocuments(true)
+    try {
+      const clientId = createClientId(
+        client.name.trim().split(' ')[0] || 'Client',
+        client.name.trim().split(' ').slice(1).join(' ') || 'Name'
+      )
+
+      console.log('🔍 Loading documents for client:', clientId)
+
+      // Try querying with category filter first (same as DocumentGenerator)
+      let result = await getClientDocuments(clientId, {
+        category: 'client_communications',
+        limit: 10,
+      })
+
+      console.log('📄 Document query result (with category):', result)
+
+      // If no results with category, try without category filter
+      if (!result.success || !result.data || result.data.length === 0) {
+        console.log('🔍 Trying query without category filter...')
+        result = await getClientDocuments(clientId, {
+          limit: 10,
+        })
+        console.log('📄 Document query result (without category):', result)
+      }
+
+      if (result.success && result.data) {
+        console.log('✅ Found', result.data.length, 'documents for client')
+        setDocuments(result.data)
+      } else {
+        console.log('⚠️ No documents found:', result.error)
+        setDocuments([])
+      }
+    } catch (error) {
+      console.error('❌ Error loading documents:', error)
+      setDocuments([])
+    } finally {
+      setLoadingDocuments(false)
+    }
+  }
+
+  // Create a client ID (same format as DocumentGenerator)
+  const createClientId = (firstName: string, lastName: string): string => {
+    const sanitize = (str: string) =>
+      str
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+    return `${sanitize(firstName)}-${sanitize(lastName)}` || 'unknown-client'
+  }
+
+  // Delete all documents for this client
+  const handleDeleteAllDocuments = async () => {
+    if (!documents.length) return
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete all ${documents.length} documents for ${client.name}? This action cannot be undone.`
+    )
+
+    if (!confirmed) return
+
+    setDeletingAllDocuments(true)
+    try {
+      let successCount = 0
+      let errorCount = 0
+
+      for (const doc of documents) {
+        try {
+          const result = await deleteDocument(doc.id)
+          if (result.success) {
+            successCount++
+          } else {
+            errorCount++
+            console.error(`Failed to delete document ${doc.id}:`, result.error)
+          }
+        } catch (error) {
+          errorCount++
+          console.error(`Error deleting document ${doc.id}:`, error)
+        }
+      }
+
+      if (successCount > 0) {
+        setDocuments([])
+        alert(
+          `Successfully deleted ${successCount} documents${errorCount > 0 ? ` (${errorCount} failed)` : ''}`
+        )
+      } else {
+        alert('Failed to delete any documents. Please try again.')
+      }
+    } catch (error) {
+      console.error('Error in delete all operation:', error)
+      alert('An error occurred while deleting documents. Please try again.')
+    } finally {
+      setDeletingAllDocuments(false)
+    }
+  }
+
+  // Load documents when component mounts or when active tab changes to documents
+  useEffect(() => {
+    if (activeTab === 'documents') {
+      loadClientDocuments()
+    }
+  }, [activeTab, client.id])
 
   // Handle initial document opening
   useEffect(() => {
     if (client.initialDocumentId && activeTab === 'documents') {
       const doc = documents.find(
-        d => d.id === parseInt(client.initialDocumentId || '0')
+        d => d.id === Number.parseInt(client.initialDocumentId || '0', 10)
       )
       if (doc) {
         setSelectedDocument({
@@ -247,6 +344,10 @@ export function ClientModal({
     setDocuments([...documents, newDocument])
     setIsUploadModalOpen(false)
     setUploadForm({ file: null, title: '', description: '', tags: '' })
+  }
+
+  const handleUploadButtonClick = () => {
+    setIsUploadModalOpen(true)
   }
 
   const handleViewDocument = (document: any) => {
@@ -717,63 +818,99 @@ export function ClientModal({
               <h3 className="font-semibold text-gray-800">
                 Documents and Content
               </h3>
-              <Button
-                onClick={handleUploadDocument}
-                className="bg-green-500 hover:bg-green-600 text-white text-sm px-3 py-1.5 h-auto"
-              >
-                <Upload className="size-4 mr-1" />
-                Upload Content
-              </Button>
+              <div className="flex space-x-2">
+                <Button
+                  onClick={loadClientDocuments}
+                  variant="outline"
+                  size="sm"
+                  disabled={loadingDocuments}
+                >
+                  <RefreshCw
+                    className={`size-4 mr-2 ${loadingDocuments ? 'animate-spin' : ''}`}
+                  />
+                  Refresh
+                </Button>
+                {documents.length > 0 && (
+                  <Button
+                    onClick={handleDeleteAllDocuments}
+                    variant="outline"
+                    size="sm"
+                    disabled={deletingAllDocuments}
+                    className="text-red-600 border-red-300 hover:bg-red-50"
+                  >
+                    <Trash2 className="size-4 mr-2" />
+                    {deletingAllDocuments ? 'Deleting...' : 'Delete All'}
+                  </Button>
+                )}
+                <Button
+                  onClick={handleUploadButtonClick}
+                  className="bg-green-500 hover:bg-green-600 text-white text-sm px-3 py-1.5 h-auto"
+                >
+                  <Upload className="size-4 mr-1" />
+                  Upload Content
+                </Button>
+              </div>
             </div>
 
             <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <div className="space-y-4">
-                {documents.map(document => (
-                  <div
-                    key={document.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <FileText className="size-5 text-blue-600" />
-                      <div>
-                        <div className="font-medium text-gray-800">
-                          {document.title}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {document.type} • {document.uploadDate}
+              {loadingDocuments ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <span className="ml-2 text-gray-600">
+                    Loading documents...
+                  </span>
+                </div>
+              ) : documents.length > 0 ? (
+                <div className="space-y-4">
+                  {documents.map(document => (
+                    <div
+                      key={document.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <FileText className="size-5 text-blue-600" />
+                        <div>
+                          <div className="font-medium text-gray-800">
+                            {document.title}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            {document.metadata?.wordCount || 0} words •{' '}
+                            {formatDate(document.createdAt)}
+                          </div>
                         </div>
                       </div>
+                      <div className="flex space-x-2">
+                        <Button
+                          onClick={() => handleViewDocument(document)}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <Eye className="size-4 mr-1" />
+                          View
+                        </Button>
+                        <Button
+                          onClick={() => handleDownloadDocument(document)}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <Download className="size-4 mr-1" />
+                          Download
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex space-x-2">
-                      <Button
-                        onClick={() => handleViewDocument(document)}
-                        variant="outline"
-                        size="sm"
-                      >
-                        <Eye className="size-4 mr-1" />
-                        View
-                      </Button>
-                      <Button
-                        onClick={() => handleDownloadDocument(document)}
-                        variant="outline"
-                        size="sm"
-                      >
-                        <Download className="size-4 mr-1" />
-                        Download
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-                {documents.length === 0 && (
-                  <div className="text-center py-8">
-                    <FileText className="size-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500">No documents uploaded yet</p>
-                    <p className="text-sm text-gray-400 mt-2">
-                      Click "Upload Content" to add documents
-                    </p>
-                  </div>
-                )}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <FileText className="size-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500">
+                    No documents found for this client
+                  </p>
+                  <p className="text-sm text-gray-400 mt-2">
+                    Generate documents or upload files to get started
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )

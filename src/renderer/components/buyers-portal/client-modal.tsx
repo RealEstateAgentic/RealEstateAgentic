@@ -31,6 +31,8 @@ import {
   Users,
   Save,
   Loader2,
+  Trash2,
+  RefreshCw,
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { DocumentGenerator } from '../documents/DocumentGenerator'
@@ -38,6 +40,10 @@ import { LeadScoringDisplay } from '../shared/lead-scoring-display'
 import type { AgentProfile } from '../../../shared/types'
 import { dummyData } from '../../data/dummy-data'
 import { gmailAuth } from '../../services/gmail-auth'
+import {
+  getClientDocuments,
+  deleteDocument,
+} from '../../../lib/firebase/collections/documents'
 
 // Define ClientProfile interface locally since it's not in shared types
 interface ClientProfile {
@@ -101,32 +107,126 @@ export function ClientModal({
     notes: client.notes,
   })
 
-  // Sample documents for buyer
-  const [documents, setDocuments] = useState([
-    {
-      id: 1,
-      title: 'Buyer Survey Results',
-      type: 'PDF',
-      size: '2.1 MB',
-      uploadDate: '2024-01-10',
-      description: 'Initial buyer questionnaire responses',
-      tags: 'survey, initial',
-    },
-    {
-      id: 2,
-      title: 'Generated Briefing',
-      type: 'PDF',
-      size: '1.5 MB',
-      uploadDate: '2024-01-08',
-      description: 'AI-generated client briefing document',
-      tags: 'briefing, ai-generated',
-    },
-  ])
+  // Documents state for buyer
+  const [documents, setDocuments] = useState<any[]>([])
+  const [loadingDocuments, setLoadingDocuments] = useState(false)
+  const [deletingAllDocuments, setDeletingAllDocuments] = useState(false)
+
+  // Load documents for this client
+  const loadClientDocuments = async () => {
+    setLoadingDocuments(true)
+    try {
+      const firstName = client.name.trim().split(' ')[0] || 'Client'
+      const lastName =
+        client.name.trim().split(' ').slice(1).join(' ') || 'Name'
+      const clientId = createClientId(firstName, lastName)
+
+      console.log('🔍 Loading documents for client:')
+      console.log('  - Full name:', client.name)
+      console.log('  - First name:', firstName)
+      console.log('  - Last name:', lastName)
+      console.log('  - Generated client ID:', clientId)
+
+      // Try querying with category filter first (same as DocumentGenerator)
+      let result = await getClientDocuments(clientId, {
+        category: 'client_communications',
+        limit: 10,
+      })
+
+      console.log('📄 Document query result (with category):', result)
+
+      // If no results with category, try without category filter
+      if (!result.success || !result.data || result.data.length === 0) {
+        console.log('🔍 Trying query without category filter...')
+        result = await getClientDocuments(clientId, {
+          limit: 10,
+        })
+        console.log('📄 Document query result (without category):', result)
+      }
+
+      if (result.success && result.data) {
+        console.log('✅ Found', result.data.length, 'documents for client')
+        setDocuments(result.data)
+      } else {
+        console.log('⚠️ No documents found:', result.error)
+        setDocuments([])
+      }
+    } catch (error) {
+      console.error('❌ Error loading documents:', error)
+      setDocuments([])
+    } finally {
+      setLoadingDocuments(false)
+    }
+  }
+
+  // Create a client ID (same format as DocumentGenerator)
+  const createClientId = (firstName: string, lastName: string): string => {
+    const sanitize = (str: string) =>
+      str
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+    return `${sanitize(firstName)}-${sanitize(lastName)}` || 'unknown-client'
+  }
+
+  // Delete all documents for this client
+  const handleDeleteAllDocuments = async () => {
+    if (!documents.length) return
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete all ${documents.length} documents for ${client.name}? This action cannot be undone.`
+    )
+
+    if (!confirmed) return
+
+    setDeletingAllDocuments(true)
+    try {
+      let successCount = 0
+      let errorCount = 0
+
+      for (const doc of documents) {
+        try {
+          const result = await deleteDocument(doc.id)
+          if (result.success) {
+            successCount++
+          } else {
+            errorCount++
+            console.error(`Failed to delete document ${doc.id}:`, result.error)
+          }
+        } catch (error) {
+          errorCount++
+          console.error(`Error deleting document ${doc.id}:`, error)
+        }
+      }
+
+      if (successCount > 0) {
+        setDocuments([])
+        alert(
+          `Successfully deleted ${successCount} documents${errorCount > 0 ? ` (${errorCount} failed)` : ''}`
+        )
+      } else {
+        alert('Failed to delete any documents. Please try again.')
+      }
+    } catch (error) {
+      console.error('Error in delete all operation:', error)
+      alert('An error occurred while deleting documents. Please try again.')
+    } finally {
+      setDeletingAllDocuments(false)
+    }
+  }
+
+  // Load documents when component mounts or when active tab changes to documents
+  useEffect(() => {
+    if (activeTab === 'documents') {
+      loadClientDocuments()
+    }
+  }, [activeTab, client.id])
 
   useEffect(() => {
     if (client.initialDocumentId && activeTab === 'documents') {
       const doc = documents.find(
-        d => d.id === parseInt(client.initialDocumentId || '0')
+        d => d.id === Number.parseInt(client.initialDocumentId || '0', 10)
       )
       if (doc) {
         setSelectedDocument({
@@ -354,9 +454,13 @@ export function ClientModal({
   }
 
   const createClientProfile = (): ClientProfile => {
-    const nameParts = client.name.trim().split(' ')
-    const firstName = nameParts[0] || 'Client'
-    const lastName = nameParts.slice(1).join(' ') || 'Name'
+    const firstName = client.name.trim().split(' ')[0] || 'Client'
+    const lastName = client.name.trim().split(' ').slice(1).join(' ') || 'Name'
+
+    console.log('🔗 Creating client profile for DocumentGenerator:')
+    console.log('  - First name:', firstName)
+    console.log('  - Last name:', lastName)
+    console.log('  - Expected client ID:', createClientId(firstName, lastName))
 
     return {
       id: client.id.toString(),
@@ -461,57 +565,194 @@ export function ClientModal({
               <h3 className="text-lg font-semibold text-gray-800">
                 Documents and Content
               </h3>
-              <Button className="bg-[#3B7097] hover:bg-[#3B7097]/90">
-                <Upload className="size-4 mr-2" />
-                Upload Document
-              </Button>
+              <div className="flex space-x-2">
+                <Button
+                  onClick={loadClientDocuments}
+                  variant="outline"
+                  size="sm"
+                  disabled={loadingDocuments}
+                >
+                  <RefreshCw
+                    className={`size-4 mr-2 ${loadingDocuments ? 'animate-spin' : ''}`}
+                  />
+                  Refresh
+                </Button>
+                {documents.length > 0 && (
+                  <Button
+                    onClick={handleDeleteAllDocuments}
+                    variant="outline"
+                    size="sm"
+                    disabled={deletingAllDocuments}
+                    className="text-red-600 border-red-300 hover:bg-red-50"
+                  >
+                    <Trash2 className="size-4 mr-2" />
+                    {deletingAllDocuments ? 'Deleting...' : 'Delete All'}
+                  </Button>
+                )}
+                <Button className="bg-[#3B7097] hover:bg-[#3B7097]/90">
+                  <Upload className="size-4 mr-2" />
+                  Upload Document
+                </Button>
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {documents.map(doc => (
-                <div
-                  key={doc.id}
-                  className="bg-white border border-gray-200 rounded-lg p-4"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-medium text-gray-900 text-sm">
-                      {doc.title}
-                    </h4>
-                    <span className="text-xs text-gray-500">{doc.type}</span>
+            {loadingDocuments ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-2 text-gray-600">Loading documents...</span>
+              </div>
+            ) : documents.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {documents.map(doc => (
+                  <div
+                    key={doc.id}
+                    className="bg-white border border-gray-200 rounded-lg p-4"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <h4 className="font-medium text-gray-900 text-sm">
+                        {doc.title}
+                      </h4>
+                      <span className="text-xs text-gray-500">{doc.type}</span>
+                    </div>
+                    <p className="text-xs text-gray-600 mb-3">
+                      {doc.description || 'No description available'}
+                    </p>
+                    <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+                      <span>{doc.metadata?.wordCount || 0} words</span>
+                      <span>{formatDate(doc.createdAt)}</span>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        onClick={() => handleViewDocument(doc)}
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        <Eye className="size-3 mr-1" />
+                        View
+                      </Button>
+                      <Button
+                        onClick={() => handleDownloadDocument(doc)}
+                        size="sm"
+                        variant="outline"
+                      >
+                        <Download className="size-3" />
+                      </Button>
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-600 mb-3">
-                    {doc.description}
-                  </p>
-                  <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-                    <span>{doc.size}</span>
-                    <span>{formatDate(doc.uploadDate)}</span>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button
-                      onClick={() => handleViewDocument(doc)}
-                      size="sm"
-                      variant="outline"
-                      className="flex-1"
-                    >
-                      <Eye className="size-3 mr-1" />
-                      View
-                    </Button>
-                    <Button
-                      onClick={() => handleDownloadDocument(doc)}
-                      size="sm"
-                      variant="outline"
-                    >
-                      <Download className="size-3" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <FileText className="size-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">
+                  No documents found for this client
+                </p>
+                <p className="text-sm text-gray-400 mt-2">
+                  Generate documents or upload files to get started
+                </p>
+              </div>
+            )}
           </div>
         )
 
       default:
-        return <div>Content not found</div>
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-800">
+                Documents and Content
+              </h3>
+              <div className="flex space-x-2">
+                <Button
+                  onClick={loadClientDocuments}
+                  variant="outline"
+                  size="sm"
+                  disabled={loadingDocuments}
+                >
+                  <RefreshCw
+                    className={`size-4 mr-2 ${loadingDocuments ? 'animate-spin' : ''}`}
+                  />
+                  Refresh
+                </Button>
+                {documents.length > 0 && (
+                  <Button
+                    onClick={handleDeleteAllDocuments}
+                    variant="outline"
+                    size="sm"
+                    disabled={deletingAllDocuments}
+                    className="text-red-600 border-red-300 hover:bg-red-50"
+                  >
+                    <Trash2 className="size-4 mr-2" />
+                    {deletingAllDocuments ? 'Deleting...' : 'Delete All'}
+                  </Button>
+                )}
+                <Button className="bg-[#3B7097] hover:bg-[#3B7097]/90">
+                  <Upload className="size-4 mr-2" />
+                  Upload Document
+                </Button>
+              </div>
+            </div>
+
+            {loadingDocuments ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span className="ml-2 text-gray-600">Loading documents...</span>
+              </div>
+            ) : documents.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {documents.map(doc => (
+                  <div
+                    key={doc.id}
+                    className="bg-white border border-gray-200 rounded-lg p-4"
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <h4 className="font-medium text-gray-900 text-sm">
+                        {doc.title}
+                      </h4>
+                      <span className="text-xs text-gray-500">{doc.type}</span>
+                    </div>
+                    <p className="text-xs text-gray-600 mb-3">
+                      {doc.description || 'No description available'}
+                    </p>
+                    <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+                      <span>{doc.metadata?.wordCount || 0} words</span>
+                      <span>{formatDate(doc.createdAt)}</span>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        onClick={() => handleViewDocument(doc)}
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        <Eye className="size-3 mr-1" />
+                        View
+                      </Button>
+                      <Button
+                        onClick={() => handleDownloadDocument(doc)}
+                        size="sm"
+                        variant="outline"
+                      >
+                        <Download className="size-3" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <FileText className="size-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">
+                  No documents found for this client
+                </p>
+                <p className="text-sm text-gray-400 mt-2">
+                  Generate documents or upload files to get started
+                </p>
+              </div>
+            )}
+          </div>
+        )
     }
   }
 

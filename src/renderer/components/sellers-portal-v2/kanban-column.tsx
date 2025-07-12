@@ -10,11 +10,15 @@ interface KanbanColumnProps {
   stage: string
   clients: any[]
   onClientClick: (client: any) => void
+  isLoading?: boolean
+  hasError?: string | null
 }
 
-export function KanbanColumn({ title, stage, clients, onClientClick }: KanbanColumnProps) {
-  // Filter clients for this stage
-  const stageClients = clients.filter(client => client.stage === stage)
+export function KanbanColumn({ title, stage, clients, onClientClick, isLoading, hasError }: KanbanColumnProps) {
+  // Filter clients for this stage and sort by dateAdded descending (newest first)
+  const stageClients = clients
+    .filter(client => client.stage === stage)
+    .sort((a, b) => new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime())
 
   // Define stage colors based on seller stages - using professional color scheme
   const getStageColor = (stage: string) => {
@@ -45,19 +49,36 @@ export function KanbanColumn({ title, stage, clients, onClientClick }: KanbanCol
           </span>
         </div>
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3B7097] mx-auto mb-2"></div>
+            <p className="text-gray-500 text-sm">Loading...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {hasError && !isLoading && (
+          <div className="text-center py-8">
+            <p className="text-red-500 text-sm">{hasError}</p>
+          </div>
+        )}
+
         {/* Client Cards */}
-        <div className="space-y-3">
-          {stageClients.map(client => (
-            <ClientCard
-              key={client.id}
-              client={client}
-              onClick={() => onClientClick(client)}
-            />
-          ))}
-        </div>
+        {!isLoading && !hasError && (
+          <div className="space-y-3">
+            {stageClients.map(client => (
+              <ClientCard
+                key={client.id}
+                client={client}
+                onClick={() => onClientClick(client)}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Empty State */}
-        {stageClients.length === 0 && (
+        {!isLoading && !hasError && stageClients.length === 0 && (
           <div className="text-center py-8">
             <p className="text-gray-500 text-sm">No clients in this stage</p>
           </div>

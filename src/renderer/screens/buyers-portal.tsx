@@ -30,14 +30,13 @@ export function BuyersPortalScreen({
   userType,
 }: BuyersPortalScreenProps) {
   const [selectedClient, setSelectedClient] = useState<any>(null)
-  const [buyerClients, setBuyerClients] = useState(dummyData.buyerClients)
-  const [archivedClients, setArchivedClients] = useState(
-    dummyData.archivedBuyerClients
-  )
+  const [buyerClients, setBuyerClients] = useState<any[]>([])
+  const [archivedClients, setArchivedClients] = useState<any[]>([])
   const [showOfferForm, setShowOfferForm] = useState(false)
   const [selectedOffer, setSelectedOffer] = useState<any>(null)
   const [showNewLeadModal, setShowNewLeadModal] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState<string | null>(null)
   const [newLeadForm, setNewLeadForm] = useState({
     name: '',
@@ -48,6 +47,35 @@ export function BuyersPortalScreen({
     notes: '',
     documents: [] as File[]
   })
+
+  // Set up real-time listener for buyer clients
+  useEffect(() => {
+    if (!currentUser?.uid) {
+      setIsLoading(false)
+      return
+    }
+
+    console.log('Setting up real-time listener for buyers')
+    const unsubscribe = firebaseCollections.getBuyersRealTime(
+      currentUser.uid,
+      (buyers) => {
+        console.log('Received real-time buyers update:', buyers.length)
+        setBuyerClients(buyers)
+        setIsLoading(false)
+        setHasError(null)
+      },
+      (error) => {
+        console.error('Real-time buyers error:', error)
+        setHasError('Failed to load buyers—please refresh')
+        setIsLoading(false)
+      }
+    )
+
+    return () => {
+      console.log('Cleaning up buyers real-time listener')
+      unsubscribe()
+    }
+  }, [currentUser?.uid])
 
   // Handle URL parameters for direct client access and new lead action
   useEffect(() => {
@@ -90,24 +118,50 @@ export function BuyersPortalScreen({
     }
   }
 
-  const handleArchive = (clientId: number) => {
-    const clientToArchive = buyerClients.find(c => c.id === clientId)
-    if (clientToArchive) {
-      setArchivedClients(prev => [...prev, clientToArchive])
-      setBuyerClients(prev => prev.filter(c => c.id !== clientId))
+  const handleArchive = async (client: any) => {
+    if (!currentUser?.uid) {
+      setHasError('User not authenticated')
+      return
+    }
+
+    try {
+      await firebaseCollections.archiveBuyer(client.id, client.stage)
+    } catch (error) {
+      console.error('Error archiving client:', error)
+      setHasError('Failed to archive client. Please try again.')
     }
     setSelectedClient(null)
   }
 
-  const handleProgress = (clientId: number, newStage: string) => {
-    setBuyerClients(prev => 
-      prev.map(c => 
-        c.id === clientId 
-          ? { ...c, stage: newStage, subStatus: getDefaultSubStatus(newStage) }
-          : c
-      )
-    )
+  const handleProgress = async (client: any) => {
+    if (!currentUser?.uid) {
+      setHasError('User not authenticated')
+      return
+    }
+
+    try {
+      const nextStage = getNextStage(client.stage)
+      if (nextStage) {
+        await firebaseCollections.updateBuyer(client.id, {
+          stage: nextStage,
+          subStatus: getDefaultSubStatus(nextStage)
+        })
+      }
+    } catch (error) {
+      console.error('Error progressing client:', error)
+      setHasError('Failed to progress client. Please try again.')
+    }
     setSelectedClient(null)
+  }
+
+  const getNextStage = (currentStage: string): string | null => {
+    switch (currentStage) {
+      case 'new_leads': return 'active_search'
+      case 'active_search': return 'under_contract'
+      case 'under_contract': return 'closed'
+      case 'closed': return null
+      default: return null
+    }
   }
 
   const getDefaultSubStatus = (stage: string) => {
@@ -262,6 +316,8 @@ export function BuyersPortalScreen({
                 clients={buyerClients}
                 onClientClick={handleClientClick}
                 navigate={navigate}
+                isLoading={isLoading}
+                hasError={hasError}
               />
             ))}
           </div>

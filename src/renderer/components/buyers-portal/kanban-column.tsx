@@ -13,6 +13,7 @@ interface KanbanColumnProps {
     budget: string
     location: string
     leadSource: string
+    dateAdded?: string
     favoritedProperties?: string[]
     viewedProperties?: string[]
     contractProperty?: string
@@ -22,9 +23,11 @@ interface KanbanColumnProps {
   }>
   onClientClick: (client: any) => void
   navigate?: (path: string) => void
+  isLoading?: boolean
+  hasError?: string | null
 }
 
-export function KanbanColumn({ title, stage, clients, onClientClick, navigate }: KanbanColumnProps) {
+export function KanbanColumn({ title, stage, clients, onClientClick, navigate, isLoading, hasError }: KanbanColumnProps) {
   const getColumnColor = (stage: string) => {
     switch (stage) {
       case 'new_leads': return 'bg-[#75BDE0]/10 border-[#75BDE0]/30'
@@ -45,7 +48,9 @@ export function KanbanColumn({ title, stage, clients, onClientClick, navigate }:
     }
   }
 
-  const stageClients = clients.filter(client => client.stage === stage)
+  const stageClients = clients
+    .filter(client => client.stage === stage)
+    .sort((a, b) => new Date(b.dateAdded || '').getTime() - new Date(a.dateAdded || '').getTime())
 
   return (
     <div className={`flex-1 min-w-80 rounded-lg border-2 ${getColumnColor(stage)}`}>
@@ -63,11 +68,23 @@ export function KanbanColumn({ title, stage, clients, onClientClick, navigate }:
 
       {/* Column Content */}
       <div className="p-4 space-y-4 min-h-96 max-h-screen overflow-y-auto">
-        {stageClients.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p className="text-sm">No clients in this stage</p>
+        {/* Loading State */}
+        {isLoading && (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#3B7097] mx-auto mb-2"></div>
+            <p className="text-gray-500 text-sm">Loading...</p>
           </div>
-        ) : (
+        )}
+
+        {/* Error State */}
+        {hasError && !isLoading && (
+          <div className="text-center py-8">
+            <p className="text-red-500 text-sm">{hasError}</p>
+          </div>
+        )}
+
+        {/* Client Cards */}
+        {!isLoading && !hasError && stageClients.length > 0 && (
           stageClients.map((client) => (
             <ClientCard
               key={client.id}
@@ -76,6 +93,13 @@ export function KanbanColumn({ title, stage, clients, onClientClick, navigate }:
               navigate={navigate}
             />
           ))
+        )}
+
+        {/* Empty State */}
+        {!isLoading && !hasError && stageClients.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            <p className="text-sm">No clients in this stage</p>
+          </div>
         )}
       </div>
     </div>

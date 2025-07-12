@@ -18,15 +18,6 @@ export function ClientCommunicationFeed() {
     }
   }
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'border-l-[#3B7097]'
-      case 'medium': return 'border-l-[#75BDE0]'
-      case 'low': return 'border-l-[#A9D09E]'
-      default: return 'border-l-gray-300'
-    }
-  }
-
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp)
     const now = new Date()
@@ -54,7 +45,7 @@ export function ClientCommunicationFeed() {
         {clientCommunications.map((communication) => (
           <div 
             key={communication.id} 
-            className={`p-3 border-l-4 bg-gray-50 rounded-r ${getPriorityColor(communication.priority)}`}
+            className="p-3 border-l-4 bg-gray-50 rounded-r border-l-gray-300"
           >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center">

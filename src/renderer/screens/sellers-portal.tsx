@@ -7,12 +7,12 @@ import { useState } from 'react'
 import { Button } from '../components/ui/button'
 import { Archive, FileText, Users, DollarSign, Plus, Home } from 'lucide-react'
 
-import type { AgentProfile, ClientProfile } from '../../shared/types'
+import type { AgentProfile } from '../../shared/types'
 import { NegotiationDashboard } from '../components/negotiations/NegotiationDashboard'
 
 interface SellersPortalScreenProps {
   navigate?: (path: string) => void
-  currentUser?: AgentProfile | ClientProfile | null
+  currentUser?: AgentProfile | null
   userType?: 'agent' | 'buyer' | 'seller' | null
 }
 
@@ -32,13 +32,13 @@ export function SellersPortalScreen({
   const [sellerClients, setSellerClients] = useState([
     {
       id: 1,
-      name: 'Johnson Family',
-      email: 'sarah.johnson@email.com',
+      name: 'Smith Family',
+      email: 'james.smith@email.com',
       phone: '(555) 123-4567',
       stage: 'appointment_set',
       property: {
         address: '123 Oak Street',
-        price: 450000,
+        price: 485000,
         type: 'Single Family',
         bedrooms: 3,
         bathrooms: 2,
@@ -46,7 +46,6 @@ export function SellersPortalScreen({
       },
       timeline: 'Next 3 months',
       motivation: 'Upgrading to larger home',
-      urgency: 'Medium',
     },
     {
       id: 2,
@@ -64,7 +63,6 @@ export function SellersPortalScreen({
       },
       timeline: 'ASAP',
       motivation: 'Relocating for work',
-      urgency: 'High',
     },
     {
       id: 3,
@@ -82,7 +80,6 @@ export function SellersPortalScreen({
       },
       timeline: 'Next 2 months',
       motivation: 'Downsizing',
-      urgency: 'Low',
     },
     {
       id: 4,
@@ -100,7 +97,6 @@ export function SellersPortalScreen({
       },
       timeline: 'Completed',
       motivation: 'Moving to retirement community',
-      urgency: 'Completed',
     },
   ])
 
@@ -162,19 +158,6 @@ export function SellersPortalScreen({
         return 'bg-green-100 border-green-300'
       default:
         return 'bg-gray-100 border-gray-300'
-    }
-  }
-
-  const getUrgencyColor = (urgency: string) => {
-    switch (urgency) {
-      case 'High':
-        return 'bg-red-100 text-red-800'
-      case 'Medium':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'Low':
-        return 'bg-green-100 text-green-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
     }
   }
 
@@ -269,11 +252,6 @@ export function SellersPortalScreen({
                             <h4 className="font-medium text-gray-800">
                               {client.name}
                             </h4>
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${getUrgencyColor(client.urgency)}`}
-                            >
-                              {client.urgency}
-                            </span>
                           </div>
                           <p className="text-sm text-gray-600 mb-1">
                             {client.property.address}

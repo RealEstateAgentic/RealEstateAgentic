@@ -57,17 +57,6 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
         </div>
       </div>
 
-      {/* Timeline & Motivation */}
-      <div className="space-y-1 mb-3">
-        <div className="flex items-center space-x-2">
-          <Calendar className="size-4 text-gray-500" />
-          <span className="text-sm text-gray-600">{client.timeline}</span>
-        </div>
-        <div className="text-xs text-gray-500">
-          {client.reasonForSelling}
-        </div>
-      </div>
-
       {/* Contact Information */}
       <div className="flex items-center justify-between pt-2 border-t border-gray-100">
         <div className="flex items-center space-x-3">

@@ -14,7 +14,6 @@ interface SellerCardProps {
     estimatedValue: string;
     listingPrice?: string;
     leadSource: string;
-    priority: 'high' | 'medium' | 'low';
     dateAdded: string;
     lastContact: string | null;
     notes: string;
@@ -47,26 +46,13 @@ export function SellerCard({ seller }: SellerCardProps) {
     }
   };
 
-  const priorityColors = {
-    high: 'border-red-200 bg-red-50',
-    medium: 'border-yellow-200 bg-yellow-50',
-    low: 'border-green-200 bg-green-50'
-  };
-
   return (
-    <div className={`p-4 rounded-lg border-2 ${priorityColors[seller.priority]} bg-white shadow-sm hover:shadow-md transition-shadow`}>
+    <div className="p-4 rounded-lg border-2 border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <User className="size-4 text-gray-500" />
           <h3 className="font-semibold text-gray-900">{seller.name}</h3>
         </div>
-        <span className={`px-2 py-1 rounded text-xs font-medium ${
-          seller.priority === 'high' ? 'bg-red-100 text-red-800' :
-          seller.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-          'bg-green-100 text-green-800'
-        }`}>
-          {seller.priority}
-        </span>
       </div>
 
       {/* Send Survey Button for new leads */}

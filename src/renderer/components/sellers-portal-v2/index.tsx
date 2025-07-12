@@ -26,7 +26,6 @@ const mockSellerClients = [
     timeline: 'Next 3 months',
     reasonForSelling: 'Upgrading to larger home',
     leadSource: 'Referral',
-    priority: 'Medium',
     dateAdded: new Date().toISOString(),
     lastContact: null,
     notes: 'Family looking to upgrade due to growing needs',
@@ -45,7 +44,6 @@ const mockSellerClients = [
     timeline: 'ASAP',
     reasonForSelling: 'Relocating for work',
     leadSource: 'Website',
-    priority: 'High',
     dateAdded: new Date().toISOString(),
     lastContact: new Date().toISOString(),
     notes: 'Urgent relocation, very motivated seller',
@@ -64,7 +62,6 @@ const mockSellerClients = [
     timeline: 'Next 2 months',
     reasonForSelling: 'Downsizing',
     leadSource: 'Open House',
-    priority: 'Medium',
     dateAdded: new Date().toISOString(),
     lastContact: new Date().toISOString(),
     notes: 'Empty nesters looking to downsize',
@@ -83,7 +80,6 @@ const mockSellerClients = [
     timeline: 'Under Contract',
     reasonForSelling: 'Moving to retirement community',
     leadSource: 'Referral',
-    priority: 'High',
     dateAdded: new Date().toISOString(),
     lastContact: new Date().toISOString(),
     notes: 'Smooth transaction, very cooperative sellers',
@@ -102,7 +98,6 @@ const mockSellerClients = [
     timeline: 'Closed',
     reasonForSelling: 'Job relocation',
     leadSource: 'Social Media',
-    priority: 'Low',
     dateAdded: new Date().toISOString(),
     lastContact: new Date().toISOString(),
     notes: 'Successful closing, very satisfied clients',
@@ -126,7 +121,6 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
     phone: '',
     propertyAddress: '',
     leadSource: '',
-    priority: 'Medium',
     notes: '',
     documents: [] as File[]
   })
@@ -190,11 +184,27 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
     setSelectedClient(null)
   }
 
-  const handleProgress = (clientId: number, newStage: string) => {
+  const handleProgress = (client: any) => {
+    const getNextStage = (currentStage: string) => {
+      switch (currentStage) {
+        case 'new_lead':
+          return 'pre_listing'
+        case 'pre_listing':
+          return 'active_listing'
+        case 'active_listing':
+          return 'under_contract'
+        case 'under_contract':
+          return 'closed'
+        default:
+          return currentStage
+      }
+    }
+
+    const nextStage = getNextStage(client.stage)
     setSellerClients(prev => 
       prev.map(c => 
-        c.id === clientId 
-          ? { ...c, stage: newStage, subStatus: getDefaultSubStatus(newStage) }
+        c.id === client.id 
+          ? { ...c, stage: nextStage, subStatus: getDefaultSubStatus(nextStage) }
           : c
       )
     )
@@ -229,7 +239,6 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
       phone: '',
       propertyAddress: '',
       leadSource: '',
-      priority: 'Medium',
       notes: '',
       documents: []
     })
@@ -257,7 +266,6 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
       timeline: 'Not specified',
       reasonForSelling: 'Not specified',
       leadSource: newLeadForm.leadSource,
-      priority: newLeadForm.priority,
       dateAdded: new Date().toISOString(),
       lastContact: null,
       notes: newLeadForm.notes,
@@ -423,20 +431,7 @@ export function SellersPortalV2({ navigate, currentUser, userType }: SellersPort
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Priority Level
-                </label>
-                <select
-                  value={newLeadForm.priority}
-                  onChange={(e) => setNewLeadForm(prev => ({ ...prev, priority: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="Low">Low</option>
-                  <option value="Medium">Medium</option>
-                  <option value="High">High</option>
-                </select>
-              </div>
+
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">

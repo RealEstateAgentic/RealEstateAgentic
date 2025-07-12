@@ -14,32 +14,24 @@ interface Lead {
   email: string
   phone: string
   type: 'buyer' | 'seller'
-  priority: 'high' | 'medium' | 'low'
   source: string
 }
 
 export function NewLeads() {
+  const [leads, setLeads] = useState<Lead[]>(dummyData.newLeads)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [leads] = useState(dummyData.newLeads as Lead[])
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
   const [processingLead, setProcessingLead] = useState<number | null>(null)
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return 'bg-[#c05e51]/10 text-gray-800 border border-[#c05e51]/30'
-      case 'medium':
-        return 'bg-[#F6E2BC]/60 text-gray-800 border border-[#F6E2BC]'
-      case 'low':
-        return 'bg-[#A9D09E]/20 text-gray-800 border border-[#A9D09E]/30'
-      default:
-        return 'bg-gray-100 text-gray-800 border border-gray-200'
-    }
-  }
-
   const getTypeColor = (type: string) => {
-    return type === 'buyer'
-      ? 'bg-[#75BDE0] text-white'
-      : 'bg-[#A9D09E] text-white'
+    switch (type) {
+      case 'buyer':
+        return 'bg-blue-100 text-blue-800'
+      case 'seller':
+        return 'bg-green-100 text-green-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
   }
 
   const handleStartOnboarding = async (lead: Lead) => {
@@ -94,93 +86,152 @@ The client will receive an automated email with their personalized qualification
     }
   }
 
+  const handleViewLead = (lead: Lead) => {
+    setSelectedLead(lead)
+    setIsModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false)
+    setSelectedLead(null)
+  }
+
   return (
-    <>
-      {/* New Leads Button - designed to fit within parent container */}
-      <Button
-        onClick={() => setIsModalOpen(true)}
-        className="w-full bg-[#3B7097] hover:bg-[#3B7097]/90 text-white font-medium py-4 relative"
-      >
-        New Leads
-        {leads.length > 0 && (
-          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center">
-            {leads.length}
-          </span>
-        )}
-      </Button>
-
-      {/* Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-800">New Leads</h2>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                <X className="size-6" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              {leads.map(lead => (
-                <div
-                  key={lead.id}
-                  className="border border-gray-200 rounded-lg p-4"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="font-semibold text-gray-800">
-                        {lead.name}
-                      </h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span
-                          className={`px-2 py-1 rounded text-xs font-medium ${getTypeColor(lead.type)}`}
-                        >
-                          {lead.type}
-                        </span>
-                        <span
-                          className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(lead.priority)}`}
-                        >
-                          {lead.priority} priority
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-right text-sm text-gray-500">
-                      {lead.source}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-4 mb-4 text-sm text-gray-600">
-                    <div className="flex items-center gap-1">
-                      <Phone className="size-4" />
-                      {lead.phone}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Mail className="size-4" />
-                      {lead.email}
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end">
-                    <Button
-                      onClick={() => handleStartOnboarding(lead)}
-                      className="bg-[#A9D09E] hover:bg-[#A9D09E]/90 text-white"
-                      disabled={processingLead === lead.id}
+    <div className="relative">
+      <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900">New Leads</h2>
+        </div>
+        <div className="p-6 space-y-4">
+          {leads.map(lead => (
+            <div
+              key={lead.id}
+              className="border border-gray-200 rounded-lg p-4"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <h3 className="font-semibold text-gray-800">
+                    {lead.name}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-medium ${getTypeColor(lead.type)}`}
                     >
-                      <Calendar className="size-4 mr-2" />
-                      {processingLead === lead.id
-                        ? 'Starting...'
-                        : 'Start Onboarding'}
-                    </Button>
+                      {lead.type}
+                    </span>
                   </div>
                 </div>
-              ))}
+                <div className="text-right text-sm text-gray-500">
+                  {lead.source}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 mb-4 text-sm text-gray-600">
+                <div className="flex items-center gap-1">
+                  <Phone className="size-4" />
+                  {lead.phone}
+                </div>
+                <div className="flex items-center gap-1">
+                  <Mail className="size-4" />
+                  {lead.email}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleViewLead(lead)}
+                  className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                >
+                  View Details
+                </button>
+                <button
+                  onClick={() => handleStartOnboarding(lead)}
+                  disabled={processingLead === lead.id}
+                  className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {processingLead === lead.id ? 'Processing...' : 'Start Onboarding'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Modal for viewing lead details */}
+      {isModalOpen && selectedLead && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">
+                  Lead Details - {selectedLead.name}
+                </h3>
+                <button
+                  onClick={handleCloseModal}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <X className="size-6" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Name
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900">{selectedLead.name}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Type
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900">{selectedLead.type}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Email
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900">{selectedLead.email}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Phone
+                    </label>
+                    <p className="mt-1 text-sm text-gray-900">{selectedLead.phone}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Source
+                  </label>
+                  <p className="mt-1 text-sm text-gray-900">{selectedLead.source}</p>
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    onClick={handleCloseModal}
+                    className="px-4 py-2 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={() => handleStartOnboarding(selectedLead)}
+                    disabled={processingLead === selectedLead.id}
+                    className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {processingLead === selectedLead.id ? 'Processing...' : 'Start Onboarding'}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   )
 }

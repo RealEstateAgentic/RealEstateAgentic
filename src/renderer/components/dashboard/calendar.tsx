@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { X, MapPin, Clock, Calendar as CalendarIcon, Tag, Plus, AlertCircle, CheckCircle, Edit } from 'lucide-react'
+import { X, MapPin, Clock, Calendar as CalendarIcon, Tag, Plus, CheckCircle, Edit } from 'lucide-react'
 import { Button } from '../ui/button'
 import { dummyData } from '../../data/dummy-data'
 
@@ -16,7 +16,6 @@ export function Calendar() {
     description: '',
     clientType: '',
     clientId: '',
-    priority: 'low',
     eventType: 'custom'
   })
   
@@ -47,12 +46,7 @@ export function Calendar() {
   }
 
   // Updated color coding system using proper UI design rules palette
-  const getEventTypeColor = (type: string, priority?: string, clientType?: string) => {
-    // Priority-based coloring for deadlines
-    if (type === 'deadline') {
-      return priority === 'high' ? 'bg-[#c05e51]/20 text-black border border-[#c05e51]/40' : 'bg-[#F6E2BC]/60 text-black border border-[#F6E2BC]'
-    }
-    
+  const getEventTypeColor = (type: string, clientType?: string) => {
     // Client-based coloring for events
     if (clientType === 'buyer') {
       return 'bg-[#75BDE0]/20 text-black border border-[#75BDE0]/40' // Sky Blue: Buyer Events
@@ -64,8 +58,8 @@ export function Calendar() {
     switch (type) {
       case 'showing': return 'bg-[#75BDE0]/20 text-black border border-[#75BDE0]/40' // Buyer events
       case 'consultation': return 'bg-[#A9D09E]/20 text-black border border-[#A9D09E]/40' // Seller events
-      case 'closing': return 'bg-[#c05e51]/20 text-black border border-[#c05e51]/40' // High priority deadline
-      case 'inspection': return 'bg-[#F6E2BC]/60 text-black border border-[#F6E2BC]' // Medium priority deadline
+      case 'closing': return 'bg-[#c05e51]/20 text-black border border-[#c05e51]/40' // Closing events
+      case 'inspection': return 'bg-[#F6E2BC]/60 text-black border border-[#F6E2BC]' // Inspection events
       case 'listing': return 'bg-[#A9D09E]/20 text-black border border-[#A9D09E]/40' // Seller events
       case 'custom': return 'bg-[#3B7097]/20 text-black border border-[#3B7097]/40' // Primary accent
       default: return 'bg-gray-100 text-gray-800 border border-gray-200'
@@ -99,7 +93,6 @@ export function Calendar() {
       description: event.location || '',
       clientType: event.clientType || '',
       clientId: event.clientId || '',
-      priority: event.priority || 'low',
       eventType: event.type || 'custom'
     })
     setIsEditModalOpen(true)
@@ -120,7 +113,6 @@ export function Calendar() {
       description: '',
       clientType: '',
       clientId: '',
-      priority: 'low',
       eventType: 'custom'
     })
   }
@@ -138,7 +130,6 @@ export function Calendar() {
       description: '',
       clientType: '',
       clientId: '',
-      priority: 'low',
       eventType: 'custom'
     })
   }
@@ -174,7 +165,6 @@ export function Calendar() {
       location: formData.description || 'TBD',
       clientType: formData.clientType || '',
       clientId: formData.clientId || '',
-      priority: formData.priority
     }
 
     setEvents([...events, newEvent])
@@ -209,7 +199,6 @@ export function Calendar() {
       location: formData.description || 'TBD',
       clientType: formData.clientType || '',
       clientId: formData.clientId || '',
-      priority: formData.priority
     }
 
     // Update in local state
@@ -284,21 +273,6 @@ export function Calendar() {
           <option value="inspection">Property Inspection</option>
           <option value="listing">Listing Activity</option>
           <option value="deadline">Deadline</option>
-        </select>
-      </div>
-
-      {/* Priority */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Priority *
-        </label>
-        <select
-          value={formData.priority}
-          onChange={(e) => handleFormChange('priority', e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097] focus:border-transparent"
-        >
-          <option value="low">Low Priority</option>
-          <option value="high">High Priority</option>
         </select>
       </div>
 
@@ -436,13 +410,10 @@ export function Calendar() {
                       <div 
                         key={event.id}
                         onClick={() => handleEventClick(event)}
-                        className={`p-3 rounded-lg text-sm ${getEventTypeColor(event.type, event.priority, event.clientType)} cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-[1.02]`}
+                        className={`p-3 rounded-lg text-sm ${getEventTypeColor(event.type, event.clientType)} cursor-pointer hover:shadow-md transition-all duration-200 hover:scale-[1.02]`}
                       >
                         <div className="font-semibold flex items-center justify-between mb-1">
                           <span className="text-xs">{event.time}</span>
-                          {event.priority === 'high' && (
-                            <AlertCircle className="size-3 text-[#c05e51]" />
-                          )}
                         </div>
                         <div className="font-medium leading-tight text-sm">{event.title}</div>
                         {event.location && (
@@ -491,14 +462,9 @@ export function Calendar() {
               {/* Event Type Badge */}
               <div className="flex items-center space-x-2">
                 <Tag className="size-4 text-gray-500" />
-                <span className={`px-3 py-1 rounded text-sm font-medium ${getEventTypeColor(selectedEvent.type, selectedEvent.priority, selectedEvent.clientType)}`}>
+                <span className={`px-3 py-1 rounded text-sm font-medium ${getEventTypeColor(selectedEvent.type, selectedEvent.clientType)}`}>
                   {getEventTypeLabel(selectedEvent.type)}
                 </span>
-                {selectedEvent.priority === 'high' && (
-                  <span className="px-2 py-1 bg-[#c05e51]/20 text-[#c05e51] text-xs rounded font-medium border border-[#c05e51]/40">
-                    High Priority
-                  </span>
-                )}
               </div>
 
               {/* Date and Time */}

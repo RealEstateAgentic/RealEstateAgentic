@@ -18,7 +18,6 @@ const generateDynamicCalendarEvents = () => {
       date: getDateOffset(0),
       type: "showing",
       location: "123 Main St, Anytown",
-      priority: "high",
       clientType: "buyer",
       clientId: "1"
     },
@@ -29,7 +28,6 @@ const generateDynamicCalendarEvents = () => {
       date: getDateOffset(0),
       type: "consultation",
       location: "Office",
-      priority: "low",
       clientType: "buyer",
       clientId: "2"
     },
@@ -40,7 +38,6 @@ const generateDynamicCalendarEvents = () => {
       date: getDateOffset(0),
       type: "closing",
       location: "Title Company",
-      priority: "high",
       clientType: "seller",
       clientId: "1"
     },
@@ -51,7 +48,6 @@ const generateDynamicCalendarEvents = () => {
       date: getDateOffset(0),
       type: "consultation",
       location: "Phone",
-      priority: "low",
       clientType: "buyer",
       clientId: "3"
     },
@@ -64,7 +60,6 @@ const generateDynamicCalendarEvents = () => {
       date: getDateOffset(1),
       type: "inspection",
       location: "456 Oak St, Anytown",
-      priority: "low",
       clientType: "buyer",
       clientId: "1"
     },
@@ -75,7 +70,6 @@ const generateDynamicCalendarEvents = () => {
       date: getDateOffset(1),
       type: "listing",
       location: "789 Pine Ave",
-      priority: "low",
       clientType: "seller",
       clientId: "2"
     },
@@ -86,7 +80,6 @@ const generateDynamicCalendarEvents = () => {
       date: getDateOffset(1),
       type: "consultation",
       location: "Phone",
-      priority: "low",
       clientType: "buyer",
       clientId: "4"
     },
@@ -99,7 +92,6 @@ const generateDynamicCalendarEvents = () => {
       date: getDateOffset(2),
       type: "listing",
       location: "789 Pine Ave, Anytown",
-      priority: "high",
       clientType: "seller",
       clientId: "1"
     },
@@ -110,7 +102,6 @@ const generateDynamicCalendarEvents = () => {
       date: getDateOffset(2),
       type: "showing",
       location: "Various locations",
-      priority: "low",
       clientType: "buyer",
       clientId: "2"
     },
@@ -121,7 +112,6 @@ const generateDynamicCalendarEvents = () => {
       date: getDateOffset(2),
       type: "consultation",
       location: "Title Company",
-      priority: "high",
       clientType: "seller",
       clientId: "3"
     },
@@ -134,7 +124,6 @@ const generateDynamicCalendarEvents = () => {
       date: getDateOffset(3),
       type: "inspection",
       location: "321 Elm St",
-      priority: "low",
       clientType: "buyer",
       clientId: "1"
     },
@@ -145,7 +134,6 @@ const generateDynamicCalendarEvents = () => {
       date: getDateOffset(3),
       type: "consultation",
       location: "Office",
-      priority: "high",
       clientType: "seller",
       clientId: "2"
     },
@@ -156,7 +144,6 @@ const generateDynamicCalendarEvents = () => {
       date: getDateOffset(3),
       type: "listing",
       location: "567 Broadway",
-      priority: "low",
       clientType: "seller",
       clientId: "1"
     },
@@ -169,7 +156,6 @@ const generateDynamicCalendarEvents = () => {
       date: getDateOffset(4),
       type: "listing",
       location: "789 Pine Ave",
-      priority: "low",
       clientType: "seller",
       clientId: "2"
     },
@@ -180,7 +166,6 @@ const generateDynamicCalendarEvents = () => {
       date: getDateOffset(4),
       type: "showing",
       location: "East Side Properties",
-      priority: "low",
       clientType: "buyer",
       clientId: "3"
     },
@@ -191,7 +176,6 @@ const generateDynamicCalendarEvents = () => {
       date: getDateOffset(4),
       type: "consultation",
       location: "Phone",
-      priority: "high",
       clientType: "buyer",
       clientId: "1"
     },
@@ -204,7 +188,6 @@ const generateDynamicCalendarEvents = () => {
       date: getDateOffset(5),
       type: "showing",
       location: "Multiple Properties",
-      priority: "low",
       clientType: "buyer",
       clientId: "2"
     },
@@ -215,7 +198,6 @@ const generateDynamicCalendarEvents = () => {
       date: getDateOffset(5),
       type: "listing",
       location: "123 Main St",
-      priority: "low",
       clientType: "seller",
       clientId: "3"
     },
@@ -228,7 +210,6 @@ const generateDynamicCalendarEvents = () => {
       date: getDateOffset(6),
       type: "inspection",
       location: "456 Oak St",
-      priority: "high",
       clientType: "buyer",
       clientId: "1"
     },
@@ -239,7 +220,6 @@ const generateDynamicCalendarEvents = () => {
       date: getDateOffset(6),
       type: "consultation",
       location: "Office",
-      priority: "low",
       clientType: "seller",
       clientId: "2"
     }
@@ -276,7 +256,6 @@ export const dummyData = {
       email: "m.chen@email.com",
       type: "buyer",
       source: "Website Form",
-      priority: "high",
       receivedDate: "2024-01-14"
     },
     {
@@ -286,7 +265,6 @@ export const dummyData = {
       email: "j.martinez@email.com",
       type: "seller",
       source: "Referral",
-      priority: "medium",
       receivedDate: "2024-01-14"
     },
     {
@@ -296,7 +274,6 @@ export const dummyData = {
       email: "r.williams@email.com",
       type: "buyer",
       source: "Zillow",
-      priority: "high",
       receivedDate: "2024-01-13"
     }
   ],
@@ -317,7 +294,6 @@ export const dummyData = {
       client: "Miller Family",
       property: "123 Main St",
       daysRemaining: 1,
-      urgency: "critical"
     },
     {
       id: 2,
@@ -325,7 +301,6 @@ export const dummyData = {
       client: "Davis Family",
       property: "456 Oak St",
       daysRemaining: 3,
-      urgency: "high"
     },
     {
       id: 3,
@@ -333,7 +308,6 @@ export const dummyData = {
       client: "Thompson Family",
       property: "789 Pine Ave",
       daysRemaining: 7,
-      urgency: "medium"
     },
     {
       id: 4,
@@ -341,7 +315,6 @@ export const dummyData = {
       client: "Wilson Family",
       property: "321 Elm St",
       daysRemaining: 10,
-      urgency: "low"
     }
   ],
 
@@ -635,7 +608,6 @@ export const dummyData = {
       type: "email",
       message: "Inspection report received - minor issues found",
       timestamp: "2024-01-14T14:30:00Z",
-      priority: "high"
     },
     {
       id: 2,
@@ -643,7 +615,6 @@ export const dummyData = {
       type: "call",
       message: "Discussed offer strategy for 789 Pine Rd",
       timestamp: "2024-01-14T11:15:00Z",
-      priority: "medium"
     },
     {
       id: 3,
@@ -651,7 +622,6 @@ export const dummyData = {
       type: "text",
       message: "Sent new listing matches in East Side",
       timestamp: "2024-01-14T09:45:00Z",
-      priority: "low"
     },
     {
       id: 4,
@@ -659,7 +629,6 @@ export const dummyData = {
       type: "email",
       message: "Confirmed showing appointments for this weekend",
       timestamp: "2024-01-13T16:20:00Z",
-      priority: "medium"
     },
     {
       id: 5,
@@ -667,7 +636,6 @@ export const dummyData = {
       type: "call",
       message: "Appraisal scheduled for Thursday",
       timestamp: "2024-01-13T13:10:00Z",
-      priority: "high"
     }
   ]
 };

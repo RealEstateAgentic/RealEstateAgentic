@@ -40,7 +40,6 @@ export function BuyersPortalScreen({
     email: '',
     phone: '',
     leadSource: '',
-    priority: 'Medium',
     notes: '',
     documents: [] as File[]
   })
@@ -123,7 +122,6 @@ export function BuyersPortalScreen({
       email: '',
       phone: '',
       leadSource: '',
-      priority: 'Medium',
       notes: '',
       documents: []
     })
@@ -147,7 +145,6 @@ export function BuyersPortalScreen({
       budget: '$0 - $0',
       location: 'Not specified',
       leadSource: newLeadForm.leadSource,
-      priority: newLeadForm.priority,
       dateAdded: new Date().toISOString(),
       lastContact: null,
       notes: newLeadForm.notes,
@@ -310,20 +307,7 @@ export function BuyersPortalScreen({
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Priority Level
-                </label>
-                <select
-                  value={newLeadForm.priority}
-                  onChange={(e) => setNewLeadForm(prev => ({ ...prev, priority: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="Low">Low</option>
-                  <option value="Medium">Medium</option>
-                  <option value="High">High</option>
-                </select>
-              </div>
+
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">

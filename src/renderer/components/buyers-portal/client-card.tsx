@@ -217,7 +217,7 @@ export function ClientCard({ client, onClick, navigate }: ClientCardProps) {
           </div>
         )}
 
-        {/* Property Search Information */}
+        {/* Budget and Location */}
         <div className="space-y-2 mb-3">
           <div className="flex items-center space-x-2">
             <DollarSign className="size-4 text-gray-500" />
@@ -227,13 +227,6 @@ export function ClientCard({ client, onClick, navigate }: ClientCardProps) {
           <div className="flex items-center space-x-2">
             <MapPin className="size-4 text-gray-500" />
             <span className="text-sm text-gray-700">{client.location}</span>
-          </div>
-        </div>
-
-        {/* Lead Source */}
-        <div className="space-y-1 mb-3">
-          <div className="text-xs text-gray-500">
-            Source: {client.leadSource}
           </div>
         </div>
 

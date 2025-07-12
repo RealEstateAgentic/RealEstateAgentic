@@ -95,7 +95,6 @@ export function ClientModal({
     phone: client.phone,
     budget: client.budget,
     location: client.location,
-    priority: client.priority,
     notes: client.notes,
   })
 
@@ -333,7 +332,6 @@ export function ClientModal({
       phone: client.phone,
       budget: client.budget,
       location: client.location,
-      priority: client.priority,
       notes: client.notes,
     })
     setIsEditingDetails(false)
@@ -406,10 +404,6 @@ export function ClientModal({
             >
               <Send className="size-4 mr-2" />
               {isSendingSurvey ? 'Sending...' : 'Send Survey'}
-            </Button>
-            <Button variant="outline">
-              <Download className="size-4 mr-2" />
-              Download Meeting Materials
             </Button>
           </div>
         )
@@ -622,42 +616,21 @@ export function ClientModal({
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Phone
-                    </label>
-                    <input
-                      type="tel"
-                      value={editableDetails.phone}
-                      onChange={e =>
-                        setEditableDetails({
-                          ...editableDetails,
-                          phone: e.target.value,
-                        })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Priority
-                    </label>
-                    <select
-                      value={editableDetails.priority}
-                      onChange={e =>
-                        setEditableDetails({
-                          ...editableDetails,
-                          priority: e.target.value,
-                        })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
-                    >
-                      <option value="High">High</option>
-                      <option value="Medium">Medium</option>
-                      <option value="Low">Low</option>
-                    </select>
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone
+                  </label>
+                  <input
+                    type="tel"
+                    value={editableDetails.phone}
+                    onChange={e =>
+                      setEditableDetails({
+                        ...editableDetails,
+                        phone: e.target.value,
+                      })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -745,8 +718,8 @@ export function ClientModal({
                 <span>{client.location}</span>
               </div>
               <div className="flex items-center space-x-2 text-sm text-gray-500 mt-1">
-                <Calendar className="size-4" />
-                <span>Date Added: {formatDate(client.dateAdded)}</span>
+                <DollarSign className="size-4" />
+                <span>Budget: {client.budget}</span>
               </div>
             </div>
           </div>

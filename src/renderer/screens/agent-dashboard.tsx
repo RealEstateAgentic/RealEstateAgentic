@@ -95,61 +95,52 @@ export function AgentDashboardScreen({
       title: 'Property showing with Johnson Family',
       time: '2:00 PM Today',
       type: 'showing',
-      priority: 'high',
     },
     {
       id: 2,
       title: 'Document review for Chen listing',
       time: '10:00 AM Tomorrow',
       type: 'documents',
-      priority: 'medium',
     },
     {
       id: 3,
       title: 'Follow up with Davis Family',
       time: '3:00 PM Tomorrow',
       type: 'follow_up',
-      priority: 'medium',
     },
     {
       id: 4,
       title: 'Market analysis for Martinez counter-offer',
       time: 'Friday 9:00 AM',
       type: 'analysis',
-      priority: 'low',
     },
   ]
 
+  const getTypeColor = (type: string) => {
+    return type === 'buyer'
+      ? 'bg-[#75BDE0] text-white'
+      : 'bg-[#A9D09E] text-white'
+  }
+
+  // Mock data for top clients
   const topClients = [
     {
-      id: 1,
+      name: 'Miller Family',
+      type: 'buyer',
+      status: 'Under Contract',
+      daysActive: 45,
+    },
+    {
+      name: 'Davis Property',
+      type: 'seller',
+      status: 'Pre-Listing',
+      daysActive: 12,
+    },
+    {
       name: 'Johnson Family',
       type: 'buyer',
-      status: 'active',
-      budget: 500000,
-      timeline: 'Next 30 days',
-      lastContact: '2 days ago',
-      priority: 'high',
-    },
-    {
-      id: 2,
-      name: 'Chen Family',
-      type: 'seller',
-      status: 'listed',
-      budget: 675000,
-      timeline: 'Next 60 days',
-      lastContact: '1 day ago',
-      priority: 'high',
-    },
-    {
-      id: 3,
-      name: 'Davis Family',
-      type: 'buyer',
-      status: 'searching',
-      budget: 450000,
-      timeline: 'Next 90 days',
-      lastContact: '3 days ago',
-      priority: 'medium',
+      status: 'Active Search',
+      daysActive: 28,
     },
   ]
 
@@ -178,19 +169,6 @@ export function AgentDashboardScreen({
         return 'bg-yellow-100 border-yellow-200'
       default:
         return 'bg-gray-100 border-gray-200'
-    }
-  }
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return 'bg-red-100 text-red-800'
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'low':
-        return 'bg-green-100 text-green-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
     }
   }
 
@@ -361,11 +339,6 @@ export function AgentDashboardScreen({
                         {task.title}
                       </p>
                       <p className="text-xs text-gray-600">{task.time}</p>
-                      <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-1 ${getPriorityColor(task.priority)}`}
-                      >
-                        {task.priority} priority
-                      </span>
                     </div>
                   </div>
                 ))}
@@ -388,7 +361,7 @@ export function AgentDashboardScreen({
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {topClients.map(client => (
                 <button
-                  key={client.id}
+                  key={client.name}
                   className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer w-full text-left"
                   onClick={() =>
                     navigate(
@@ -401,21 +374,16 @@ export function AgentDashboardScreen({
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="font-medium text-gray-900">{client.name}</h3>
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${client.type === 'buyer' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(client.type)}`}
                     >
                       {client.type}
                     </span>
                   </div>
                   <div className="space-y-1 text-sm text-gray-600">
-                    <p>Budget: ${client.budget.toLocaleString()}</p>
-                    <p>Timeline: {client.timeline}</p>
+                    <p>Status: {client.status}</p>
+                    <p>Days Active: {client.daysActive}</p>
                   </div>
                   <div className="mt-3 flex items-center justify-between">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(client.priority)}`}
-                    >
-                      {client.priority} priority
-                    </span>
                     <ArrowRight className="w-4 h-4 text-gray-400" />
                   </div>
                 </button>

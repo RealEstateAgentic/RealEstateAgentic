@@ -7,11 +7,11 @@ import { useState } from 'react'
 import { ClientModal } from '../components/sellers-portal-v2/client-modal'
 import { Button } from '../components/ui/button'
 import { ArrowLeft, Calendar, MapPin, Phone, Mail, RotateCcw } from 'lucide-react'
-import type { AgentProfile, ClientProfile } from '../../shared/types'
+import type { AgentProfile } from '../../shared/types'
 
 interface SellersArchiveScreenProps {
   navigate?: (path: string) => void
-  currentUser?: AgentProfile | ClientProfile | null
+  currentUser?: AgentProfile | null
   userType?: 'agent' | 'buyer' | 'seller' | null
 }
 
@@ -36,7 +36,6 @@ export function SellersArchiveScreen({
       timeline: 'Next 6 months',
       reasonForSelling: 'Upgrading',
       leadSource: 'Referral',
-      priority: 'Low',
       dateAdded: '2024-01-15T10:00:00Z',
       lastContact: null,
       notes: 'Not ready to sell yet, follow up in 3 months',
@@ -57,7 +56,6 @@ export function SellersArchiveScreen({
       timeline: 'Undecided',
       reasonForSelling: 'Job relocation',
       leadSource: 'Website',
-      priority: 'Medium',
       dateAdded: '2024-01-10T09:00:00Z',
       lastContact: '2024-01-12T16:00:00Z',
       notes: 'Job relocation fell through, no longer selling',

@@ -1,5 +1,6 @@
 import { Phone, Mail, MapPin, Calendar, DollarSign, Send, Loader2 } from 'lucide-react'
 import { useState } from 'react'
+import { dummyData } from '../../data/dummy-data'
 
 interface ClientCardProps {
   client: {
@@ -63,6 +64,21 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
     }
   }
 
+  // Get next event for this client
+  const getNextEvent = () => {
+    const clientEvents = dummyData.calendarEvents.filter(event => 
+      event.clientType === 'buyer' && event.clientId === client.id.toString()
+    )
+    const today = new Date()
+    const upcomingEvents = clientEvents.filter(event => {
+      const eventDate = new Date(event.date)
+      return eventDate >= today
+    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    
+    return upcomingEvents.length > 0 ? upcomingEvents[0] : null
+  }
+
+  const nextEvent = getNextEvent()
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -156,7 +172,7 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
       </div>
 
       {/* Contact Info */}
-      <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+      <div className="space-y-1 mb-3 text-xs text-gray-500">
         <div className="flex items-center">
           <Phone className="size-3 mr-1" />
           {client.phone}
@@ -167,11 +183,11 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
         </div>
       </div>
 
-      {/* Last Contact */}
+      {/* Date Added and Lead Source */}
       <div className="flex items-center justify-between text-xs text-gray-500">
         <div className="flex items-center">
           <Calendar className="size-3 mr-1" />
-          Last: {formatDate(client.lastContact)}
+          Added: {formatDate(client.dateAdded)}
         </div>
         <div className="text-xs text-gray-400">
           {client.leadSource}
@@ -183,6 +199,22 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
         <div className="mt-2 p-2 bg-[#75BDE0]/10 rounded text-xs">
           <span className="font-medium text-[#3B7097]">Contract:</span>
           <span className="text-[#3B7097] ml-1">{client.contractProperty}</span>
+        </div>
+      )}
+
+      {/* Next Event */}
+      {nextEvent && (
+        <div className="text-xs text-gray-500 pt-1">
+          <div className="flex items-center space-x-1">
+            <Calendar className="size-3" />
+            <span>Next: {nextEvent.title}</span>
+          </div>
+          <div className="text-xs text-gray-400 ml-4">
+            {new Date(nextEvent.date).toLocaleDateString('en-US', { 
+              month: 'short', 
+              day: 'numeric' 
+            })} at {nextEvent.time}
+          </div>
         </div>
       )}
 

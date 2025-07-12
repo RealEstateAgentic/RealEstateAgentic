@@ -393,11 +393,7 @@ export const dummyData = {
       subStatus: "to_initiate_contact",
       budget: "$450,000 - $550,000",
       location: "Downtown area",
-      leadSource: "Website Form",
-      priority: "High",
-      dateAdded: "2024-01-14",
-      lastContact: null,
-      notes: "First-time buyer, pre-approved with local bank"
+      leadSource: "Website Form"
     },
     {
       id: 2,
@@ -408,11 +404,7 @@ export const dummyData = {
       subStatus: "awaiting_survey",
       budget: "$600,000 - $700,000",
       location: "Suburban neighborhoods",
-      leadSource: "Referral",
-      priority: "Medium",
-      dateAdded: "2024-01-13",
-      lastContact: "2024-01-14",
-      notes: "Looking for 4BR family home, has 2 kids"
+      leadSource: "Referral"
     },
     {
       id: 3,
@@ -423,11 +415,7 @@ export const dummyData = {
       subStatus: "review_survey",
       budget: "$300,000 - $400,000",
       location: "Any area",
-      leadSource: "Zillow",
-      priority: "High",
-      dateAdded: "2024-01-12",
-      lastContact: "2024-01-13",
-      notes: "Veteran buyer, VA loan pre-approved"
+      leadSource: "Zillow"
     },
     {
       id: 4,
@@ -438,11 +426,7 @@ export const dummyData = {
       subStatus: "to_initiate_contact",
       budget: "$500,000 - $650,000",
       location: "Austin area",
-      leadSource: "Website Form",
-      priority: "High",
-      dateAdded: "2024-01-15",
-      lastContact: null,
-      notes: "Software developer, interested in modern condos"
+      leadSource: "Website Form"
     },
     // Active Search
     {
@@ -455,10 +439,6 @@ export const dummyData = {
       budget: "$500,000 - $600,000",
       location: "Midtown",
       leadSource: "Past Client Referral",
-      priority: "High",
-      dateAdded: "2024-01-10",
-      lastContact: "2024-01-14",
-      notes: "Loves modern condos, flexible timing",
       favoritedProperties: ["123 Main St", "456 Oak Ave"],
       viewedProperties: ["789 Pine Rd", "321 Elm St"]
     },
@@ -472,10 +452,6 @@ export const dummyData = {
       budget: "$400,000 - $500,000",
       location: "Westside",
       leadSource: "Website Form",
-      priority: "Medium",
-      dateAdded: "2024-01-08",
-      lastContact: "2024-01-13",
-      notes: "Young professional, first-time buyer",
       favoritedProperties: ["987 Cedar Ln"],
       viewedProperties: ["654 Birch Ave", "321 Spruce St"]
     },
@@ -489,10 +465,6 @@ export const dummyData = {
       budget: "$650,000 - $750,000",
       location: "North Hills",
       leadSource: "Referral",
-      priority: "High",
-      dateAdded: "2024-01-05",
-      lastContact: "2024-01-14",
-      notes: "Relocating family, needs quick close",
       favoritedProperties: ["555 Maple Dr", "777 Oak St"],
       viewedProperties: ["444 Pine Ave", "888 Elm Rd"]
     },
@@ -507,10 +479,6 @@ export const dummyData = {
       budget: "$520,000",
       location: "Eastside",
       leadSource: "Past Client",
-      priority: "High",
-      dateAdded: "2024-01-03",
-      lastContact: "2024-01-13",
-      notes: "Contract signed, inspection scheduled",
       contractProperty: "321 Willow St",
       contractDate: "2024-01-10",
       closingDate: "2024-02-15"
@@ -525,10 +493,6 @@ export const dummyData = {
       budget: "$475,000",
       location: "Southside",
       leadSource: "Referral",
-      priority: "Medium",
-      dateAdded: "2024-01-01",
-      lastContact: "2024-01-12",
-      notes: "Appraisal ordered, waiting for results",
       contractProperty: "789 Poplar Ave",
       contractDate: "2024-01-08",
       closingDate: "2024-02-20"
@@ -543,10 +507,6 @@ export const dummyData = {
       budget: "$380,000",
       location: "Central",
       leadSource: "Walk-in",
-      priority: "Medium",
-      dateAdded: "2023-12-28",
-      lastContact: "2024-01-11",
-      notes: "Finalizing loan documents",
       contractProperty: "123 Hickory Ln",
       contractDate: "2024-01-05",
       closingDate: "2024-02-10"
@@ -562,10 +522,6 @@ export const dummyData = {
       budget: "$425,000",
       location: "Northwest",
       leadSource: "Social Media",
-      priority: "Low",
-      dateAdded: "2023-12-15",
-      lastContact: "2024-01-10",
-      notes: "Successfully closed, happy clients",
       contractProperty: "456 Sycamore St",
       contractDate: "2023-12-20",
       closingDate: "2024-01-12",
@@ -581,10 +537,6 @@ export const dummyData = {
       budget: "$350,000",
       location: "Westside",
       leadSource: "Past Client",
-      priority: "Low",
-      dateAdded: "2023-12-10",
-      lastContact: "2024-01-05",
-      notes: "Happy with purchase, potential referral source",
       contractProperty: "654 Maple Dr",
       contractDate: "2023-12-15",
       closingDate: "2024-01-08",
@@ -603,8 +555,7 @@ export const dummyData = {
       stage: "listed",
       listingDate: "2024-01-10",
       askingPrice: "$485,000",
-      location: "West Hills",
-      notes: "Motivated sellers, open to negotiations"
+      location: "West Hills"
     },
     {
       id: 2,
@@ -615,8 +566,7 @@ export const dummyData = {
       stage: "appointment_set",
       listingDate: null,
       askingPrice: "TBD",
-      location: "Downtown",
-      notes: "Investment property, needs staging"
+      location: "Downtown"
     },
     {
       id: 3,
@@ -627,8 +577,7 @@ export const dummyData = {
       stage: "under_contract",
       listingDate: "2024-01-05",
       askingPrice: "$520,000",
-      location: "Eastside",
-      notes: "Estate sale, quick closing preferred"
+      location: "Eastside"
     },
     {
       id: 4,
@@ -639,8 +588,7 @@ export const dummyData = {
       stage: "closed",
       listingDate: "2023-12-15",
       askingPrice: "$395,000",
-      location: "Southside",
-      notes: "Successful sale, happy clients"
+      location: "Southside"
     }
   ],
 
@@ -656,10 +604,6 @@ export const dummyData = {
       budget: "$380,000 - $420,000",
       location: "Northeast",
       leadSource: "Referral",
-      priority: "medium",
-      dateAdded: "2023-12-20",
-      lastContact: "2024-01-05",
-      notes: "Looking for starter home, first-time buyers",
       favoritedProperties: ["101 Pine St", "202 Oak Ave"],
       viewedProperties: ["303 Maple Dr", "404 Elm St"],
       archivedDate: "2024-01-05T10:30:00Z",
@@ -675,10 +619,6 @@ export const dummyData = {
       budget: "$550,000",
       location: "Westside",
       leadSource: "Website Form",
-      priority: "high",
-      dateAdded: "2023-12-01",
-      lastContact: "2024-01-03",
-      notes: "Deal fell through after inspection",
       contractProperty: "505 Valley Rd",
       contractDate: "2023-12-15",
       inspectionDate: "2024-01-03",

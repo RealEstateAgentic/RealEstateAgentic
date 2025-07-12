@@ -30,7 +30,7 @@ import {
   Star,
   Users,
   Save,
-  Loader2
+  Loader2,
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { DocumentGenerator } from '../documents/DocumentGenerator'
@@ -89,7 +89,6 @@ export function ClientModal({
   const [showDocumentGenerator, setShowDocumentGenerator] = useState(false)
   const [isEditingDetails, setIsEditingDetails] = useState(false)
   const [isSendingSurvey, setIsSendingSurvey] = useState(false)
-
   const [editableDetails, setEditableDetails] = useState({
     name: client.name,
     email: client.email,
@@ -97,7 +96,7 @@ export function ClientModal({
     budget: client.budget,
     location: client.location,
     priority: client.priority,
-    notes: client.notes
+    notes: client.notes,
   })
 
   // Sample documents for buyer
@@ -109,7 +108,7 @@ export function ClientModal({
       size: '2.1 MB',
       uploadDate: '2024-01-10',
       description: 'Initial buyer questionnaire responses',
-      tags: 'survey, initial'
+      tags: 'survey, initial',
     },
     {
       id: 2,
@@ -118,17 +117,20 @@ export function ClientModal({
       size: '1.5 MB',
       uploadDate: '2024-01-08',
       description: 'AI-generated client briefing document',
-      tags: 'briefing, ai-generated'
-    }
+      tags: 'briefing, ai-generated',
+    },
   ])
 
   useEffect(() => {
     if (client.initialDocumentId && activeTab === 'documents') {
-      const doc = documents.find(d => d.id === parseInt(client.initialDocumentId || '0'))
+      const doc = documents.find(
+        d => d.id === parseInt(client.initialDocumentId || '0')
+      )
       if (doc) {
         setSelectedDocument({
           ...doc,
-          content: "This is the document content that would be displayed in a scrollable modal."
+          content:
+            'This is the document content that would be displayed in a scrollable modal.',
         })
       }
     }
@@ -137,10 +139,10 @@ export function ClientModal({
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return 'Not set'
     const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
     })
   }
 
@@ -213,46 +215,53 @@ export function ClientModal({
 
   const handleSendSurvey = async () => {
     if (isSendingSurvey) return
-    
+
     setIsSendingSurvey(true)
-    
+
     try {
       console.log('Sending survey to:', client.name, client.email)
-      
+
       // Check if Gmail is authenticated
       if (!gmailAuth.isAuthenticated()) {
         console.log('🔑 Gmail not authenticated, starting OAuth flow...')
-        
+
         const authResult = await gmailAuth.authenticate()
-        
+
         if (!authResult.success) {
           throw new Error(`Gmail authentication failed: ${authResult.error}`)
         }
-        
+
         console.log('✅ Gmail authenticated:', authResult.userEmail)
       }
-      
+
       // Import and use the automation service with Gmail API
-      const { startBuyerWorkflowWithGmail } = await import('../../services/automation')
-      
+      const { startBuyerWorkflowWithGmail } = await import(
+        '../../services/automation'
+      )
+
       const result = await startBuyerWorkflowWithGmail({
         agentId: 'agent-1', // TODO: Get actual agent ID
         buyerEmail: client.email,
         buyerName: client.name,
         buyerPhone: client.phone,
-        senderEmail: gmailAuth.getUserEmail() || undefined
+        senderEmail: gmailAuth.getUserEmail() || undefined,
       })
-      
+
       if (result.success) {
-        alert(`✅ Survey sent successfully to ${client.name} from your Gmail account!\n\nForm URL: ${result.formUrl}`)
+        alert(
+          `✅ Survey sent successfully to ${client.name} from your Gmail account!\n\nForm URL: ${result.formUrl}`
+        )
         console.log('Survey sent successfully:', result)
       } else {
         throw new Error('Failed to send survey')
       }
     } catch (error) {
       console.error('Error sending survey:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-      alert(`❌ Failed to send survey to ${client.name}.\n\nError: ${errorMessage}`)
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred'
+      alert(
+        `❌ Failed to send survey to ${client.name}.\n\nError: ${errorMessage}`
+      )
     } finally {
       setIsSendingSurvey(false)
     }
@@ -325,7 +334,7 @@ export function ClientModal({
       budget: client.budget,
       location: client.location,
       priority: client.priority,
-      notes: client.notes
+      notes: client.notes,
     })
     setIsEditingDetails(false)
   }
@@ -333,7 +342,8 @@ export function ClientModal({
   const handleViewDocument = (document: any) => {
     setSelectedDocument({
       ...document,
-      content: "This is the document content that would be displayed in a scrollable modal."
+      content:
+        'This is the document content that would be displayed in a scrollable modal.',
     })
   }
 
@@ -371,11 +381,9 @@ export function ClientModal({
   }
 
   const getVisibleTabs = () => {
-    const baseTabs = [
-      { id: 'ai_lead_scoring', label: 'AI Lead Scoring', icon: TrendingUp },
-    ]
+    
 
-    const stageSpecificTabs = []
+  
     
     // Removed Contingencies tab - no longer needed
 
@@ -383,7 +391,7 @@ export function ClientModal({
       { id: 'documents', label: 'Documents and Content', icon: FolderOpen },
     ]
 
-    return [...baseTabs, ...stageSpecificTabs, ...alwaysVisibleTabs]
+    return [...alwaysVisibleTabs]
   }
 
   const getStageActions = () => {
@@ -391,7 +399,7 @@ export function ClientModal({
       case 'new_leads':
         return (
           <div className="flex flex-wrap gap-2">
-            <Button 
+            <Button
               onClick={handleSendSurvey}
               disabled={isSendingSurvey}
               className="bg-[#3B7097] hover:bg-[#3B7097]/90"
@@ -408,7 +416,7 @@ export function ClientModal({
       case 'active_search':
         return (
           <div className="flex flex-wrap gap-2">
-            <Button 
+            <Button
               onClick={handleGenerateDocuments}
               className="bg-[#3B7097] hover:bg-[#3B7097]/90"
             >
@@ -420,13 +428,13 @@ export function ClientModal({
       case 'under_contract':
         return (
           <div className="flex flex-wrap gap-2">
-            <Button 
+            <Button
               onClick={handleRepairEstimator}
               className="bg-[#3B7097] hover:bg-[#3B7097]/90"
             >
               Repair Estimator
             </Button>
-            <Button 
+            <Button
               onClick={handleGenerateDocuments}
               className="bg-[#3B7097] hover:bg-[#3B7097]/90"
             >
@@ -449,19 +457,13 @@ export function ClientModal({
   const renderTabContent = () => {
     switch (activeTab) {
 
-      case 'ai_lead_scoring':
-        return (
-          <LeadScoringDisplay
-            clientEmail={client.email}
-            clientName={client.name}
-          />
-        )
-
       case 'documents':
         return (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-800">Documents and Content</h3>
+              <h3 className="text-lg font-semibold text-gray-800">
+                Documents and Content
+              </h3>
               <Button className="bg-[#3B7097] hover:bg-[#3B7097]/90">
                 <Upload className="size-4 mr-2" />
                 Upload Document
@@ -469,13 +471,20 @@ export function ClientModal({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {documents.map((doc) => (
-                <div key={doc.id} className="bg-white border border-gray-200 rounded-lg p-4">
+              {documents.map(doc => (
+                <div
+                  key={doc.id}
+                  className="bg-white border border-gray-200 rounded-lg p-4"
+                >
                   <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-medium text-gray-900 text-sm">{doc.title}</h4>
+                    <h4 className="font-medium text-gray-900 text-sm">
+                      {doc.title}
+                    </h4>
                     <span className="text-xs text-gray-500">{doc.type}</span>
                   </div>
-                  <p className="text-xs text-gray-600 mb-3">{doc.description}</p>
+                  <p className="text-xs text-gray-600 mb-3">
+                    {doc.description}
+                  </p>
                   <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
                     <span>{doc.size}</span>
                     <span>{formatDate(doc.uploadDate)}</span>
@@ -517,7 +526,9 @@ export function ClientModal({
           <div className="bg-white rounded-lg max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">{selectedDocument.title}</h3>
+                <h3 className="text-lg font-semibold">
+                  {selectedDocument.title}
+                </h3>
                 <button
                   onClick={() => setSelectedDocument(null)}
                   className="text-gray-500 hover:text-gray-700"
@@ -579,39 +590,67 @@ export function ClientModal({
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Name
+                    </label>
                     <input
                       type="text"
                       value={editableDetails.name}
-                      onChange={(e) => setEditableDetails({...editableDetails, name: e.target.value})}
+                      onChange={e =>
+                        setEditableDetails({
+                          ...editableDetails,
+                          name: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email
+                    </label>
                     <input
                       type="email"
                       value={editableDetails.email}
-                      onChange={(e) => setEditableDetails({...editableDetails, email: e.target.value})}
+                      onChange={e =>
+                        setEditableDetails({
+                          ...editableDetails,
+                          email: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Phone
+                    </label>
                     <input
                       type="tel"
                       value={editableDetails.phone}
-                      onChange={(e) => setEditableDetails({...editableDetails, phone: e.target.value})}
+                      onChange={e =>
+                        setEditableDetails({
+                          ...editableDetails,
+                          phone: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Priority
+                    </label>
                     <select
                       value={editableDetails.priority}
-                      onChange={(e) => setEditableDetails({...editableDetails, priority: e.target.value})}
+                      onChange={e =>
+                        setEditableDetails({
+                          ...editableDetails,
+                          priority: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                     >
                       <option value="High">High</option>
@@ -621,28 +660,49 @@ export function ClientModal({
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Budget</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Budget
+                  </label>
                   <input
                     type="text"
                     value={editableDetails.budget}
-                    onChange={(e) => setEditableDetails({...editableDetails, budget: e.target.value})}
+                    onChange={e =>
+                      setEditableDetails({
+                        ...editableDetails,
+                        budget: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Location
+                  </label>
                   <input
                     type="text"
                     value={editableDetails.location}
-                    onChange={(e) => setEditableDetails({...editableDetails, location: e.target.value})}
+                    onChange={e =>
+                      setEditableDetails({
+                        ...editableDetails,
+                        location: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Notes
+                  </label>
                   <textarea
                     value={editableDetails.notes}
-                    onChange={(e) => setEditableDetails({...editableDetails, notes: e.target.value})}
+                    onChange={e =>
+                      setEditableDetails({
+                        ...editableDetails,
+                        notes: e.target.value,
+                      })
+                    }
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                   />
@@ -674,7 +734,9 @@ export function ClientModal({
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-4">
             <div>
-              <h2 className="text-xl font-semibold text-gray-800">{isEditingDetails ? editableDetails.name : client.name}</h2>
+              <h2 className="text-xl font-semibold text-gray-800">
+                {isEditingDetails ? editableDetails.name : client.name}
+              </h2>
               <div className="flex items-center space-x-2 text-sm text-gray-600 mt-1">
                 <span>{getStageName(client.stage)}</span>
               </div>
@@ -690,10 +752,16 @@ export function ClientModal({
           </div>
           <div className="flex items-center space-x-2">
             <div className="flex items-center space-x-2">
-              <a href={`tel:${isEditingDetails ? editableDetails.phone : client.phone}`} className="text-gray-500 hover:text-[#3B7097]">
+              <a
+                href={`tel:${isEditingDetails ? editableDetails.phone : client.phone}`}
+                className="text-gray-500 hover:text-[#3B7097]"
+              >
                 <Phone className="size-5" />
               </a>
-              <a href={`mailto:${isEditingDetails ? editableDetails.email : client.email}`} className="text-gray-500 hover:text-[#3B7097]">
+              <a
+                href={`mailto:${isEditingDetails ? editableDetails.email : client.email}`}
+                className="text-gray-500 hover:text-[#3B7097]"
+              >
                 <Mail className="size-5" />
               </a>
             </div>
@@ -709,7 +777,7 @@ export function ClientModal({
         {/* Tabs - Updated to match seller modal tabs */}
         <div className="border-b border-gray-200 px-6">
           <nav className="flex space-x-8">
-            {getVisibleTabs().map((tab) => (
+            {getVisibleTabs().map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
@@ -727,16 +795,14 @@ export function ClientModal({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {renderTabContent()}
-        </div>
+        <div className="flex-1 overflow-y-auto p-6">{renderTabContent()}</div>
 
         {/* Footer Actions */}
         <div className="border-t border-gray-200 p-6">
           <div className="flex flex-wrap gap-2">
             {/* Stage-specific actions */}
             {getStageActions()}
-            
+
             {/* Edit Details Button - Always present */}
             <Button
               onClick={() => setIsEditingDetails(true)}
@@ -766,7 +832,7 @@ export function ClientModal({
                   <Archive className="size-4 mr-2" />
                   Archive
                 </Button>
-                
+
                 {/* Progress Button */}
                 {shouldShowProgressButton(client.stage) && (
                   <Button

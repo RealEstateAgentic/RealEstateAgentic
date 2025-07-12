@@ -13,10 +13,6 @@ interface KanbanColumnProps {
     budget: string
     location: string
     leadSource: string
-    priority: string
-    dateAdded: string
-    lastContact: string | null
-    notes: string
     favoritedProperties?: string[]
     viewedProperties?: string[]
     contractProperty?: string

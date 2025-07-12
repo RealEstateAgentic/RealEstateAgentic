@@ -5,11 +5,37 @@
  */
 
 import { useState, useEffect } from 'react'
-import { 
-  X, Phone, Mail, MapPin, Calendar, DollarSign, FileText, Download, Plus, 
-  Home, Clock, Archive, ArrowRight, RotateCcw, History, FolderOpen, 
-  CalendarDays, Upload, Eye, Edit, MessageCircle, User, Send, 
-  CheckCircle, AlertCircle, Settings, Star, TrendingUp, Users, Save
+import {
+  X,
+  Phone,
+  Mail,
+  MapPin,
+  Calendar,
+  DollarSign,
+  FileText,
+  Download,
+  Plus,
+  Home,
+  Clock,
+  Archive,
+  ArrowRight,
+  RotateCcw,
+  History,
+  FolderOpen,
+  CalendarDays,
+  Upload,
+  Eye,
+  Edit,
+  MessageCircle,
+  User,
+  Send,
+  CheckCircle,
+  AlertCircle,
+  Settings,
+  Star,
+  TrendingUp,
+  Users,
+  Save,
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { DocumentGenerator } from '../documents/DocumentGenerator'
@@ -46,14 +72,14 @@ interface ClientModalProps {
   currentUser?: any
 }
 
-export function ClientModal({ 
-  client, 
-  onClose, 
-  onArchive, 
-  onProgress, 
-  onUnarchive, 
+export function ClientModal({
+  client,
+  onClose,
+  onArchive,
+  onProgress,
+  onUnarchive,
   isArchiveMode = false,
-  currentUser
+  currentUser,
 }: ClientModalProps) {
   const [activeTab, setActiveTab] = useState(client.initialTab || 'ai_lead_scoring')
   const [selectedDocument, setSelectedDocument] = useState<any>(null)
@@ -64,7 +90,7 @@ export function ClientModal({
     file: null as File | null,
     title: '',
     description: '',
-    tags: ''
+    tags: '',
   })
   const [editableDetails, setEditableDetails] = useState({
     name: client.name,
@@ -78,7 +104,7 @@ export function ClientModal({
     reasonForSelling: client.reasonForSelling,
     leadSource: client.leadSource,
     priority: client.priority,
-    notes: client.notes
+    notes: client.notes,
   })
   const [documents, setDocuments] = useState([
     {
@@ -88,7 +114,7 @@ export function ClientModal({
       size: '2.3 MB',
       uploadDate: '2024-01-10',
       description: 'Initial seller questionnaire responses',
-      tags: 'survey, initial'
+      tags: 'survey, initial',
     },
     {
       id: 2,
@@ -97,18 +123,21 @@ export function ClientModal({
       size: '1.8 MB',
       uploadDate: '2024-01-08',
       description: 'AI-generated client briefing document',
-      tags: 'briefing, ai-generated'
-    }
+      tags: 'briefing, ai-generated',
+    },
   ])
 
   // Handle initial document opening
   useEffect(() => {
     if (client.initialDocumentId && activeTab === 'documents') {
-      const doc = documents.find(d => d.id === parseInt(client.initialDocumentId || '0'))
+      const doc = documents.find(
+        d => d.id === parseInt(client.initialDocumentId || '0')
+      )
       if (doc) {
         setSelectedDocument({
           ...doc,
-          content: "This is the document content that would be displayed in a scrollable modal."
+          content:
+            'This is the document content that would be displayed in a scrollable modal.',
         })
       }
     }
@@ -117,10 +146,10 @@ export function ClientModal({
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return 'Not set'
     const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
     })
   }
 
@@ -210,7 +239,7 @@ export function ClientModal({
       size: `${(uploadForm.file.size / 1024 / 1024).toFixed(1)} MB`,
       uploadDate: new Date().toISOString().split('T')[0],
       description: uploadForm.description,
-      tags: uploadForm.tags
+      tags: uploadForm.tags,
     }
 
     setDocuments([...documents, newDocument])
@@ -221,7 +250,7 @@ export function ClientModal({
   const handleViewDocument = (document: any) => {
     setSelectedDocument({
       ...document,
-      content: `This is the content of "${document.title}". In a real application, this would display the actual document content in a scrollable format.`
+      content: `This is the content of "${document.title}". In a real application, this would display the actual document content in a scrollable format.`,
     })
   }
 
@@ -250,7 +279,7 @@ export function ClientModal({
       reasonForSelling: client.reasonForSelling,
       leadSource: client.leadSource,
       priority: client.priority,
-      notes: client.notes
+      notes: client.notes,
     })
     setIsEditingDetails(false)
   }
@@ -263,7 +292,9 @@ export function ClientModal({
     }
 
     if (!currentUser.displayName) {
-      alert('Agent profile is incomplete. Please update your profile before generating documents.')
+      alert(
+        'Agent profile is incomplete. Please update your profile before generating documents.'
+      )
       return
     }
 
@@ -322,7 +353,7 @@ export function ClientModal({
         firstName,
         lastName,
         city: 'Unknown City',
-        state: 'Unknown State', 
+        state: 'Unknown State',
         zipCode: 'Unknown Zip',
       },
       clientType: 'seller',
@@ -343,12 +374,6 @@ export function ClientModal({
 
   // Define which tabs should be visible based on client stage
   const getVisibleTabs = () => {
-    const baseTabs = [
-      // Removed 'overview' and 'stage_details' tabs per Phase 2 requirements
-      { id: 'ai_lead_scoring', label: 'AI Lead Scoring', icon: TrendingUp },
-    ]
-
-    const stageSpecificTabs: any[] = []
     
     // Removed Offers tab from Active Listing stage per Phase 5 Task 5.3
     // Removed Contingencies tab - no longer needed
@@ -358,7 +383,7 @@ export function ClientModal({
       // Removed 'email_history' tab as requested
     ]
 
-    return [...baseTabs, ...stageSpecificTabs, ...alwaysVisibleTabs]
+    return [...alwaysVisibleTabs]
   }
 
   // Updated stage actions with removed buttons per requirements
@@ -381,7 +406,7 @@ export function ClientModal({
         return (
           <div className="flex flex-wrap gap-2">
             {/* Removed "Schedule Listing Appointment" button per Task 4.2 */}
-            <Button 
+            <Button
               onClick={handleGenerateDocuments}
               className="bg-[#3B7097] hover:bg-[#3B7097]/90"
             >
@@ -394,7 +419,7 @@ export function ClientModal({
         return (
           <div className="flex flex-wrap gap-2">
             {/* Removed "Add Showing Notes" button per Phase 5 Task 5.1 */}
-            <Button 
+            <Button
               onClick={handleGenerateDocuments}
               className="bg-[#3B7097] hover:bg-[#3B7097]/90"
             >
@@ -430,19 +455,34 @@ export function ClientModal({
             <div className="bg-[#75BDE0]/10 p-4 rounded-lg border border-[#75BDE0]/30">
               <h4 className="font-medium text-gray-800 mb-2">Survey Status</h4>
               <div className="space-y-2 text-sm">
-                <div><strong>Survey Status:</strong> {client.subStatus === 'awaiting_survey' ? 'Pending' : 'Completed'}</div>
-                <div><strong>Lead Source:</strong> {client.leadSource}</div>
-                <div><strong>Priority:</strong> {client.priority}</div>
-                <div><strong>Date Added:</strong> {formatDate(client.dateAdded)}</div>
+                <div>
+                  <strong>Survey Status:</strong>{' '}
+                  {client.subStatus === 'awaiting_survey'
+                    ? 'Pending'
+                    : 'Completed'}
+                </div>
+                <div>
+                  <strong>Lead Source:</strong> {client.leadSource}
+                </div>
+                <div>
+                  <strong>Priority:</strong> {client.priority}
+                </div>
+                <div>
+                  <strong>Date Added:</strong> {formatDate(client.dateAdded)}
+                </div>
               </div>
             </div>
             <div className="bg-[#c05e51]/10 p-4 rounded-lg border border-[#c05e51]/30">
               <h4 className="font-medium text-gray-800 mb-2">AI Briefing</h4>
               <p className="text-sm text-gray-700">
-                {client.subStatus === 'to_initiate_contact' && 'Ready for initial consultation call. Seller profile indicates potential for listing.'}
-                {client.subStatus === 'awaiting_survey' && 'Survey sent to seller. Follow up recommended if no response within 48 hours.'}
-                {client.subStatus === 'review_survey' && 'Survey completed. Review responses and prepare personalized seller consultation.'}
-                {client.subStatus === 'awaiting_signing' && 'Seller is ready to sign listing agreement. Schedule signing appointment.'}
+                {client.subStatus === 'to_initiate_contact' &&
+                  'Ready for initial consultation call. Seller profile indicates potential for listing.'}
+                {client.subStatus === 'awaiting_survey' &&
+                  'Survey sent to seller. Follow up recommended if no response within 48 hours.'}
+                {client.subStatus === 'review_survey' &&
+                  'Survey completed. Review responses and prepare personalized seller consultation.'}
+                {client.subStatus === 'awaiting_signing' &&
+                  'Seller is ready to sign listing agreement. Schedule signing appointment.'}
               </p>
             </div>
           </div>
@@ -453,19 +493,39 @@ export function ClientModal({
             <div className="bg-[#A9D09E]/10 p-6 rounded-lg border border-[#A9D09E]/30 flex-1">
               <h4 className="font-medium text-gray-800 mb-4">CMA Status</h4>
               <div className="space-y-3 text-sm">
-                <div><strong>CMA Status:</strong> {client.subStatus === 'preparing_cma' ? 'In Progress' : 'Completed'}</div>
-                <div><strong>Market Analysis:</strong> Comparative analysis of 5 similar properties</div>
-                <div><strong>Suggested List Price:</strong> $425,000 - $450,000</div>
+                <div>
+                  <strong>CMA Status:</strong>{' '}
+                  {client.subStatus === 'preparing_cma'
+                    ? 'In Progress'
+                    : 'Completed'}
+                </div>
+                <div>
+                  <strong>Market Analysis:</strong> Comparative analysis of 5
+                  similar properties
+                </div>
+                <div>
+                  <strong>Suggested List Price:</strong> $425,000 - $450,000
+                </div>
                 <div className="pt-4 space-y-2">
-                  <div><strong>Comparable Properties:</strong></div>
-                  <div className="text-xs text-gray-600">• 456 Oak Street - $445,000 (15 days on market)</div>
-                  <div className="text-xs text-gray-600">• 789 Pine Avenue - $430,000 (22 days on market)</div>
-                  <div className="text-xs text-gray-600">• 321 Maple Drive - $465,000 (8 days on market)</div>
+                  <div>
+                    <strong>Comparable Properties:</strong>
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    • 456 Oak Street - $445,000 (15 days on market)
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    • 789 Pine Avenue - $430,000 (22 days on market)
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    • 321 Maple Drive - $465,000 (8 days on market)
+                  </div>
                 </div>
               </div>
             </div>
             <div className="bg-[#F6E2BC]/30 p-6 rounded-lg border border-[#F6E2BC]/50 flex-1">
-              <h4 className="font-medium text-gray-800 mb-4">Listing Preparation</h4>
+              <h4 className="font-medium text-gray-800 mb-4">
+                Listing Preparation
+              </h4>
               <div className="space-y-3 text-sm">
                 <div className="flex items-center justify-between">
                   <span>Property Photos</span>
@@ -480,11 +540,21 @@ export function ClientModal({
                   <span className="text-gray-600">Pending</span>
                 </div>
                 <div className="pt-4 space-y-2">
-                  <div><strong>Next Steps:</strong></div>
-                  <div className="text-xs text-gray-600">• Schedule professional photography</div>
-                  <div className="text-xs text-gray-600">• Complete staging recommendations</div>
-                  <div className="text-xs text-gray-600">• Finalize MLS description and details</div>
-                  <div className="text-xs text-gray-600">• Set listing price and strategy</div>
+                  <div>
+                    <strong>Next Steps:</strong>
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    • Schedule professional photography
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    • Complete staging recommendations
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    • Finalize MLS description and details
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    • Set listing price and strategy
+                  </div>
                 </div>
               </div>
             </div>
@@ -494,21 +564,35 @@ export function ClientModal({
         return (
           <div className="space-y-4">
             <div className="bg-[#75BDE0]/10 p-4 rounded-lg border border-[#75BDE0]/30">
-              <h4 className="font-medium text-gray-800 mb-2">Showing Feedback Hub</h4>
-              <p className="text-sm text-gray-600 mb-3">Recent showing feedback from buyer's agents</p>
+              <h4 className="font-medium text-gray-800 mb-2">
+                Showing Feedback Hub
+              </h4>
+              <p className="text-sm text-gray-600 mb-3">
+                Recent showing feedback from buyer's agents
+              </p>
               <div className="space-y-2 text-sm">
                 <div className="bg-white p-2 rounded border">
-                  <div className="font-medium">Showing 1/12 - Positive feedback</div>
-                  <div className="text-gray-600">Buyers loved the kitchen updates</div>
+                  <div className="font-medium">
+                    Showing 1/12 - Positive feedback
+                  </div>
+                  <div className="text-gray-600">
+                    Buyers loved the kitchen updates
+                  </div>
                 </div>
                 <div className="bg-white p-2 rounded border">
-                  <div className="font-medium">Showing 1/10 - Neutral feedback</div>
-                  <div className="text-gray-600">Buyers concerned about backyard size</div>
+                  <div className="font-medium">
+                    Showing 1/10 - Neutral feedback
+                  </div>
+                  <div className="text-gray-600">
+                    Buyers concerned about backyard size
+                  </div>
                 </div>
               </div>
             </div>
             <div className="bg-[#A9D09E]/10 p-4 rounded-lg border border-[#A9D09E]/30">
-              <h4 className="font-medium text-gray-800 mb-3">Listing Performance</h4>
+              <h4 className="font-medium text-gray-800 mb-3">
+                Listing Performance
+              </h4>
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-[#3B7097]">247</div>
@@ -530,16 +614,28 @@ export function ClientModal({
         return (
           <div className="space-y-4">
             <div className="bg-[#c05e51]/10 p-4 rounded-lg border border-[#c05e51]/30">
-              <h4 className="font-medium text-gray-800 mb-2">Contract Details</h4>
+              <h4 className="font-medium text-gray-800 mb-2">
+                Contract Details
+              </h4>
               <div className="space-y-2 text-sm">
-                <div><strong>Contract Price:</strong> $435,000</div>
-                <div><strong>Buyer Agent:</strong> Jane Smith, ABC Realty</div>
-                <div><strong>Closing Date:</strong> February 15, 2024</div>
-                <div><strong>Contract Date:</strong> January 5, 2024</div>
+                <div>
+                  <strong>Contract Price:</strong> $435,000
+                </div>
+                <div>
+                  <strong>Buyer Agent:</strong> Jane Smith, ABC Realty
+                </div>
+                <div>
+                  <strong>Closing Date:</strong> February 15, 2024
+                </div>
+                <div>
+                  <strong>Contract Date:</strong> January 5, 2024
+                </div>
               </div>
             </div>
             <div className="bg-[#F6E2BC]/30 p-4 rounded-lg border border-[#F6E2BC]/50">
-              <h4 className="font-medium text-gray-800 mb-2">Transaction Timeline</h4>
+              <h4 className="font-medium text-gray-800 mb-2">
+                Transaction Timeline
+              </h4>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">
                   <span>Inspection Period</span>
@@ -561,16 +657,28 @@ export function ClientModal({
         return (
           <div className="space-y-4">
             <div className="bg-[#A9D09E]/10 p-4 rounded-lg border border-[#A9D09E]/30">
-              <h4 className="font-medium text-gray-800 mb-2">Closing Summary</h4>
+              <h4 className="font-medium text-gray-800 mb-2">
+                Closing Summary
+              </h4>
               <div className="space-y-2 text-sm">
-                <div><strong>Final Sale Price:</strong> $432,000</div>
-                <div><strong>Closing Date:</strong> February 12, 2024</div>
-                <div><strong>Days on Market:</strong> 18 days</div>
-                <div><strong>Commission:</strong> $12,960</div>
+                <div>
+                  <strong>Final Sale Price:</strong> $432,000
+                </div>
+                <div>
+                  <strong>Closing Date:</strong> February 12, 2024
+                </div>
+                <div>
+                  <strong>Days on Market:</strong> 18 days
+                </div>
+                <div>
+                  <strong>Commission:</strong> $12,960
+                </div>
               </div>
             </div>
             <div className="bg-[#75BDE0]/10 p-4 rounded-lg border border-[#75BDE0]/30">
-              <h4 className="font-medium text-gray-800 mb-2">Post-Closing Status</h4>
+              <h4 className="font-medium text-gray-800 mb-2">
+                Post-Closing Status
+              </h4>
               <div className="space-y-2 text-sm">
                 <div className="flex items-center justify-between">
                   <span>Keys Transferred</span>
@@ -591,7 +699,9 @@ export function ClientModal({
       default:
         return (
           <div className="space-y-4">
-            <div className="text-gray-500">No stage-specific content available.</div>
+            <div className="text-gray-500">
+              No stage-specific content available.
+            </div>
           </div>
         )
     }
@@ -599,14 +709,6 @@ export function ClientModal({
 
   const renderTabContent = () => {
     switch (activeTab) {
-
-      case 'ai_lead_scoring':
-        return (
-          <LeadScoringDisplay
-            clientEmail={client.email}
-            clientName={client.name}
-          />
-        )
 
       case 'documents':
         return (
@@ -660,14 +762,15 @@ export function ClientModal({
                   <div className="text-center py-8">
                     <FileText className="size-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-500">No documents uploaded yet</p>
-                    <p className="text-sm text-gray-400 mt-2">Click "Upload Content" to add documents</p>
+                    <p className="text-sm text-gray-400 mt-2">
+                      Click "Upload Content" to add documents
+                    </p>
                   </div>
                 )}
               </div>
             </div>
           </div>
         )
-
       default:
         return (
           <div className="space-y-4">
@@ -726,7 +829,12 @@ export function ClientModal({
                   </label>
                   <input
                     type="file"
-                    onChange={(e) => setUploadForm({...uploadForm, file: e.target.files?.[0] || null})}
+                    onChange={e =>
+                      setUploadForm({
+                        ...uploadForm,
+                        file: e.target.files?.[0] || null,
+                      })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                   />
                 </div>
@@ -737,7 +845,9 @@ export function ClientModal({
                   <input
                     type="text"
                     value={uploadForm.title}
-                    onChange={(e) => setUploadForm({...uploadForm, title: e.target.value})}
+                    onChange={e =>
+                      setUploadForm({ ...uploadForm, title: e.target.value })
+                    }
                     placeholder="Enter document title"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                   />
@@ -748,7 +858,12 @@ export function ClientModal({
                   </label>
                   <textarea
                     value={uploadForm.description}
-                    onChange={(e) => setUploadForm({...uploadForm, description: e.target.value})}
+                    onChange={e =>
+                      setUploadForm({
+                        ...uploadForm,
+                        description: e.target.value,
+                      })
+                    }
                     placeholder="Brief description of the document"
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
@@ -761,7 +876,9 @@ export function ClientModal({
                   <input
                     type="text"
                     value={uploadForm.tags}
-                    onChange={(e) => setUploadForm({...uploadForm, tags: e.target.value})}
+                    onChange={e =>
+                      setUploadForm({ ...uploadForm, tags: e.target.value })
+                    }
                     placeholder="e.g., contract, inspection, photos"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                   />
@@ -804,48 +921,83 @@ export function ClientModal({
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Name
+                    </label>
                     <input
                       type="text"
                       value={editableDetails.name}
-                      onChange={(e) => setEditableDetails({...editableDetails, name: e.target.value})}
+                      onChange={e =>
+                        setEditableDetails({
+                          ...editableDetails,
+                          name: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email
+                    </label>
                     <input
                       type="email"
                       value={editableDetails.email}
-                      onChange={(e) => setEditableDetails({...editableDetails, email: e.target.value})}
+                      onChange={e =>
+                        setEditableDetails({
+                          ...editableDetails,
+                          email: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone
+                  </label>
                   <input
                     type="tel"
                     value={editableDetails.phone}
-                    onChange={(e) => setEditableDetails({...editableDetails, phone: e.target.value})}
+                    onChange={e =>
+                      setEditableDetails({
+                        ...editableDetails,
+                        phone: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Property Address</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Property Address
+                  </label>
                   <input
                     type="text"
                     value={editableDetails.propertyAddress}
-                    onChange={(e) => setEditableDetails({...editableDetails, propertyAddress: e.target.value})}
+                    onChange={e =>
+                      setEditableDetails({
+                        ...editableDetails,
+                        propertyAddress: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                   />
                 </div>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Property Type</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Property Type
+                    </label>
                     <select
                       value={editableDetails.propertyType}
-                      onChange={(e) => setEditableDetails({...editableDetails, propertyType: e.target.value})}
+                      onChange={e =>
+                        setEditableDetails({
+                          ...editableDetails,
+                          propertyType: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                     >
                       <option value="Single Family">Single Family</option>
@@ -855,30 +1007,51 @@ export function ClientModal({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Bedrooms</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Bedrooms
+                    </label>
                     <input
                       type="number"
                       value={editableDetails.bedrooms}
-                      onChange={(e) => setEditableDetails({...editableDetails, bedrooms: parseInt(e.target.value)})}
+                      onChange={e =>
+                        setEditableDetails({
+                          ...editableDetails,
+                          bedrooms: parseInt(e.target.value),
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Bathrooms</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Bathrooms
+                    </label>
                     <input
                       type="number"
                       value={editableDetails.bathrooms}
-                      onChange={(e) => setEditableDetails({...editableDetails, bathrooms: parseInt(e.target.value)})}
+                      onChange={e =>
+                        setEditableDetails({
+                          ...editableDetails,
+                          bathrooms: parseInt(e.target.value),
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                     />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Timeline</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Timeline
+                    </label>
                     <select
                       value={editableDetails.timeline}
-                      onChange={(e) => setEditableDetails({...editableDetails, timeline: e.target.value})}
+                      onChange={e =>
+                        setEditableDetails({
+                          ...editableDetails,
+                          timeline: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                     >
                       <option value="Immediate">Immediate</option>
@@ -888,10 +1061,17 @@ export function ClientModal({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Priority
+                    </label>
                     <select
                       value={editableDetails.priority}
-                      onChange={(e) => setEditableDetails({...editableDetails, priority: e.target.value})}
+                      onChange={e =>
+                        setEditableDetails({
+                          ...editableDetails,
+                          priority: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                     >
                       <option value="High">High</option>
@@ -901,19 +1081,33 @@ export function ClientModal({
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Reason for Selling</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Reason for Selling
+                  </label>
                   <input
                     type="text"
                     value={editableDetails.reasonForSelling}
-                    onChange={(e) => setEditableDetails({...editableDetails, reasonForSelling: e.target.value})}
+                    onChange={e =>
+                      setEditableDetails({
+                        ...editableDetails,
+                        reasonForSelling: e.target.value,
+                      })
+                    }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Notes
+                  </label>
                   <textarea
                     value={editableDetails.notes}
-                    onChange={(e) => setEditableDetails({...editableDetails, notes: e.target.value})}
+                    onChange={e =>
+                      setEditableDetails({
+                        ...editableDetails,
+                        notes: e.target.value,
+                      })
+                    }
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                   />
@@ -938,20 +1132,26 @@ export function ClientModal({
           </div>
         </div>
       )}
-      
+
       {/* Main Modal */}
       <div className="bg-white rounded-lg w-[85vw] h-[85vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-4">
             <div>
-              <h2 className="text-xl font-semibold text-gray-800">{isEditingDetails ? editableDetails.name : client.name}</h2>
+              <h2 className="text-xl font-semibold text-gray-800">
+                {isEditingDetails ? editableDetails.name : client.name}
+              </h2>
               <div className="flex items-center space-x-2 text-sm text-gray-600 mt-1">
                 <span>{getStageName(client.stage)}</span>
               </div>
               <div className="flex items-center space-x-2 text-sm text-gray-600">
                 <MapPin className="size-4" />
-                <span>{isEditingDetails ? editableDetails.propertyAddress : client.propertyAddress}</span>
+                <span>
+                  {isEditingDetails
+                    ? editableDetails.propertyAddress
+                    : client.propertyAddress}
+                </span>
               </div>
               <div className="flex items-center space-x-2 text-sm text-gray-500 mt-1">
                 <Calendar className="size-4" />
@@ -961,10 +1161,16 @@ export function ClientModal({
           </div>
           <div className="flex items-center space-x-2">
             <div className="flex items-center space-x-2">
-              <a href={`tel:${isEditingDetails ? editableDetails.phone : client.phone}`} className="text-gray-500 hover:text-[#3B7097]">
+              <a
+                href={`tel:${isEditingDetails ? editableDetails.phone : client.phone}`}
+                className="text-gray-500 hover:text-[#3B7097]"
+              >
                 <Phone className="size-5" />
               </a>
-              <a href={`mailto:${isEditingDetails ? editableDetails.email : client.email}`} className="text-gray-500 hover:text-[#3B7097]">
+              <a
+                href={`mailto:${isEditingDetails ? editableDetails.email : client.email}`}
+                className="text-gray-500 hover:text-[#3B7097]"
+              >
                 <Mail className="size-5" />
               </a>
             </div>
@@ -980,7 +1186,7 @@ export function ClientModal({
         {/* Tabs */}
         <div className="border-b border-gray-200 px-6">
           <nav className="flex space-x-8">
-            {getVisibleTabs().map((tab) => (
+            {getVisibleTabs().map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
@@ -998,16 +1204,14 @@ export function ClientModal({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {renderTabContent()}
-        </div>
+        <div className="flex-1 overflow-y-auto p-6">{renderTabContent()}</div>
 
         {/* Footer Actions */}
         <div className="border-t border-gray-200 p-6">
           <div className="flex flex-wrap gap-2">
             {/* Stage-specific actions */}
             {getStageActions()}
-            
+
             {/* Edit Details Button - Always present */}
             <Button
               onClick={() => setIsEditingDetails(true)}
@@ -1037,7 +1241,7 @@ export function ClientModal({
                   <Archive className="size-4 mr-2" />
                   Archive
                 </Button>
-                
+
                 {/* Progress Button */}
                 {shouldShowProgressButton(client.stage) && (
                   <Button
@@ -1093,4 +1297,4 @@ export function ClientModal({
       )}
     </div>
   )
-} 
+}

@@ -1,7 +1,6 @@
-import { Phone, Mail, MapPin, Calendar, DollarSign, Send, Loader2, Shield, ShieldCheck, Home, AlertCircle, FileText, X } from 'lucide-react'
+import { Phone, Mail, MapPin, DollarSign, Send, Loader2, FileText, X } from 'lucide-react'
 import { useState } from 'react'
 import { gmailAuth } from '../../services/gmail-auth'
-import { dummyData } from '../../data/dummy-data'
 import { DocumentGenerator } from '../documents/DocumentGenerator'
 import type { AgentProfile } from '../../../shared/types'
 
@@ -16,10 +15,6 @@ interface ClientCardProps {
     budget: string
     location: string
     leadSource: string
-    priority: string
-    dateAdded: string
-    lastContact: string | null
-    notes: string
     favoritedProperties?: string[]
     viewedProperties?: string[]
     contractProperty?: string
@@ -61,39 +56,46 @@ export function ClientCard({ client, onClick, navigate }: ClientCardProps) {
       }
       
       // Import and use the automation service with Gmail API
-      const { startBuyerWorkflowWithGmail } = await import('../../services/automation')
+      const { startBuyerWorkflowWithGmail } = await import(
+        '../../services/automation'
+      )
       
       const result = await startBuyerWorkflowWithGmail({
         agentId: 'agent-1', // TODO: Get actual agent ID
         buyerEmail: client.email,
         buyerName: client.name,
         buyerPhone: client.phone,
-        senderEmail: gmailAuth.getUserEmail() || undefined
+        senderEmail: gmailAuth.getUserEmail() || undefined,
       })
       
       if (result.success) {
-        alert(`✅ Survey sent successfully to ${client.name} from your Gmail account!\n\nForm URL: ${result.formUrl}`)
+        alert(
+          `✅ Survey sent successfully to ${client.name} from your Gmail account!\n\nForm URL: ${result.formUrl}`
+        )
         console.log('Survey sent successfully:', result)
       } else {
         throw new Error('Failed to send survey')
       }
     } catch (error) {
       console.error('Error sending survey:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-      alert(`❌ Failed to send survey to ${client.name}.\n\nError: ${errorMessage}`)
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred'
+      alert(
+        `❌ Failed to send survey to ${client.name}.\n\nError: ${errorMessage}`
+      )
     } finally {
       setIsSending(false)
     }
   }
 
   const handleGenerateDocuments = (e: React.MouseEvent) => {
-    e.stopPropagation() // Prevent card click event
+    e.stopPropagation()
     setShowDocumentGenerator(true)
   }
 
   const handleDocumentGenerated = (result: any) => {
     console.log('Document generated:', result)
-    // Keep the modal open for user to review generated documents
+    setShowDocumentGenerator(false)
   }
 
   const handleCancelDocumentGeneration = () => {
@@ -101,7 +103,7 @@ export function ClientCard({ client, onClick, navigate }: ClientCardProps) {
   }
 
   const handleRepairEstimator = (e: React.MouseEvent) => {
-    e.stopPropagation() // Prevent card click event
+    e.stopPropagation()
     if (navigate) {
       navigate('/repair-estimator')
     }
@@ -109,24 +111,27 @@ export function ClientCard({ client, onClick, navigate }: ClientCardProps) {
 
   const createAgentProfileAdapter = (): any => {
     return {
+      id: 'agent-1',
+      name: 'Real Estate Agent',
+      email: 'agent@example.com',
+      phone: '(555) 123-4567',
       personalInfo: {
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@realestate.com',
+        firstName: 'Real Estate',
+        lastName: 'Agent',
         phone: '(555) 123-4567',
-        licenseNumber: 'RE123456'
       },
-      businessInfo: {
-        brokerage: 'Premier Real Estate',
-        title: 'Senior Real Estate Agent',
-        officeAddress: '123 Main St, Anytown, ST 12345',
-        website: 'www.johndoe-realestate.com'
+      licenseInfo: {
+        brokerageName: 'Sample Brokerage',
+        yearsExperience: 5,
       },
-      signature: 'John Doe\nSenior Real Estate Agent\nPremier Real Estate\n(555) 123-4567'
     }
   }
 
   const createClientProfile = () => {
+    const nameParts = client.name.trim().split(' ')
+    const firstName = nameParts[0] || 'Client'
+    const lastName = nameParts.slice(1).join(' ') || 'Name'
+
     return {
       id: client.id.toString(),
       name: client.name,
@@ -134,59 +139,19 @@ export function ClientCard({ client, onClick, navigate }: ClientCardProps) {
       phone: client.phone,
       clientType: 'buyer' as const,
       personalInfo: {
-        firstName: client.name.split(' ')[0] || client.name,
-        lastName: client.name.split(' ').slice(1).join(' ') || '',
-        city: client.location.split(', ')[0] || client.location,
-        state: client.location.split(', ')[1] || 'CA',
-        zipCode: '90210'
+        firstName,
+        lastName,
+        city: 'Unknown City',
+        state: 'Unknown State',
+        zipCode: 'Unknown Zip',
       },
       preferences: {
-        timeframe: '3-6 months',
+        timeframe: 'Not specified',
         budget: client.budget,
-        location: client.location
+        location: client.location,
       },
-      notes: client.notes,
-      createdAt: client.dateAdded,
-      updatedAt: client.dateAdded
-    }
-  }
-
-  // Get next event for this client
-  const getNextEvent = () => {
-    const clientEvents = dummyData.calendarEvents.filter((event: any) => 
-      event.clientType === 'buyer' && event.clientId === client.id.toString()
-    )
-    const today = new Date()
-    const upcomingEvents = clientEvents.filter((event: any) => {
-      const eventDate = new Date(event.date)
-      return eventDate >= today
-    }).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    
-    return upcomingEvents.length > 0 ? upcomingEvents[0] : null
-  }
-
-  const nextEvent = getNextEvent()
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Never'
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric'
-    })
-  }
-
-  // Updated priority color function to match seller cards
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'High':
-        return 'bg-[#c05e51]/10 text-[#c05e51] border border-[#c05e51]/20'
-      case 'Medium':
-        return 'bg-[#F6E2BC]/30 text-[#8B7355] border border-[#F6E2BC]/50'
-      case 'Low':
-        return 'bg-[#A9D09E]/20 text-[#5a7c50] border border-[#A9D09E]/40'
-      default:
-        return 'bg-gray-100 text-gray-800 border border-gray-200'
+      createdAt: '2024-01-01',
+      updatedAt: '2024-01-01'
     }
   }
 
@@ -196,18 +161,10 @@ export function ClientCard({ client, onClick, navigate }: ClientCardProps) {
         onClick={onClick}
         className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-shadow"
       >
-        {/* Client Header - matches seller card structure */}
+        {/* Client Header */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2">
             <h4 className="font-semibold text-gray-800">{client.name}</h4>
-            {client.priority === 'High' && (
-              <AlertCircle className="size-4 text-red-500" />
-            )}
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(client.priority)}`}>
-              {client.priority}
-            </span>
           </div>
         </div>
 
@@ -260,7 +217,7 @@ export function ClientCard({ client, onClick, navigate }: ClientCardProps) {
           </div>
         )}
 
-        {/* Property Search Information - analogous to seller property info */}
+        {/* Property Search Information */}
         <div className="space-y-2 mb-3">
           <div className="flex items-center space-x-2">
             <DollarSign className="size-4 text-gray-500" />
@@ -273,29 +230,12 @@ export function ClientCard({ client, onClick, navigate }: ClientCardProps) {
           </div>
         </div>
 
-        {/* Timeline & Lead Source */}
+        {/* Lead Source */}
         <div className="space-y-1 mb-3">
-          <div className="flex items-center space-x-2">
-            <Calendar className="size-4 text-gray-500" />
-            <span className="text-sm text-gray-600">Added: {formatDate(client.dateAdded)}</span>
-          </div>
           <div className="text-xs text-gray-500">
             Source: {client.leadSource}
           </div>
         </div>
-
-        {/* Next Event - replaces Last Contact */}
-        {nextEvent && (
-          <div className="space-y-1 mb-3">
-            <div className="flex items-center space-x-2">
-              <Calendar className="size-4 text-gray-500" />
-              <span className="text-sm text-gray-600">Next: {nextEvent.title}</span>
-            </div>
-            <div className="text-xs text-gray-500">
-              {formatDate(nextEvent.date)} at {nextEvent.time}
-            </div>
-          </div>
-        )}
 
         {/* Contract Property (if applicable) */}
         {client.contractProperty && (
@@ -305,12 +245,25 @@ export function ClientCard({ client, onClick, navigate }: ClientCardProps) {
           </div>
         )}
 
-        {/* Notes preview */}
-        {client.notes && (
-          <div className="mt-2 text-xs text-gray-600 line-clamp-2">
-            {client.notes}
+        {/* Contact Information */}
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          <div className="flex items-center space-x-3">
+            <a
+              href={`tel:${client.phone}`}
+              onClick={(e) => e.stopPropagation()}
+              className="text-gray-400 hover:text-[#3B7097] transition-colors"
+            >
+              <Phone className="size-4" />
+            </a>
+            <a
+              href={`mailto:${client.email}`}
+              onClick={(e) => e.stopPropagation()}
+              className="text-gray-400 hover:text-[#3B7097] transition-colors"
+            >
+              <Mail className="size-4" />
+            </a>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Document Generator Modal */}

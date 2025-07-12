@@ -395,7 +395,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
       case '/appraisal-scenarios':
         return 'Appraisal Tools'
       default:
-        return 'Real Estate Agentic'
+        return 'AIgent Pro'
     }
   }
 

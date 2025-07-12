@@ -1,7 +1,6 @@
-# System Architecture & Workflow Integration Overview
+# 06. System Architecture Overview
 
-## Overview
-This diagram illustrates how all workflow automations integrate within the Real Estate Agentic platform, showing the complete system architecture and the relationships between different components, services, and user interactions.
+This diagram illustrates how all workflow automations integrate within the AIgent Pro platform, showing the complete system architecture and the relationships between different components, services, and user interactions.
 
 ## Key Features
 - **Unified Platform**: All workflows integrated in a single desktop application

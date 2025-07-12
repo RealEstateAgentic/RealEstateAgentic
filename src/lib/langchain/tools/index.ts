@@ -141,7 +141,7 @@ export class ToolRegistry {
       description:
         'Firebase integration tools for data persistence and real-time operations',
       version: '1.0.0',
-      author: 'Real Estate Agentic Platform',
+      author: 'AIgent Pro Platform',
       compatibility: { langchain: '^0.1.0', nodejs: '^18.0.0' },
     })
 
@@ -149,7 +149,7 @@ export class ToolRegistry {
     this.registerToolCategory('market_data', getAllMarketDataTools(), {
       description: 'Market analysis and property valuation tools',
       version: '1.0.0',
-      author: 'Real Estate Agentic Platform',
+      author: 'AIgent Pro Platform',
       compatibility: { langchain: '^0.1.0', nodejs: '^18.0.0' },
     })
 
@@ -157,7 +157,7 @@ export class ToolRegistry {
     this.registerToolCategory('calculations', getAllCalculationTools(), {
       description: 'Financial calculations and formatting utilities',
       version: '1.0.0',
-      author: 'Real Estate Agentic Platform',
+      author: 'AIgent Pro Platform',
       compatibility: { langchain: '^0.1.0', nodejs: '^18.0.0' },
     })
 
@@ -169,7 +169,7 @@ export class ToolRegistry {
         description:
           'Property condition assessment and investment analysis tools',
         version: '1.0.0',
-        author: 'Real Estate Agentic Platform',
+        author: 'AIgent Pro Platform',
         compatibility: { langchain: '^0.1.0', nodejs: '^18.0.0' },
       }
     )
@@ -181,7 +181,7 @@ export class ToolRegistry {
       {
         description: 'Document generation and formatting tools',
         version: '1.0.0',
-        author: 'Real Estate Agentic Platform',
+        author: 'AIgent Pro Platform',
         compatibility: { langchain: '^0.1.0', nodejs: '^18.0.0' },
       }
     )
@@ -193,7 +193,7 @@ export class ToolRegistry {
       {
         description: 'Data validation and error handling tools',
         version: '1.0.0',
-        author: 'Real Estate Agentic Platform',
+        author: 'AIgent Pro Platform',
         compatibility: { langchain: '^0.1.0', nodejs: '^18.0.0' },
       }
     )

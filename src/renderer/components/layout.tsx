@@ -48,7 +48,7 @@ function Navigation({
           onClick={() => navigate('/')}
           className="text-lg font-semibold text-gray-800 hover:text-[#3B7097] transition-colors"
         >
-          Real Estate Agentic
+          AIgent Pro
         </button>
 
         {/* Main Navigation */}

@@ -1,7 +1,7 @@
-# Project Brief: Real Estate Agentic
+# Project Brief: AIgent Pro
 
 ## Overview
-Real Estate Agentic is an AI Agent-Powered Real Estate Desktop Application designed to be the **"brokerage of the future"** by **empowering real estate agents** with advanced tools across the entire transaction process. This B2B2C solution addresses critical industry challenges including outdated technology, agents' lack of practical training, and buyers' financial illiteracy.
+AIgent Pro is an AI Agent-Powered Real Estate Desktop Application designed to be the **"brokerage of the future"** by **empowering real estate agents** with advanced tools across the entire transaction lifecycle. This B2B2C solution addresses critical industry challenges including outdated technology, agents' lack of practical training, and buyers' financial illiteracy.
 
 ## Core Mission
 To create a comprehensive desktop application that leverages AI and Large Language Models (LLMs) to streamline real estate transactions, improve agent efficiency, and enhance client experience while maintaining the crucial human connection that agents provide.

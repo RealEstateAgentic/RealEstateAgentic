@@ -1,6 +1,6 @@
 /**
- * Firebase Storage Service
- * Handles file uploads and management for the Real Estate Agentic application
+ * Firebase Storage service
+ * Handles file uploads and management for the AIgent Pro application
  */
 
 import {

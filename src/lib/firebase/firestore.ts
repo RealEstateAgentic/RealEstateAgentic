@@ -1,6 +1,6 @@
 /**
- * Firestore Database Service
- * Handles database operations for the Real Estate Agentic application
+ * Firestore Service
+ * Handles database operations for the AIgent Pro application
  */
 
 import {
@@ -19,7 +19,11 @@ import {
 } from 'firebase/firestore'
 import { db } from './config'
 import { getCurrentUser } from './auth'
-import type { Property, RepairEstimate, InspectionReport } from '../../shared/types'
+import type {
+  Property,
+  RepairEstimate,
+  InspectionReport,
+} from '../../shared/types'
 
 /**
  * Collection names
@@ -28,7 +32,7 @@ const COLLECTIONS = {
   PROPERTIES: 'properties',
   REPAIR_ESTIMATES: 'repairEstimates',
   USERS: 'users',
-  INSPECTION_REPORTS: 'inspectionReports'
+  INSPECTION_REPORTS: 'inspectionReports',
 } as const
 
 /**
@@ -170,7 +174,10 @@ export const deleteProperty = async (propertyId: string): Promise<void> => {
  * Create a new inspection report
  */
 export const createInspectionReport = async (
-  reportData: Omit<InspectionReport, 'id' | 'userId' | 'createdAt' | 'updatedAt'>
+  reportData: Omit<
+    InspectionReport,
+    'id' | 'userId' | 'createdAt' | 'updatedAt'
+  >
 ): Promise<string> => {
   try {
     const userId = getCurrentUserId()
@@ -210,7 +217,6 @@ export const getInspectionReport = async (
 
   return { id: reportSnap.id, ...reportSnap.data() } as InspectionReport
 }
-
 
 // ========== REPAIR ESTIMATE OPERATIONS ==========
 

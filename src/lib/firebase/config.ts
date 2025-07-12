@@ -1,6 +1,6 @@
 /**
  * Firebase Configuration
- * Initializes Firebase services for the Real Estate Agentic application
+ * Initializes Firebase services for the AIgent Pro application
  */
 
 import { initializeApp } from 'firebase/app'

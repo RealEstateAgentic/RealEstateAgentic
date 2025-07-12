@@ -25,9 +25,10 @@ interface KanbanColumnProps {
     soldPrice?: string
   }>
   onClientClick: (client: any) => void
+  navigate?: (path: string) => void
 }
 
-export function KanbanColumn({ title, stage, clients, onClientClick }: KanbanColumnProps) {
+export function KanbanColumn({ title, stage, clients, onClientClick, navigate }: KanbanColumnProps) {
   const getColumnColor = (stage: string) => {
     switch (stage) {
       case 'new_leads': return 'bg-[#75BDE0]/10 border-[#75BDE0]/30'
@@ -76,6 +77,7 @@ export function KanbanColumn({ title, stage, clients, onClientClick }: KanbanCol
               key={client.id}
               client={client}
               onClick={() => onClientClick(client)}
+              navigate={navigate}
             />
           ))
         )}

@@ -29,7 +29,8 @@ import {
   Settings,
   Star,
   Users,
-  Save
+  Save,
+  Loader2
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { DocumentGenerator } from '../documents/DocumentGenerator'
@@ -63,39 +64,14 @@ interface ClientProfile {
 }
 
 interface ClientModalProps {
-  client: {
-    id: number
-    name: string
-    email: string
-    phone: string
-    stage: string
-    subStatus: string
-    budget: string
-    location: string
-    leadSource: string
-    priority: string
-    dateAdded: string
-    lastContact: string | null
-    notes: string
-    favoritedProperties?: string[]
-    viewedProperties?: string[]
-    contractProperty?: string
-    contractDate?: string
-    inspectionDate?: string
-    appraisalDate?: string
-    closingDate?: string
-    soldPrice?: string
-    archivedDate?: string
-    archivedFromStage?: string
-    initialTab?: string
-    initialDocumentId?: string
-  }
+  client: any
   onClose: () => void
-  onArchive?: (client: any) => void
-  onProgress?: (client: any) => void
-  onUnarchive?: (client: any) => void
+  onArchive: (clientId: number) => void
+  onProgress: (clientId: number, newStage: string) => void
+  onUnarchive?: (clientId: number) => void
   isArchiveMode?: boolean
   currentUser?: AgentProfile | null
+  navigate?: (path: string) => void
 }
 
 export function ClientModal({
@@ -106,12 +82,26 @@ export function ClientModal({
   onUnarchive,
   isArchiveMode = false,
   currentUser,
+  navigate,
 }: ClientModalProps) {
   const [activeTab, setActiveTab] = useState(client.initialTab || 'summary')
   const [selectedDocument, setSelectedDocument] = useState<any>(null)
   const [showDocumentGenerator, setShowDocumentGenerator] = useState(false)
   const [isEditingDetails, setIsEditingDetails] = useState(false)
   const [isSendingSurvey, setIsSendingSurvey] = useState(false)
+  const [isEditingContingencies, setIsEditingContingencies] = useState(false)
+  const [contingencyDates, setContingencyDates] = useState({
+    inspection: '2024-01-15',
+    appraisal: '2024-01-25',
+    finance: '2024-02-01'
+  })
+  const [contingencyDetails, setContingencyDetails] = useState('')
+  const [contractDetails, setContractDetails] = useState({
+    contractPrice: '',
+    sellerAgent: '',
+    closingDate: '',
+    contractDate: ''
+  })
   const [editableDetails, setEditableDetails] = useState({
     name: client.name,
     email: client.email,
@@ -213,19 +203,19 @@ export function ClientModal({
 
   const handleArchive = () => {
     if (onArchive) {
-      onArchive(client)
+      onArchive(client.id)
     }
   }
 
   const handleProgress = () => {
     if (onProgress) {
-      onProgress(client)
+      onProgress(client.id, client.stage)
     }
   }
 
   const handleUnarchive = () => {
     if (onUnarchive) {
-      onUnarchive(client)
+      onUnarchive(client.id)
     }
   }
 
@@ -277,6 +267,63 @@ export function ClientModal({
       alert(`❌ Failed to send survey to ${client.name}.\n\nError: ${errorMessage}`)
     } finally {
       setIsSendingSurvey(false)
+    }
+  }
+
+  const handleSaveContingencies = () => {
+    console.log('Saving contingency dates:', contingencyDates)
+    console.log('Additional details:', contingencyDetails)
+    console.log('Contract details:', contractDetails)
+    
+    // Task 6.5: Auto-create calendar events from contingency dates
+    try {
+      // Create calendar events for each contingency deadline
+      const events = [
+        {
+          title: 'Inspection Period Deadline',
+          date: contingencyDates.inspection,
+          time: '17:00', // 5:00 PM
+          description: `Inspection period deadline for buyer ${client.name}`,
+          clientType: 'buyer',
+          clientId: client.id.toString(),
+          priority: 'high',
+          eventType: 'inspection_deadline'
+        },
+        {
+          title: 'Appraisal Deadline',
+          date: contingencyDates.appraisal,
+          time: '17:00',
+          description: `Appraisal deadline for buyer ${client.name}`,
+          clientType: 'buyer',
+          clientId: client.id.toString(),
+          priority: 'high',
+          eventType: 'appraisal_deadline'
+        },
+        {
+          title: 'Financing Deadline',
+          date: contingencyDates.finance,
+          time: '17:00',
+          description: `Financing deadline for buyer ${client.name}`,
+          clientType: 'buyer',
+          clientId: client.id.toString(),
+          priority: 'high',
+          eventType: 'financing_deadline'
+        }
+      ]
+      
+      console.log('Auto-created calendar events for contingency deadlines:', events)
+      // In a real application, these would be saved to the calendar system
+      
+    } catch (error) {
+      console.error('Error creating calendar events:', error)
+    }
+    
+    setIsEditingContingencies(false)
+  }
+
+  const handleRepairEstimator = () => {
+    if (navigate) {
+      navigate('/repair-estimator')
     }
   }
 
@@ -392,12 +439,19 @@ export function ClientModal({
       { id: 'summary', label: 'Summary', icon: null },
     ]
 
+    const stageSpecificTabs = []
+    
+    // Add Contingencies tab only for Under Contract stage
+    if (client.stage === 'under_contract') {
+      stageSpecificTabs.push({ id: 'contingencies', label: 'Contingencies', icon: Clock })
+    }
+
     const alwaysVisibleTabs = [
       { id: 'documents', label: 'Documents and Content', icon: FolderOpen },
       { id: 'calendar', label: 'Calendar', icon: CalendarDays },
     ]
 
-    return [...baseTabs, ...alwaysVisibleTabs]
+    return [...baseTabs, ...stageSpecificTabs, ...alwaysVisibleTabs]
   }
 
   const getStageActions = () => {
@@ -434,7 +488,10 @@ export function ClientModal({
       case 'under_contract':
         return (
           <div className="flex flex-wrap gap-2">
-            <Button className="bg-[#3B7097] hover:bg-[#3B7097]/90">
+            <Button 
+              onClick={handleRepairEstimator}
+              className="bg-[#3B7097] hover:bg-[#3B7097]/90"
+            >
               Repair Estimator
             </Button>
             <Button 
@@ -443,6 +500,13 @@ export function ClientModal({
             >
               <FileText className="size-4 mr-2" />
               Generate Documents
+            </Button>
+            <Button 
+              onClick={() => setIsEditingContingencies(true)}
+              className="bg-[#3B7097] hover:bg-[#3B7097]/90"
+            >
+              <Edit className="size-4 mr-2" />
+              Edit Contingencies
             </Button>
           </div>
         )
@@ -474,6 +538,105 @@ export function ClientModal({
   const renderTabContent = () => {
     switch (activeTab) {
       case 'summary':
+        if (client.stage === 'closed') {
+          // Phase 7: Closed stage specific design matching seller implementation
+          return (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Purchase Summary Widget */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <Home className="size-5 text-green-600 mr-2" />
+                  <h3 className="font-semibold text-gray-800">Purchase Summary</h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Final Purchase Price:</span>
+                    <span className="text-sm text-gray-900">$432,000</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Closing Date:</span>
+                    <span className="text-sm text-gray-900">February 12, 2024</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Days to Close:</span>
+                    <span className="text-sm text-gray-900">45 days</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Property Address:</span>
+                    <span className="text-sm text-gray-900">123 Elm Street</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Buyer Motivation Widget - updated for closed */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <TrendingUp className="size-5 text-green-600 mr-2" />
+                  <h3 className="font-semibold text-gray-800">Buyer Motivation</h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Original Timeline:</span>
+                    <span className="text-sm text-gray-900">Next 3-6 months</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Reason for Buying:</span>
+                    <span className="text-sm text-gray-900">First-time buyer</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Original Budget:</span>
+                    <span className="text-sm text-gray-900">{client.budget}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Priority Level:</span>
+                    <span className="text-sm text-gray-900">{client.priority}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recent Notes Widget */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <MessageCircle className="size-5 text-orange-600 mr-2" />
+                  <h3 className="font-semibold text-gray-800">Final Notes</h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="text-sm text-gray-700">
+                    {client.notes || 'Successful home purchase completed. Client expressed satisfaction with the process and property selection.'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Post-Closing Status Widget */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <CheckCircle className="size-5 text-green-600 mr-2" />
+                  <h3 className="font-semibold text-gray-800">Post-Closing Status</h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Keys Received</span>
+                    <CheckCircle className="size-4 text-green-600" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Final Walkthrough</span>
+                    <CheckCircle className="size-4 text-green-600" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Utilities Connected</span>
+                    <CheckCircle className="size-4 text-green-600" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Move-in Ready</span>
+                    <CheckCircle className="size-4 text-green-600" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        }
+        
+        // Regular summary for other stages
         return (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Widget A: Client Details */}
@@ -577,6 +740,190 @@ export function ClientModal({
             clientEmail={client.email}
             clientName={client.name}
           />
+        )
+
+      case 'contingencies':
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-gray-800">Buyer Contingencies</h3>
+              {isEditingContingencies && (
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={handleSaveContingencies}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Save className="size-4 mr-2" />
+                    Save
+                  </Button>
+                  <Button
+                    onClick={() => setIsEditingContingencies(false)}
+                    variant="outline"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
+            </div>
+            
+            {/* Contract Details Section */}
+            <div className="mb-6 p-4 bg-[#3B7097]/5 rounded-lg border border-[#3B7097]/20">
+              <h4 className="font-semibold text-gray-800 mb-4">Contract Details</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Contract Price</label>
+                  {isEditingContingencies ? (
+                    <input
+                      type="text"
+                      value={contractDetails.contractPrice}
+                      onChange={(e) => setContractDetails({...contractDetails, contractPrice: e.target.value})}
+                      placeholder="e.g., $435,000"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
+                    />
+                  ) : (
+                    <div className="text-sm text-gray-800 font-medium">
+                      {contractDetails.contractPrice || <span className="text-gray-500 italic">Not entered</span>}
+                    </div>
+                  )}
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Seller Agent</label>
+                  {isEditingContingencies ? (
+                    <input
+                      type="text"
+                      value={contractDetails.sellerAgent}
+                      onChange={(e) => setContractDetails({...contractDetails, sellerAgent: e.target.value})}
+                      placeholder="e.g., Jane Smith, ABC Realty"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
+                    />
+                  ) : (
+                    <div className="text-sm text-gray-800 font-medium">
+                      {contractDetails.sellerAgent || <span className="text-gray-500 italic">Not entered</span>}
+                    </div>
+                  )}
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Closing Date</label>
+                  {isEditingContingencies ? (
+                    <input
+                      type="date"
+                      value={contractDetails.closingDate}
+                      onChange={(e) => setContractDetails({...contractDetails, closingDate: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
+                    />
+                  ) : (
+                    <div className="text-sm text-gray-800 font-medium">
+                      {contractDetails.closingDate ? formatDate(contractDetails.closingDate) : <span className="text-gray-500 italic">Not set</span>}
+                    </div>
+                  )}
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Contract Date</label>
+                  {isEditingContingencies ? (
+                    <input
+                      type="date"
+                      value={contractDetails.contractDate}
+                      onChange={(e) => setContractDetails({...contractDetails, contractDate: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
+                    />
+                  ) : (
+                    <div className="text-sm text-gray-800 font-medium">
+                      {contractDetails.contractDate ? formatDate(contractDetails.contractDate) : <span className="text-gray-500 italic">Not set</span>}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            {/* Contingencies Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <AlertCircle className="size-5 text-yellow-600" />
+                  <div>
+                    <div className="font-medium text-gray-800">Inspection Contingency</div>
+                    {isEditingContingencies ? (
+                      <input
+                        type="date"
+                        value={contingencyDates.inspection}
+                        onChange={(e) => setContingencyDates({...contingencyDates, inspection: e.target.value})}
+                        className="text-sm border rounded px-2 py-1"
+                      />
+                    ) : (
+                      <div className="text-sm text-gray-600">Due: {formatDate(contingencyDates.inspection)}</div>
+                    )}
+                  </div>
+                </div>
+                <span className="text-sm font-medium text-yellow-600">Pending</span>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <Clock className="size-5 text-gray-600" />
+                  <div>
+                    <div className="font-medium text-gray-800">Appraisal Contingency</div>
+                    {isEditingContingencies ? (
+                      <input
+                        type="date"
+                        value={contingencyDates.appraisal}
+                        onChange={(e) => setContingencyDates({...contingencyDates, appraisal: e.target.value})}
+                        className="text-sm border rounded px-2 py-1"
+                      />
+                    ) : (
+                      <div className="text-sm text-gray-600">Due: {formatDate(contingencyDates.appraisal)}</div>
+                    )}
+                  </div>
+                </div>
+                <span className="text-sm font-medium text-gray-600">Pending</span>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <CheckCircle className="size-5 text-green-600" />
+                  <div>
+                    <div className="font-medium text-gray-800">Finance Contingency</div>
+                    {isEditingContingencies ? (
+                      <input
+                        type="date"
+                        value={contingencyDates.finance}
+                        onChange={(e) => setContingencyDates({...contingencyDates, finance: e.target.value})}
+                        className="text-sm border rounded px-2 py-1"
+                      />
+                    ) : (
+                      <div className="text-sm text-gray-600">Due: {formatDate(contingencyDates.finance)}</div>
+                    )}
+                  </div>
+                </div>
+                <span className="text-sm font-medium text-green-600">Complete</span>
+              </div>
+              
+              {/* Additional details field */}
+              {isEditingContingencies && (
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Additional Details
+                  </label>
+                  <textarea
+                    value={contingencyDetails}
+                    onChange={(e) => setContingencyDetails(e.target.value)}
+                    rows={3}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                    placeholder="Enter any additional contingency details or notes..."
+                  />
+                </div>
+              )}
+              
+              {contingencyDetails && !isEditingContingencies && (
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                  <div className="text-sm font-medium text-gray-800 mb-1">Additional Details:</div>
+                  <div className="text-sm text-gray-600">{contingencyDetails}</div>
+                </div>
+              )}
+            </div>
+          </div>
         )
 
       case 'documents':

@@ -479,7 +479,7 @@ export function ClientModal({
               className="bg-[#3B7097] hover:bg-[#3B7097]/90"
             >
               <Edit className="size-4 mr-2" />
-              Enter Contingencies
+              Edit Contingencies
             </Button>
           </div>
         )

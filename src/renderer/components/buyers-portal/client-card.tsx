@@ -28,9 +28,10 @@ interface ClientCardProps {
     soldPrice?: string
   }
   onClick: () => void
+  navigate?: (path: string) => void
 }
 
-export function ClientCard({ client, onClick }: ClientCardProps) {
+export function ClientCard({ client, onClick, navigate }: ClientCardProps) {
   const [isSending, setIsSending] = useState(false)
   const [isGmailConnected, setIsGmailConnected] = useState(gmailAuth.isAuthenticated())
   const [showDocumentGenerator, setShowDocumentGenerator] = useState(false)
@@ -97,6 +98,13 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
 
   const handleCancelDocumentGeneration = () => {
     setShowDocumentGenerator(false)
+  }
+
+  const handleRepairEstimator = (e: React.MouseEvent) => {
+    e.stopPropagation() // Prevent card click event
+    if (navigate) {
+      navigate('/repair-estimator')
+    }
   }
 
   const createAgentProfileAdapter = (): any => {
@@ -235,6 +243,19 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
             >
               <FileText className="size-4" />
               Generate Documents
+            </button>
+          </div>
+        )}
+
+        {/* Repair Estimator Button for Under Contract */}
+        {client.stage === 'under_contract' && (
+          <div className="mb-3">
+            <button
+              onClick={handleRepairEstimator}
+              className="flex items-center gap-2 px-3 py-2 bg-[#3B7097] hover:bg-[#3B7097]/90 text-white text-sm rounded-md transition-colors w-full"
+            >
+              <FileText className="size-4" />
+              Repair Estimator
             </button>
           </div>
         )}

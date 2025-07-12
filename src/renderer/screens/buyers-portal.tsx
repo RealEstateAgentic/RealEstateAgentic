@@ -218,6 +218,7 @@ export function BuyersPortalScreen({
                 stage={stage.stage}
                 clients={buyerClients}
                 onClientClick={handleClientClick}
+                navigate={navigate}
               />
             ))}
           </div>
@@ -232,6 +233,7 @@ export function BuyersPortalScreen({
           onArchive={handleArchive}
           onProgress={handleProgress}
           currentUser={currentUser}
+          navigate={navigate}
         />
       )}
 

@@ -4,6 +4,7 @@
  */
 
 import { MapPin, Phone, Mail, Home, Calendar, AlertCircle } from 'lucide-react'
+import { dummyData } from '../../data/dummy-data'
 
 interface ClientCardProps {
   client: {
@@ -24,6 +25,7 @@ interface ClientCardProps {
     dateAdded: string
     lastContact: string | null
     notes: string
+    nextEvent?: string
   }
   onClick: () => void
 }
@@ -51,42 +53,21 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
     }
   }
 
-  const getSubStatusDisplay = (subStatus: string) => {
-    switch (subStatus) {
-      case 'to_initiate_contact':
-        return 'To Initiate Contact'
-      case 'awaiting_survey':
-        return 'Awaiting Survey'
-      case 'review_survey':
-        return 'Review Survey'
-      case 'awaiting_signing':
-        return 'Awaiting Signing'
-      case 'preparing_cma':
-        return 'Preparing CMA'
-      case 'awaiting_listing_agreement':
-        return 'Awaiting Listing Agreement'
-      case 'staging_photos_scheduled':
-        return 'Staging/Photos Scheduled'
-      case 'just_listed':
-        return 'Just Listed'
-      case 'accepting_showings':
-        return 'Accepting Showings'
-      case 'reviewing_offers':
-        return 'Reviewing Offers'
-      case 'awaiting_inspection':
-        return 'Awaiting Inspection'
-      case 'reviewing_repair_requests':
-        return 'Reviewing Repair Requests'
-      case 'awaiting_appraisal':
-        return 'Awaiting Appraisal'
-      case 'post_closing_checklist':
-        return 'Post-Closing Checklist'
-      case 'nurture_campaign_active':
-        return 'Nurture Campaign Active'
-      default:
-        return subStatus.replace('_', ' ')
-    }
+  // Get next event for this client
+  const getNextEvent = () => {
+    const clientEvents = dummyData.calendarEvents.filter(event => 
+      event.clientType === 'seller' && event.clientId === client.id.toString()
+    )
+    const today = new Date()
+    const upcomingEvents = clientEvents.filter(event => {
+      const eventDate = new Date(event.date)
+      return eventDate >= today
+    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    
+    return upcomingEvents.length > 0 ? upcomingEvents[0] : null
   }
+
+  const nextEvent = getNextEvent()
 
   return (
     <div
@@ -101,9 +82,11 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
             <AlertCircle className="size-4 text-red-500" />
           )}
         </div>
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(client.priority)}`}>
-          {client.priority}
-        </span>
+        <div className="flex items-center space-x-2">
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(client.priority)}`}>
+            {client.priority}
+          </span>
+        </div>
       </div>
 
       {/* Property Information */}
@@ -123,13 +106,6 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
               </span>
             )}
           </span>
-        </div>
-      </div>
-
-      {/* Sub-status */}
-      <div className="mb-3">
-        <div className="bg-gray-50 px-2 py-1 rounded text-xs text-gray-600">
-          {getSubStatusDisplay(client.subStatus)}
         </div>
       </div>
 
@@ -167,10 +143,19 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
         </div>
       </div>
 
-      {/* Last Contact */}
-      {client.lastContact && (
+      {/* Next Event */}
+      {nextEvent && (
         <div className="text-xs text-gray-500 pt-1">
-          Last contact: {formatDate(client.lastContact)}
+          <div className="flex items-center space-x-1">
+            <Calendar className="size-3" />
+            <span>Next: {nextEvent.title}</span>
+          </div>
+          <div className="text-xs text-gray-400 ml-4">
+            {new Date(nextEvent.date).toLocaleDateString('en-US', { 
+              month: 'short', 
+              day: 'numeric' 
+            })} at {nextEvent.time}
+          </div>
         </div>
       )}
     </div>

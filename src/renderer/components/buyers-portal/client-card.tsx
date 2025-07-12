@@ -1,5 +1,6 @@
-import { Phone, Mail, MapPin, Calendar, DollarSign, Send, Loader2 } from 'lucide-react'
+import { Phone, Mail, MapPin, Calendar, DollarSign, Send, Loader2, Shield, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
+import { gmailAuth } from '../../services/gmail-auth'
 import { dummyData } from '../../data/dummy-data'
 
 interface ClientCardProps {
@@ -29,7 +30,9 @@ interface ClientCardProps {
 
 export function ClientCard({ client, onClick }: ClientCardProps) {
   const [isSending, setIsSending] = useState(false)
+  const [isGmailConnected, setIsGmailConnected] = useState(gmailAuth.isAuthenticated())
   
+
   const handleSendSurvey = async (e: React.MouseEvent) => {
     e.stopPropagation() // Prevent card click event
     
@@ -40,25 +43,41 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
     try {
       console.log('Sending survey to:', client.name, client.email)
       
-      // Import and use the automation service
-      const { startBuyerWorkflow } = await import('../../services/automation')
+      // Check if Gmail is authenticated
+      if (!gmailAuth.isAuthenticated()) {
+        console.log('🔑 Gmail not authenticated, starting OAuth flow...')
+        
+        const authResult = await gmailAuth.authenticate()
+        
+        if (!authResult.success) {
+          throw new Error(`Gmail authentication failed: ${authResult.error}`)
+        }
+        
+        setIsGmailConnected(true)
+        console.log('✅ Gmail authenticated:', authResult.userEmail)
+      }
       
-      const result = await startBuyerWorkflow({
+      // Import and use the automation service with Gmail API
+      const { startBuyerWorkflowWithGmail } = await import('../../services/automation')
+      
+      const result = await startBuyerWorkflowWithGmail({
         agentId: 'agent-1', // TODO: Get actual agent ID
         buyerEmail: client.email,
         buyerName: client.name,
-        buyerPhone: client.phone
+        buyerPhone: client.phone,
+        senderEmail: gmailAuth.getUserEmail() || undefined
       })
       
       if (result.success) {
-        alert(`✅ Survey sent successfully to ${client.name}!\n\nForm URL: ${result.formUrl}`)
+        alert(`✅ Survey sent successfully to ${client.name} from your Gmail account!\n\nForm URL: ${result.formUrl}`)
         console.log('Survey sent successfully:', result)
       } else {
         throw new Error('Failed to send survey')
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error sending survey:', error)
-      alert(`❌ Failed to send survey to ${client.name}.\n\nError: ${error.message}`)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      alert(`❌ Failed to send survey to ${client.name}.\n\nError: ${errorMessage}`)
     } finally {
       setIsSending(false)
     }
@@ -66,14 +85,14 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
 
   // Get next event for this client
   const getNextEvent = () => {
-    const clientEvents = dummyData.calendarEvents.filter(event => 
+    const clientEvents = dummyData.calendarEvents.filter((event: any) => 
       event.clientType === 'buyer' && event.clientId === client.id.toString()
     )
     const today = new Date()
-    const upcomingEvents = clientEvents.filter(event => {
+    const upcomingEvents = clientEvents.filter((event: any) => {
       const eventDate = new Date(event.date)
       return eventDate >= today
-    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    }).sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
     
     return upcomingEvents.length > 0 ? upcomingEvents[0] : null
   }
@@ -147,15 +166,26 @@ export function ClientCard({ client, onClick }: ClientCardProps) {
             {isSending ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                Sending...
+                {isGmailConnected ? 'Sending...' : 'Connecting Gmail...'}
               </>
             ) : (
               <>
-                <Send className="size-4" />
-                Send Survey
+                {isGmailConnected ? (
+                  <ShieldCheck className="size-4" />
+                ) : (
+                  <Shield className="size-4" />
+                )}
+                Send Survey {isGmailConnected ? 'via Gmail' : '(Connect Gmail)'}
               </>
             )}
           </button>
+          
+          {isGmailConnected && gmailAuth.getUserEmail() && (
+            <div className="text-xs text-gray-600 flex items-center gap-1">
+              <Mail className="size-3" />
+              Connected: {gmailAuth.getUserEmail()}
+            </div>
+          )}
         </div>
       )}
 

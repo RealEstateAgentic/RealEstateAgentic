@@ -21,9 +21,12 @@ import {
   Eye,
   Edit,
   MessageCircle,
+  TrendingUp,
+  History,
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { DocumentGenerator } from '../documents/DocumentGenerator'
+import { LeadScoringDisplay } from '../shared/lead-scoring-display'
 import type { AgentProfile } from '../../../shared/types'
 import { dummyData } from '../../data/dummy-data'
 
@@ -583,10 +586,6 @@ export function ClientModal({
                 <div>
                   <strong>Date Added:</strong> {formatDate(client.dateAdded)}
                 </div>
-                <div>
-                  <strong>Last Contact:</strong>{' '}
-                  {formatDate(client.lastContact)}
-                </div>
               </div>
             </div>
             <div className="bg-[#c05e51]/10 p-4 rounded-lg border border-[#c05e51]/30">
@@ -751,8 +750,9 @@ export function ClientModal({
   // Define which tabs should be visible based on client stage
   const getVisibleTabs = () => {
     const baseTabs = [
+      // Removed 'overview' and 'stage_details' tabs per Phase 2 requirements
+      { id: 'ai_lead_scoring', label: 'AI Lead Scoring', icon: TrendingUp },
       { id: 'summary', label: 'Summary', icon: null },
-      // Removed 'overview' and 'stage_details' tabs as requested
     ]
 
     const stageSpecificTabs = []
@@ -769,7 +769,6 @@ export function ClientModal({
 
     const alwaysVisibleTabs = [
       { id: 'content', label: 'Content', icon: FolderOpen },
-      // Removed 'email_history' tab as requested
       { id: 'calendar', label: 'Calendar', icon: CalendarDays },
     ]
 
@@ -796,6 +795,14 @@ export function ClientModal({
               </div>
             </div>
           </div>
+        )
+      
+      case 'ai_lead_scoring':
+        return (
+          <LeadScoringDisplay
+            clientEmail={client.email}
+            clientName={client.name}
+          />
         )
       
       case 'offers':
@@ -1255,7 +1262,17 @@ export function ClientModal({
               >
                 Client Summary
               </button>
-              {/* Removed 'details' tab as requested */}
+              <button
+                onClick={() => setActiveTab('ai_lead_scoring')}
+                className={`flex items-center space-x-2 py-4 px-1 text-sm font-medium border-b-2 ${
+                  activeTab === 'ai_lead_scoring'
+                    ? 'border-[#3B7097] text-[#3B7097]'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <TrendingUp className="size-4" />
+                <span>AI Lead Scoring</span>
+              </button>
             </nav>
           </div>
 
@@ -1286,16 +1303,17 @@ export function ClientModal({
                       <strong>Date Added:</strong>{' '}
                       {formatDate(client.dateAdded)}
                     </div>
-                    <div>
-                      <strong>Last Contact:</strong>{' '}
-                      {formatDate(client.lastContact)}
-                    </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Removed 'details' tab content as requested */}
+            {activeTab === 'ai_lead_scoring' && (
+              <LeadScoringDisplay
+                clientEmail={client.email}
+                clientName={client.name}
+              />
+            )}
           </div>
 
           {/* Actions */}

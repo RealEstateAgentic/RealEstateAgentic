@@ -80,6 +80,26 @@ export const AI_MODELS: Record<string, AIModelConfig> = {
     frequencyPenalty: 0.0,
     presencePenalty: 0.0,
   },
+
+  // Thorough analysis - high quality for parsing and critical tasks
+  THOROUGH: {
+    name: 'gpt-4o',
+    maxTokens: 4000,
+    temperature: 0.3,
+    topP: 0.8,
+    frequencyPenalty: 0.0,
+    presencePenalty: 0.0,
+  },
+
+  // Fast processing - efficient for research and synthesis
+  FAST: {
+    name: 'gpt-4o-mini',
+    maxTokens: 2000,
+    temperature: 0.5,
+    topP: 0.9,
+    frequencyPenalty: 0.0,
+    presencePenalty: 0.0,
+  },
 }
 
 // ========== CLIENT IMPLEMENTATION ==========

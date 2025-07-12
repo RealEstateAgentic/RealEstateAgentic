@@ -14,6 +14,7 @@ import {
 import { Button } from '../ui/button'
 import { DocumentGenerator } from '../documents/DocumentGenerator'
 import { dummyData } from '../../data/dummy-data'
+import { LeadScoringDisplay } from '../shared/lead-scoring-display'
 
 interface ClientModalProps {
   client: {
@@ -108,7 +109,7 @@ export function ClientModal({
   // Handle initial document opening
   useEffect(() => {
     if (client.initialDocumentId && activeTab === 'documents') {
-      const doc = documents.find(d => d.id === parseInt(client.initialDocumentId))
+      const doc = documents.find(d => d.id === parseInt(client.initialDocumentId || '0'))
       if (doc) {
         setSelectedDocument({
           ...doc,
@@ -352,8 +353,9 @@ export function ClientModal({
   // Define which tabs should be visible based on client stage
   const getVisibleTabs = () => {
     const baseTabs = [
+      // Removed 'overview' and 'stage_details' tabs per Phase 2 requirements
+      { id: 'ai_lead_scoring', label: 'AI Lead Scoring', icon: TrendingUp },
       { id: 'summary', label: 'Summary', icon: null },
-      // Removed 'overview' and 'stage_details' tabs as requested
     ]
 
     const stageSpecificTabs = []
@@ -745,8 +747,8 @@ export function ClientModal({
                             day: 'numeric' 
                           })} at {nextEvent.time}</span>
                         </div>
-                        {nextEvent.description && (
-                          <p className="text-xs text-blue-600 mt-3 opacity-75">{nextEvent.description}</p>
+                        {(nextEvent as any).description && (
+                          <p className="text-xs text-blue-600 mt-3 opacity-75">{(nextEvent as any).description}</p>
                         )}
                       </div>
                     </div>
@@ -768,6 +770,13 @@ export function ClientModal({
               </div>
             </div>
           </div>
+        )
+      case 'ai_lead_scoring':
+        return (
+          <LeadScoringDisplay
+            clientEmail={client.email}
+            clientName={client.name}
+          />
         )
       case 'offers':
         return (

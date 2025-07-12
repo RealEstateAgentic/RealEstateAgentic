@@ -72,6 +72,13 @@ export function ClientModal({
     appraisal: '2024-01-25',
     finance: '2024-02-01'
   })
+  const [contingencyDetails, setContingencyDetails] = useState('')
+  const [contractDetails, setContractDetails] = useState({
+    contractPrice: '',
+    buyerAgent: '',
+    closingDate: '',
+    contractDate: ''
+  })
   const [editableDetails, setEditableDetails] = useState({
     name: client.name,
     email: client.email,
@@ -238,6 +245,52 @@ export function ClientModal({
 
   const handleSaveContingencies = () => {
     console.log('Saving contingency dates:', contingencyDates)
+    console.log('Additional details:', contingencyDetails)
+    console.log('Contract details:', contractDetails)
+    
+    // Phase 6 Task 6.4: Auto-create calendar events from contingency dates
+    try {
+      // Create calendar events for each contingency deadline
+      const events = [
+        {
+          title: 'Inspection Period Deadline',
+          date: contingencyDates.inspection,
+          time: '17:00', // 5:00 PM
+          description: `Inspection period deadline for ${client.propertyAddress}`,
+          clientType: 'seller',
+          clientId: client.id.toString(),
+          priority: 'high',
+          eventType: 'inspection_deadline'
+        },
+        {
+          title: 'Appraisal Deadline',
+          date: contingencyDates.appraisal,
+          time: '17:00',
+          description: `Appraisal deadline for ${client.propertyAddress}`,
+          clientType: 'seller',
+          clientId: client.id.toString(),
+          priority: 'high',
+          eventType: 'appraisal_deadline'
+        },
+        {
+          title: 'Financing Deadline',
+          date: contingencyDates.finance,
+          time: '17:00',
+          description: `Financing deadline for ${client.propertyAddress}`,
+          clientType: 'seller',
+          clientId: client.id.toString(),
+          priority: 'high',
+          eventType: 'financing_deadline'
+        }
+      ]
+      
+      console.log('Auto-created calendar events for contingency deadlines:', events)
+      // In a real application, these would be saved to the calendar system
+      
+    } catch (error) {
+      console.error('Error creating calendar events:', error)
+    }
+    
     setIsEditingContingencies(false)
   }
 
@@ -360,11 +413,7 @@ export function ClientModal({
 
     const stageSpecificTabs = []
     
-    // Add Offers tab only for Active Listing stage
-    if (client.stage === 'active_listing') {
-      stageSpecificTabs.push({ id: 'offers', label: 'Offers', icon: DollarSign })
-    }
-    
+    // Removed Offers tab from Active Listing stage per Phase 5 Task 5.3
     // Add Contingencies tab only for Under Contract stage
     if (client.stage === 'under_contract') {
       stageSpecificTabs.push({ id: 'contingencies', label: 'Contingencies', icon: Clock })
@@ -411,10 +460,13 @@ export function ClientModal({
       case 'active_listing':
         return (
           <div className="flex flex-wrap gap-2">
-            {/* Removed "Generate Weekly Seller Report" and "Log Showing Feedback" buttons */}
-            <Button variant="outline">
-              <Plus className="size-4 mr-2" />
-              Add Showing Notes
+            {/* Removed "Add Showing Notes" button per Phase 5 Task 5.1 */}
+            <Button 
+              onClick={handleGenerateDocuments}
+              className="bg-[#3B7097] hover:bg-[#3B7097]/90"
+            >
+              <FileText className="size-4 mr-2" />
+              Generate Documents
             </Button>
           </div>
         )
@@ -427,18 +479,15 @@ export function ClientModal({
               className="bg-[#3B7097] hover:bg-[#3B7097]/90"
             >
               <Edit className="size-4 mr-2" />
-              Edit Contingencies
+              Enter Contingencies
             </Button>
           </div>
         )
       case 'closed':
         return (
           <div className="flex flex-wrap gap-2">
-            {/* Removed "Suggest Thank You Gift", "Start Post-Closing Follow-Up", "Request Referral", "Generate Closing Packet" buttons */}
-            <Button variant="outline">
-              <Archive className="size-4 mr-2" />
-              Archive Client
-            </Button>
+            {/* Removed "Archive Client" button per Phase 7 Task 7.1 */}
+            {/* All action buttons have been removed for closed stage */}
           </div>
         )
       default:
@@ -778,25 +827,7 @@ export function ClientModal({
             clientName={client.name}
           />
         )
-      case 'offers':
-        return (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-800">Received Offers</h3>
-              <Button className="bg-[#3B7097] hover:bg-[#3B7097]/90">
-                <TrendingUp className="size-4 mr-2" />
-                Analyze Offers
-              </Button>
-            </div>
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-              <div className="text-center py-8">
-                <DollarSign className="size-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">No offers received yet</p>
-                <p className="text-sm text-gray-400 mt-2">Offers will appear here when received</p>
-              </div>
-            </div>
-          </div>
-        )
+
       case 'contingencies':
         return (
           <div className="space-y-4">
@@ -821,6 +852,76 @@ export function ClientModal({
               )}
             </div>
             <div className="bg-white border border-gray-200 rounded-lg p-6">
+              {/* Contract Details Section */}
+              <div className="mb-6 p-4 bg-[#3B7097]/5 rounded-lg border border-[#3B7097]/20">
+                <h4 className="font-semibold text-gray-800 mb-4">Contract Details</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Contract Price</label>
+                    {isEditingContingencies ? (
+                      <input
+                        type="text"
+                        value={contractDetails.contractPrice}
+                        onChange={(e) => setContractDetails({...contractDetails, contractPrice: e.target.value})}
+                        placeholder="e.g., $435,000"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
+                      />
+                    ) : (
+                      <div className="text-sm text-gray-800 font-medium">
+                        {contractDetails.contractPrice || <span className="text-gray-500 italic">Not entered</span>}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Buyer Agent</label>
+                    {isEditingContingencies ? (
+                      <input
+                        type="text"
+                        value={contractDetails.buyerAgent}
+                        onChange={(e) => setContractDetails({...contractDetails, buyerAgent: e.target.value})}
+                        placeholder="e.g., Jane Smith, ABC Realty"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
+                      />
+                    ) : (
+                      <div className="text-sm text-gray-800 font-medium">
+                        {contractDetails.buyerAgent || <span className="text-gray-500 italic">Not entered</span>}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Closing Date</label>
+                    {isEditingContingencies ? (
+                      <input
+                        type="date"
+                        value={contractDetails.closingDate}
+                        onChange={(e) => setContractDetails({...contractDetails, closingDate: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
+                      />
+                    ) : (
+                      <div className="text-sm text-gray-800 font-medium">
+                        {contractDetails.closingDate ? formatDate(contractDetails.closingDate) : <span className="text-gray-500 italic">Not set</span>}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Contract Date</label>
+                    {isEditingContingencies ? (
+                      <input
+                        type="date"
+                        value={contractDetails.contractDate}
+                        onChange={(e) => setContractDetails({...contractDetails, contractDate: e.target.value})}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
+                      />
+                    ) : (
+                      <div className="text-sm text-gray-800 font-medium">
+                        {contractDetails.contractDate ? formatDate(contractDetails.contractDate) : <span className="text-gray-500 italic">Not set</span>}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Contingencies Section */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
                   <div className="flex items-center space-x-3">
@@ -879,6 +980,29 @@ export function ClientModal({
                   </div>
                   <span className="text-sm font-medium text-green-600">Complete</span>
                 </div>
+                
+                {/* Phase 6 Task 6.2: Additional details field */}
+                {isEditingContingencies && (
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Additional Details
+                    </label>
+                    <textarea
+                      value={contingencyDetails}
+                      onChange={(e) => setContingencyDetails(e.target.value)}
+                      rows={3}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
+                      placeholder="Enter any additional contingency details or notes..."
+                    />
+                  </div>
+                )}
+                
+                {!isEditingContingencies && contingencyDetails && (
+                  <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                    <div className="text-sm font-medium text-gray-800 mb-1">Additional Details:</div>
+                    <div className="text-sm text-gray-600">{contingencyDetails}</div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

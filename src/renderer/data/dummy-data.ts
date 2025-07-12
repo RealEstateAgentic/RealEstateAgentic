@@ -381,31 +381,6 @@ export const dummyData = {
     }
   ],
 
-  // Notifications
-  notifications: [
-    {
-      id: 1,
-      type: "new_lead",
-      message: "New buyer lead from website form",
-      timestamp: "2024-01-14T10:30:00Z",
-      read: false
-    },
-    {
-      id: 2,
-      type: "deadline_reminder",
-      message: "Inspection contingency expires tomorrow for Miller Family",
-      timestamp: "2024-01-14T09:00:00Z",
-      read: false
-    },
-    {
-      id: 3,
-      type: "document_received",
-      message: "Appraisal report received for 456 Oak St",
-      timestamp: "2024-01-13T16:45:00Z",
-      read: true
-    }
-  ],
-
   // Buyer clients for Kanban board
   buyerClients: [
     // New Leads

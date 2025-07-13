@@ -176,10 +176,10 @@ src/
 Please read our [contributing guide](CONTRIBUTING.md) to learn how you can help out.
 
 Current contributors:
-- Damon
-- Daniel
+- [Damon](https://x.com/damonbodine)
+- [Daniel](https://x.com/dlopezklu)
 - Brooks
-- Andrew
+- [Andrew](https://x.com/ph0rque)
 
 ## Resources
 - [Brain Lift Workflow](https://workflowy.com/#/6beca50d2bf6) - Project planning and task management outline

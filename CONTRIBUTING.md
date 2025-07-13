@@ -14,4 +14,4 @@ Welcome to the AIgent Pro project! We're excited to have you contribute to the f
 
 ### Finding Issues
 
-*   **Find an issue:** Go to the [**Issues tab**](https://github.com/your-org/AIgentPro/issues) in our repository to see what's available to work on. 
+*   **Find an issue:** Go to the [**Issues tab**](https://github.com/RealEstateAgentic/RealEstateAgentic/issues) in our repository to see what's available to work on. 

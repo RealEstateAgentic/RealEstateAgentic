@@ -528,10 +528,69 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
   onDocumentGenerated,
   onCancel,
 }) => {
-  const [selectedTemplate, setSelectedTemplate] =
-    useState<string>('buyer_offer')
-  const [customDocuments, setCustomDocuments] =
-    useState<DocumentTypeSelection[]>(DOCUMENT_TYPES)
+  // Filter template packages based on client type
+  const getFilteredPackageTemplates = () => {
+    const isBuyer = clientProfile.clientType === 'buyer'
+
+    if (isBuyer) {
+      // Buyers: only buyer offer package, client education package, competitive analysis package
+      return Object.fromEntries(
+        Object.entries(PACKAGE_TEMPLATES).filter(([key]) =>
+          ['buyer_offer', 'client_education', 'competitive_analysis'].includes(
+            key
+          )
+        )
+      )
+    } else {
+      // Sellers: exclude buyer offer package (include seller counter, client education, competitive analysis)
+      return Object.fromEntries(
+        Object.entries(PACKAGE_TEMPLATES).filter(
+          ([key]) => key !== 'buyer_offer'
+        )
+      )
+    }
+  }
+
+  // Filter custom document types based on client type
+  const getFilteredDocumentTypes = () => {
+    const isBuyer = clientProfile.clientType === 'buyer'
+
+    if (isBuyer) {
+      // Buyers: exclude risk assessment and competitive comparison
+      return DOCUMENT_TYPES.filter(
+        doc => !['risk_assessment', 'competitive_comparison'].includes(doc.type)
+      )
+    } else {
+      // Sellers: include all document types (cover letter will be made counter-offer specific in prompts)
+      return DOCUMENT_TYPES
+    }
+  }
+
+  const filteredPackageTemplates = getFilteredPackageTemplates()
+  const filteredDocumentTypes = getFilteredDocumentTypes()
+
+  // Set default template based on client type
+  const getDefaultTemplate = () => {
+    const isBuyer = clientProfile.clientType === 'buyer'
+    const availableTemplates = Object.keys(filteredPackageTemplates)
+
+    if (isBuyer && availableTemplates.includes('buyer_offer')) {
+      return 'buyer_offer'
+    } else if (!isBuyer && availableTemplates.includes('seller_counter')) {
+      return 'seller_counter'
+    } else if (availableTemplates.includes('client_education')) {
+      return 'client_education'
+    } else {
+      return availableTemplates[0] || 'buyer_offer'
+    }
+  }
+
+  const [selectedTemplate, setSelectedTemplate] = useState<string>(
+    getDefaultTemplate()
+  )
+  const [customDocuments, setCustomDocuments] = useState<
+    DocumentTypeSelection[]
+  >(filteredDocumentTypes)
   const [generationMode, setGenerationMode] = useState<'template' | 'custom'>(
     'template'
   )
@@ -667,7 +726,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
 
   const handleTemplateChange = (template: string) => {
     setSelectedTemplate(template)
-    const templateConfig = PACKAGE_TEMPLATES[template]
+    const templateConfig = filteredPackageTemplates[template]
     if (templateConfig) {
       setCustomDocuments(prev =>
         prev.map(doc => ({
@@ -1021,7 +1080,7 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
 
       // Create the document package request
       const request: DocumentPackageRequest = {
-        type: 'buyer_offer' as DocumentPackageType,
+        type: selectedTemplate as DocumentPackageType,
         context,
         options: {
           format: 'text',
@@ -1306,33 +1365,35 @@ export const DocumentGenerator: React.FC<DocumentGeneratorProps> = ({
                   Template Packages
                 </h3>
                 <div className="space-y-3">
-                  {Object.entries(PACKAGE_TEMPLATES).map(([key, template]) => (
-                    <label
-                      key={key}
-                      className={`block p-3 border rounded-lg cursor-pointer transition-colors ${
-                        selectedTemplate === key
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-300 hover:border-gray-400'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        value={key}
-                        checked={selectedTemplate === key}
-                        onChange={e => handleTemplateChange(e.target.value)}
-                        className="sr-only"
-                      />
-                      <div className="font-medium text-gray-900">
-                        {template.label}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {template.description}
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        {template.types.length} documents included
-                      </div>
-                    </label>
-                  ))}
+                  {Object.entries(filteredPackageTemplates).map(
+                    ([key, template]) => (
+                      <label
+                        key={key}
+                        className={`block p-3 border rounded-lg cursor-pointer transition-colors ${
+                          selectedTemplate === key
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-300 hover:border-gray-400'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          value={key}
+                          checked={selectedTemplate === key}
+                          onChange={e => handleTemplateChange(e.target.value)}
+                          className="sr-only"
+                        />
+                        <div className="font-medium text-gray-900">
+                          {template.label}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {template.description}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {template.types.length} documents included
+                        </div>
+                      </label>
+                    )
+                  )}
                 </div>
               </div>
             )}

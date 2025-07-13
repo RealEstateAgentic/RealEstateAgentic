@@ -102,8 +102,6 @@ class JotFormPollingService {
 
   private async pollForSubmissions() {
     try {
-      console.log('🔄 Polling for new submissions...');
-      
       // Poll buyer form
       if (this.buyerFormId) {
         await this.pollFormSubmissions(this.buyerFormId, 'buyer');
@@ -121,10 +119,7 @@ class JotFormPollingService {
 
   private async pollFormSubmissions(formId: string, formType: 'buyer' | 'seller') {
     try {
-      console.log(`🔍 Polling ${formType} form ${formId} with API key: ${JOTFORM_API_KEY ? 'PRESENT' : 'MISSING'}`);
-      
       const apiUrl = `${JOTFORM_API_BASE}/form/${formId}/submissions?apiKey=${JOTFORM_API_KEY}&limit=10&orderby=created_at`;
-      console.log(`🌐 Request URL: ${apiUrl.replace(JOTFORM_API_KEY, 'HIDDEN_KEY')}`);
       
       const response = await fetch(apiUrl);
       

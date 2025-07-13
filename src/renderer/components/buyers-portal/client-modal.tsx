@@ -32,7 +32,7 @@ import {
   Save,
   Loader2,
   Trash2,
-  RefreshCw
+  RefreshCw,
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { DocumentGenerator } from '../documents/DocumentGenerator'
@@ -45,7 +45,11 @@ import {
   getClientDocuments,
   deleteDocument,
 } from '../../../lib/firebase/collections/documents'
-import { useFormData, extractFormField, getFieldLabel } from '../../hooks/useFormData'
+import {
+  useFormData,
+  extractFormField,
+  getFieldLabel,
+} from '../../hooks/useFormData'
 
 // Define ClientProfile interface locally since it's not in shared types
 interface ClientProfile {
@@ -103,14 +107,14 @@ export function ClientModal({
   const [contingencyDates, setContingencyDates] = useState({
     inspection: '2024-01-15',
     appraisal: '2024-01-25',
-    finance: '2024-02-01'
+    finance: '2024-02-01',
   })
   const [contingencyDetails, setContingencyDetails] = useState('')
   const [contractDetails, setContractDetails] = useState({
     contractPrice: '',
     sellerAgent: '',
     closingDate: '',
-    contractDate: ''
+    contractDate: '',
   })
   const [editableDetails, setEditableDetails] = useState({
     name: client.name,
@@ -119,13 +123,34 @@ export function ClientModal({
     budget: client.budget,
     location: client.location,
     priority: client.priority,
-    notes: client.notes
+    notes: client.notes,
   })
 
   // Documents state for buyer
   const [documents, setDocuments] = useState<any[]>([])
   const [loadingDocuments, setLoadingDocuments] = useState(false)
   const [deletingAllDocuments, setDeletingAllDocuments] = useState(false)
+
+  // Fetch form data and GPT analysis
+  const {
+    formData,
+    aiSummary,
+    submissionDate,
+    loading: formLoading,
+    error: formError,
+    formQuestions,
+  } = useFormData(client.email, 'buyer')
+
+  // Create a client ID (same format as DocumentGenerator)
+  const createClientId = (firstName: string, lastName: string): string => {
+    const sanitize = (str: string) =>
+      str
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+    return `${sanitize(firstName)}-${sanitize(lastName)}` || 'unknown-client'
+  }
 
   // Load documents for this client
   const loadClientDocuments = async () => {
@@ -166,47 +191,12 @@ export function ClientModal({
         console.log('⚠️ No documents found:', result.error)
         setDocuments([])
       }
-      } catch (error) {
-        console.error('❌ Error loading documents:', error)
-        setDocuments([])
-      } finally {
-        setLoadingDocuments(false)
-      }
-
-  // Fetch form data and GPT analysis
-  const { formData, aiSummary, submissionDate, loading: formLoading, error: formError, formQuestions } = useFormData(client.email, 'buyer')
-
-  // Sample documents for buyer
-  const [documents, setDocuments] = useState([
-    {
-      id: 1,
-      title: 'Buyer Survey Results',
-      type: 'PDF',
-      size: '2.1 MB',
-      uploadDate: '2024-01-10',
-      description: 'Initial buyer questionnaire responses',
-      tags: 'survey, initial'
-    },
-    {
-      id: 2,
-      title: 'Generated Briefing',
-      type: 'PDF',
-      size: '1.5 MB',
-      uploadDate: '2024-01-08',
-      description: 'AI-generated client briefing document',
-      tags: 'briefing, ai-generated'
+    } catch (error) {
+      console.error('❌ Error loading documents:', error)
+      setDocuments([])
+    } finally {
+      setLoadingDocuments(false)
     }
-  }
-
-  // Create a client ID (same format as DocumentGenerator)
-  const createClientId = (firstName: string, lastName: string): string => {
-    const sanitize = (str: string) =>
-      str
-        .toLowerCase()
-        .replace(/[^a-z0-9]/g, '-')
-        .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '')
-    return `${sanitize(firstName)}-${sanitize(lastName)}` || 'unknown-client'
   }
 
   // Delete all documents for this client
@@ -267,16 +257,11 @@ export function ClientModal({
       const doc = documents.find(
         d => d.id === Number.parseInt(client.initialDocumentId || '0', 10)
       )
-    }
-  ])
-
-  useEffect(() => {
-    if (client.initialDocumentId && activeTab === 'documents') {
-      const doc = documents.find(d => d.id === parseInt(client.initialDocumentId || '0'))
       if (doc) {
         setSelectedDocument({
           ...doc,
-          content: "This is the document content that would be displayed in a scrollable modal."
+          content:
+            'This is the document content that would be displayed in a scrollable modal.',
         })
       }
     }
@@ -285,41 +270,11 @@ export function ClientModal({
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return 'Not set'
     const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
     })
-  }
-
-  const getProgressButtonText = (stage: string) => {
-    switch (stage) {
-      case 'new_leads':
-        return 'Progress to Active Search'
-      case 'active_search':
-        return 'Progress to Under Contract'
-      case 'under_contract':
-        return 'Progress to Closed'
-      default:
-        return null
-    }
-  }
-
-  const getPreviousStageText = (stage: string) => {
-    switch (stage) {
-      case 'active_search':
-        return 'Return to New Leads'
-      case 'under_contract':
-        return 'Return to Active Search'
-      case 'closed':
-        return 'Return to Under Contract'
-      default:
-        return null
-    }
-  }
-
-  const shouldShowProgressButton = (stage: string) => {
-    return stage !== 'closed'
   }
 
   const getStageName = (stage: string) => {
@@ -343,12 +298,6 @@ export function ClientModal({
     }
   }
 
-  const handleProgress = () => {
-    if (onProgress) {
-      onProgress(client.id, client.stage)
-    }
-  }
-
   const handleUnarchive = () => {
     if (onUnarchive) {
       onUnarchive(client.id)
@@ -361,46 +310,53 @@ export function ClientModal({
 
   const handleSendSurvey = async () => {
     if (isSendingSurvey) return
-    
+
     setIsSendingSurvey(true)
-    
+
     try {
       console.log('Sending survey to:', client.name, client.email)
-      
+
       // Check if Gmail is authenticated
       if (!gmailAuth.isAuthenticated()) {
         console.log('🔑 Gmail not authenticated, starting OAuth flow...')
-        
+
         const authResult = await gmailAuth.authenticate()
-        
+
         if (!authResult.success) {
           throw new Error(`Gmail authentication failed: ${authResult.error}`)
         }
-        
+
         console.log('✅ Gmail authenticated:', authResult.userEmail)
       }
-      
+
       // Import and use the automation service with Gmail API
-      const { startBuyerWorkflowWithGmail } = await import('../../services/automation')
-      
+      const { startBuyerWorkflowWithGmail } = await import(
+        '../../services/automation'
+      )
+
       const result = await startBuyerWorkflowWithGmail({
         agentId: 'agent-1', // TODO: Get actual agent ID
         buyerEmail: client.email,
         buyerName: client.name,
         buyerPhone: client.phone,
-        senderEmail: gmailAuth.getUserEmail() || undefined
+        senderEmail: gmailAuth.getUserEmail() || undefined,
       })
-      
+
       if (result.success) {
-        alert(`✅ Survey sent successfully to ${client.name} from your Gmail account!\n\nForm URL: ${result.formUrl}`)
+        alert(
+          `✅ Survey sent successfully to ${client.name} from your Gmail account!\n\nForm URL: ${result.formUrl}`
+        )
         console.log('Survey sent successfully:', result)
       } else {
         throw new Error('Failed to send survey')
       }
     } catch (error) {
       console.error('Error sending survey:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-      alert(`❌ Failed to send survey to ${client.name}.\n\nError: ${errorMessage}`)
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error occurred'
+      alert(
+        `❌ Failed to send survey to ${client.name}.\n\nError: ${errorMessage}`
+      )
     } finally {
       setIsSendingSurvey(false)
     }
@@ -410,7 +366,7 @@ export function ClientModal({
     console.log('Saving contingency dates:', contingencyDates)
     console.log('Additional details:', contingencyDetails)
     console.log('Contract details:', contractDetails)
-    
+
     // Task 6.5: Auto-create calendar events from contingency dates
     try {
       // Create calendar events for each contingency deadline
@@ -423,7 +379,7 @@ export function ClientModal({
           clientType: 'buyer',
           clientId: client.id.toString(),
           priority: 'high',
-          eventType: 'inspection_deadline'
+          eventType: 'inspection_deadline',
         },
         {
           title: 'Appraisal Deadline',
@@ -433,7 +389,7 @@ export function ClientModal({
           clientType: 'buyer',
           clientId: client.id.toString(),
           priority: 'high',
-          eventType: 'appraisal_deadline'
+          eventType: 'appraisal_deadline',
         },
         {
           title: 'Financing Deadline',
@@ -443,17 +399,19 @@ export function ClientModal({
           clientType: 'buyer',
           clientId: client.id.toString(),
           priority: 'high',
-          eventType: 'financing_deadline'
-        }
+          eventType: 'financing_deadline',
+        },
       ]
-      
-      console.log('Auto-created calendar events for contingency deadlines:', events)
+
+      console.log(
+        'Auto-created calendar events for contingency deadlines:',
+        events
+      )
       // In a real application, these would be saved to the calendar system
-      
     } catch (error) {
       console.error('Error creating calendar events:', error)
     }
-    
+
     setIsEditingContingencies(false)
   }
 
@@ -524,7 +482,7 @@ export function ClientModal({
       budget: client.budget,
       location: client.location,
       priority: client.priority,
-      notes: client.notes
+      notes: client.notes,
     })
     setIsEditingDetails(false)
   }
@@ -532,7 +490,8 @@ export function ClientModal({
   const handleViewDocument = (document: any) => {
     setSelectedDocument({
       ...document,
-      content: "This is the document content that would be displayed in a scrollable modal."
+      content:
+        'This is the document content that would be displayed in a scrollable modal.',
     })
   }
 
@@ -553,13 +512,9 @@ export function ClientModal({
   }
 
   const createClientProfile = (): ClientProfile => {
-    const firstName = client.name.trim().split(' ')[0] || 'Client'
-    const lastName = client.name.trim().split(' ').slice(1).join(' ') || 'Name'
-
-    console.log('🔗 Creating client profile for DocumentGenerator:')
-    console.log('  - First name:', firstName)
-    console.log('  - Last name:', lastName)
-    console.log('  - Expected client ID:', createClientId(firstName, lastName))
+    const nameParts = client.name.trim().split(' ')
+    const firstName = nameParts[0] || 'Client'
+    const lastName = nameParts.slice(1).join(' ') || 'Name'
 
     return {
       id: client.id.toString(),
@@ -592,17 +547,19 @@ export function ClientModal({
     ]
 
     const stageSpecificTabs = []
-    
+
     // Add Contingencies tab only for Under Contract stage
     if (client.stage === 'under_contract') {
-      stageSpecificTabs.push({ id: 'contingencies', label: 'Contingencies', icon: Clock })
+      stageSpecificTabs.push({
+        id: 'contingencies',
+        label: 'Contingencies',
+        icon: Clock,
+      })
     }
 
     const alwaysVisibleTabs = [
       { id: 'form_details', label: 'Form Details', icon: FileText },
       { id: 'documents', label: 'Documents and Content', icon: FolderOpen },
-      { id: 'email_history', label: 'Email History', icon: History },
-      { id: 'calendar', label: 'Calendar', icon: CalendarDays },
       { id: 'email_history', label: 'Email History', icon: History },
       { id: 'calendar', label: 'Calendar', icon: CalendarDays },
     ]
@@ -615,7 +572,7 @@ export function ClientModal({
       case 'new_leads':
         return (
           <div className="flex flex-wrap gap-2">
-            <Button 
+            <Button
               onClick={handleSendSurvey}
               disabled={isSendingSurvey}
               className="bg-[#3B7097] hover:bg-[#3B7097]/90"
@@ -632,7 +589,7 @@ export function ClientModal({
       case 'active_search':
         return (
           <div className="flex flex-wrap gap-2">
-            <Button 
+            <Button
               onClick={handleGenerateDocuments}
               className="bg-[#3B7097] hover:bg-[#3B7097]/90"
             >
@@ -644,20 +601,20 @@ export function ClientModal({
       case 'under_contract':
         return (
           <div className="flex flex-wrap gap-2">
-            <Button 
+            <Button
               onClick={handleRepairEstimator}
               className="bg-[#3B7097] hover:bg-[#3B7097]/90"
             >
               Repair Estimator
             </Button>
-            <Button 
+            <Button
               onClick={handleGenerateDocuments}
               className="bg-[#3B7097] hover:bg-[#3B7097]/90"
             >
               <FileText className="size-4 mr-2" />
               Generate Documents
             </Button>
-            <Button 
+            <Button
               onClick={() => setIsEditingContingencies(true)}
               className="bg-[#3B7097] hover:bg-[#3B7097]/90"
             >
@@ -683,12 +640,13 @@ export function ClientModal({
         return (
           <div className="space-y-4">
             <div className="bg-[#75BDE0]/10 p-4 rounded-lg border border-[#75BDE0]/30">
-              <h4 className="font-medium text-gray-800 mb-2">
-                Lead Information
-              </h4>
+              <h4 className="font-medium text-gray-800 mb-2">Survey Status</h4>
               <div className="space-y-2 text-sm">
                 <div>
-                  <strong>Source:</strong> {client.leadSource}
+                  <strong>Survey Status:</strong> Pending
+                </div>
+                <div>
+                  <strong>Lead Source:</strong> {client.leadSource}
                 </div>
                 <div>
                   <strong>Priority:</strong> {client.priority}
@@ -696,22 +654,7 @@ export function ClientModal({
                 <div>
                   <strong>Date Added:</strong> {formatDate(client.dateAdded)}
                 </div>
-                <div>
-                  <strong>Last Contact:</strong>{' '}
-                  {formatDate(client.lastContact)}
-                </div>
               </div>
-            </div>
-            <div className="bg-[#c05e51]/10 p-4 rounded-lg border border-[#c05e51]/30">
-              <h4 className="font-medium text-gray-800 mb-2">AI Briefing</h4>
-              <p className="text-sm text-gray-700">
-                {client.subStatus === 'to_initiate_contact' &&
-                  'Schedule initial consultation call'}
-                {client.subStatus === 'awaiting_survey' &&
-                  'Send buyer survey form'}
-                {client.subStatus === 'review_survey' &&
-                  'Review submitted survey and prepare briefing'}
-              </p>
             </div>
           </div>
         )
@@ -720,42 +663,18 @@ export function ClientModal({
           <div className="space-y-4">
             <div className="bg-[#A9D09E]/10 p-4 rounded-lg border border-[#A9D09E]/30">
               <h4 className="font-medium text-gray-800 mb-2">
-                Property Search
+                Search Progress
               </h4>
               <div className="space-y-2 text-sm">
                 <div>
-                  <strong>Favorited Properties:</strong>{' '}
-                  {client.favoritedProperties?.length || 0}
+                  <strong>Properties Viewed:</strong> 5
                 </div>
                 <div>
-                  <strong>Viewed Properties:</strong>{' '}
-                  {client.viewedProperties?.length || 0}
+                  <strong>Favorites:</strong> 2
                 </div>
                 <div>
-                  <strong>Status:</strong> {client.subStatus.replace('_', ' ')}
+                  <strong>Offers Made:</strong> 1
                 </div>
-              </div>
-            </div>
-            {client.favoritedProperties &&
-              client.favoritedProperties.length > 0 && (
-                <div className="bg-[#F6E2BC]/50 p-4 rounded-lg border border-[#F6E2BC]">
-                  <h4 className="font-medium text-gray-800 mb-2">
-                    Favorited Properties
-                  </h4>
-                  <div className="space-y-1">
-                    {client.favoritedProperties.map((property, index) => (
-                      <div key={index} className="text-sm text-gray-700">
-                        • {property}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              <h4 className="font-medium text-gray-800 mb-2">Search Progress</h4>
-              <div className="space-y-2 text-sm">
-                <div><strong>Properties Viewed:</strong> 5</div>
-                <div><strong>Favorites:</strong> 2</div>
-                <div><strong>Offers Made:</strong> 1</div>
               </div>
             </div>
           </div>
@@ -763,94 +682,240 @@ export function ClientModal({
       case 'under_contract':
         return (
           <div className="space-y-4">
-            {/* Transaction Timeline */}
-            <div className="bg-[#c05e51]/10 p-4 rounded-lg border border-[#c05e51]/30">
+            <div className="bg-[#F6E2BC]/30 p-4 rounded-lg border border-[#F6E2BC]/50">
               <h4 className="font-medium text-gray-800 mb-2">
-                Contract Details
+                Contract Status
               </h4>
               <div className="space-y-2 text-sm">
                 <div>
-                  <strong>Property:</strong> {client.contractProperty}
+                  <strong>Contract Price:</strong> $435,000
                 </div>
                 <div>
-                  <strong>Contract Date:</strong>{' '}
-                  {formatDate(client.contractDate)}
+                  <strong>Closing Date:</strong> {formatDate('2024-02-15')}
                 </div>
                 <div>
-                  <strong>Inspection Date:</strong>{' '}
-                  {formatDate(client.inspectionDate)}
-                </div>
-                <div>
-                  <strong>Appraisal Date:</strong>{' '}
-                  {formatDate(client.appraisalDate)}
-                </div>
-                <div>
-                  <strong>Closing Date:</strong>{' '}
-                  {formatDate(client.closingDate)}
+                  <strong>Contract Date:</strong> {formatDate('2024-01-05')}
                 </div>
               </div>
             </div>
-
-            {/* Option Period Deadline */}
-            <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-              <h4 className="font-medium text-red-800 mb-2 flex items-center">
-                <Clock className="size-4 mr-2" />
-                Option Period Deadline
-              </h4>
-              <p className="text-sm text-red-700">
-                Option period expires:{' '}
-                <strong>{formatDate(client.inspectionDate)}</strong>
-              </p>
-            </div>
-
-            {/* Inspection Hub */}
+          </div>
+        )
+      case 'closed':
+        return (
+          <div className="space-y-4">
             <div className="bg-[#A9D09E]/10 p-4 rounded-lg border border-[#A9D09E]/30">
-              <h4 className="font-medium text-gray-800 mb-2">Inspection Hub</h4>
-              <p className="text-sm text-gray-600 mb-3">
-                Manage inspection reports and repair estimates
-              </p>
-              <Button
-                onClick={handleUploadInspectionReport}
-                className="bg-[#3B7097] hover:bg-[#3B7097]/90"
-              >
-                <Upload className="size-4 mr-2" />
-                Upload Inspection Report
-              </Button>
+              <h4 className="font-medium text-gray-800 mb-2">
+                Closing Summary
+              </h4>
+              <div className="space-y-2 text-sm">
+                <div>
+                  <strong>Final Purchase Price:</strong> $432,000
+                </div>
+                <div>
+                  <strong>Closing Date:</strong> {formatDate('2024-02-12')}
+                </div>
+                <div>
+                  <strong>Days to Close:</strong> 38 days
+                </div>
+              </div>
             </div>
+          </div>
+        )
+      default:
+        return (
+          <div className="space-y-4">
+            <div className="text-gray-500">
+              No stage-specific content available.
+            </div>
+          </div>
+        )
+    }
+  }
 
-            {/* Key Contacts Widget */}
-            <div className="bg-[#F6E2BC]/10 p-4 rounded-lg border border-[#F6E2BC]/30">
-              <h4 className="font-medium text-gray-800 mb-3">Key Contacts</h4>
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'summary':
+        if (client.stage === 'closed') {
+          // Phase 7: Closed stage specific design matching seller implementation
+          return (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Purchase Summary Widget */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <Home className="size-5 text-green-600 mr-2" />
+                  <h3 className="font-semibold text-gray-800">
+                    Purchase Summary
+                  </h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">
+                      Final Purchase Price:
+                    </span>
+                    <span className="text-sm text-gray-900">$432,000</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">
+                      Closing Date:
+                    </span>
+                    <span className="text-sm text-gray-900">
+                      February 12, 2024
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">
+                      Days to Close:
+                    </span>
+                    <span className="text-sm text-gray-900">45 days</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">
+                      Property Address:
+                    </span>
+                    <span className="text-sm text-gray-900">
+                      123 Elm Street
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Buyer Motivation Widget - updated for closed */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <TrendingUp className="size-5 text-green-600 mr-2" />
+                  <h3 className="font-semibold text-gray-800">
+                    Buyer Motivation
+                  </h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">
+                      Original Timeline:
+                    </span>
+                    <span className="text-sm text-gray-900">
+                      Next 3-6 months
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">
+                      Reason for Buying:
+                    </span>
+                    <span className="text-sm text-gray-900">
+                      First-time buyer
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">
+                      Original Budget:
+                    </span>
+                    <span className="text-sm text-gray-900">
+                      {client.budget}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">
+                      Priority Level:
+                    </span>
+                    <span className="text-sm text-gray-900">
+                      {client.priority}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Recent Notes Widget */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <MessageCircle className="size-5 text-orange-600 mr-2" />
+                  <h3 className="font-semibold text-gray-800">Final Notes</h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="text-sm text-gray-700">
+                    {client.notes ||
+                      'Successful home purchase completed. Client expressed satisfaction with the process and property selection.'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Post-Closing Status Widget */}
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center mb-4">
+                  <CheckCircle className="size-5 text-green-600 mr-2" />
+                  <h3 className="font-semibold text-gray-800">
+                    Post-Closing Status
+                  </h3>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">
+                      Keys Received
+                    </span>
+                    <CheckCircle className="size-4 text-green-600" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">
+                      Final Walkthrough
+                    </span>
+                    <CheckCircle className="size-4 text-green-600" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">
+                      Utilities Connected
+                    </span>
+                    <CheckCircle className="size-4 text-green-600" />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">
+                      Move-in Ready
+                    </span>
+                    <CheckCircle className="size-4 text-green-600" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        }
+
+        // Regular summary for other stages
+        return (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Widget A: Client Details */}
+            <div className="bg-white border border-gray-200 rounded-lg p-6">
+              <div className="flex items-center mb-4">
+                <Home className="size-5 text-blue-600 mr-2" />
+                <h3 className="font-semibold text-gray-800">Client Details</h3>
+              </div>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Looking for:</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Looking for:
+                  </span>
                   <span className="text-sm text-gray-900">
-                    {extractFormField(formData, 'propertyType') || extractFormField(formData, 'looking_for') || 'Single Family Home'}
+                    {extractFormField(formData, 'propertyType') ||
+                      extractFormField(formData, 'looking_for') ||
+                      'Single Family Home'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Zipcode(s):</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Zipcode(s):
+                  </span>
                   <span className="text-sm text-gray-900">
-                    {extractFormField(formData, 'location') || extractFormField(formData, 'zipcode') || client.location || 'Not specified'}
+                    {extractFormField(formData, 'location') ||
+                      extractFormField(formData, 'zipcode') ||
+                      client.location ||
+                      'Not specified'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-700">Property Type Desired:</span>
-                  <span className="text-sm text-gray-900">
-                    {extractFormField(formData, 'propertyType') || extractFormField(formData, 'property_type') || 'Single Family'}
+                  <span className="text-sm font-medium text-gray-700">
+                    Property Type Desired:
                   </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-sm">
-                      Title/Escrow Officer
-                    </div>
-                    <div className="text-xs text-gray-500">Not assigned</div>
-                  </div>
-                  <Button size="sm" variant="outline">
-                    <User className="size-3 mr-1" />
-                    Add
-                  </Button>
+                  <span className="text-sm text-gray-900">
+                    {extractFormField(formData, 'propertyType') ||
+                      extractFormField(formData, 'property_type') ||
+                      'Single Family'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <div>
@@ -864,71 +929,10 @@ export function ClientModal({
                     Add
                   </Button>
                 </div>
-            <div className="bg-[#F6E2BC]/30 p-4 rounded-lg border border-[#F6E2BC]/50">
-              <h4 className="font-medium text-gray-800 mb-2">Contract Status</h4>
-              <div className="space-y-2 text-sm">
-                <div><strong>Contract Price:</strong> $435,000</div>
-                <div><strong>Closing Date:</strong> {formatDate('2024-02-15')}</div>
-                <div><strong>Contract Date:</strong> {formatDate('2024-01-05')}</div>
               </div>
             </div>
           </div>
         )
-      default:
-        return (
-          <div className="space-y-4">
-            <div className="bg-[#A9D09E]/10 p-4 rounded-lg border border-[#A9D09E]/30">
-              <h4 className="font-medium text-gray-800 mb-2">
-                Stage Information
-              </h4>
-              <div className="space-y-2 text-sm">
-                <div>
-                  <strong>Current Stage:</strong> {getStageName(client.stage)}
-                </div>
-                <div>
-                  <strong>Status:</strong> {client.subStatus.replace('_', ' ')}
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-    }
-  }
-
-
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'summary':
-        return (
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-medium text-gray-800 mb-2">Client Notes</h3>
-              <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
-                {client.notes || 'No notes available'}
-              </p>
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-800 mb-2">Client Details</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <strong>Lead Source:</strong> {client.leadSource}
-                </div>
-                <div>
-                  <strong>Priority:</strong> {client.priority}
-                </div>
-                <div>
-                  <strong>Date Added:</strong> {formatDate(client.dateAdded)}
-                </div>
-                <div>
-                  <strong>Last Contact:</strong>{' '}
-                  {formatDate(client.lastContact)}
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-      case 'stage_details':
-        return getStageSpecificContent()
 
       case 'ai_lead_scoring':
         return (
@@ -938,41 +942,13 @@ export function ClientModal({
           />
         )
 
-      case 'offers':
-        return (
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-medium text-gray-800 mb-3">Client Offers</h3>
-            </div>
-            <div className="space-y-3">
-              {/* Sample offer data - in real app this would come from database */}
-              <div className="border border-gray-200 rounded-lg p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-medium text-gray-800">
-                      123 Main Street
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      Offer Price: $450,000
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Submitted: March 15, 2024
-                    </p>
-                  </div>
-                  <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
-                    Pending
-                  </span>
-                </div>
-              </div>
-              <div className="text-sm text-gray-500 text-center py-4">
-                No additional offers found for this client.
-              </div>
-      
       case 'contingencies':
         return (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-semibold text-gray-800">Buyer Contingencies</h3>
+              <h3 className="font-semibold text-gray-800">
+                Buyer Contingencies
+              </h3>
               {isEditingContingencies && (
                 <div className="flex space-x-2">
                   <Button
@@ -991,161 +967,264 @@ export function ClientModal({
                 </div>
               )}
             </div>
-            
+
             {/* Contract Details Section */}
             <div className="mb-6 p-4 bg-[#3B7097]/5 rounded-lg border border-[#3B7097]/20">
-              <h4 className="font-semibold text-gray-800 mb-4">Contract Details</h4>
+              <h4 className="font-semibold text-gray-800 mb-4">
+                Contract Details
+              </h4>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Contract Price</label>
+                  <label
+                    htmlFor="contract-price"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Contract Price
+                  </label>
                   {isEditingContingencies ? (
                     <input
+                      id="contract-price"
                       type="text"
                       value={contractDetails.contractPrice}
-                      onChange={(e) => setContractDetails({...contractDetails, contractPrice: e.target.value})}
+                      onChange={e =>
+                        setContractDetails({
+                          ...contractDetails,
+                          contractPrice: e.target.value,
+                        })
+                      }
                       placeholder="e.g., $435,000"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                     />
                   ) : (
                     <div className="text-sm text-gray-800 font-medium">
-                      {contractDetails.contractPrice || <span className="text-gray-500 italic">Not entered</span>}
+                      {contractDetails.contractPrice || (
+                        <span className="text-gray-500 italic">
+                          Not entered
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Seller Agent</label>
+                  <label
+                    htmlFor="seller-agent"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Seller Agent
+                  </label>
                   {isEditingContingencies ? (
                     <input
+                      id="seller-agent"
                       type="text"
                       value={contractDetails.sellerAgent}
-                      onChange={(e) => setContractDetails({...contractDetails, sellerAgent: e.target.value})}
+                      onChange={e =>
+                        setContractDetails({
+                          ...contractDetails,
+                          sellerAgent: e.target.value,
+                        })
+                      }
                       placeholder="e.g., Jane Smith, ABC Realty"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                     />
                   ) : (
                     <div className="text-sm text-gray-800 font-medium">
-                      {contractDetails.sellerAgent || <span className="text-gray-500 italic">Not entered</span>}
+                      {contractDetails.sellerAgent || (
+                        <span className="text-gray-500 italic">
+                          Not entered
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Closing Date</label>
+                  <label
+                    htmlFor="closing-date"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Closing Date
+                  </label>
                   {isEditingContingencies ? (
                     <input
+                      id="closing-date"
                       type="date"
                       value={contractDetails.closingDate}
-                      onChange={(e) => setContractDetails({...contractDetails, closingDate: e.target.value})}
+                      onChange={e =>
+                        setContractDetails({
+                          ...contractDetails,
+                          closingDate: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                     />
                   ) : (
                     <div className="text-sm text-gray-800 font-medium">
-                      {contractDetails.closingDate ? formatDate(contractDetails.closingDate) : <span className="text-gray-500 italic">Not set</span>}
+                      {contractDetails.closingDate ? (
+                        formatDate(contractDetails.closingDate)
+                      ) : (
+                        <span className="text-gray-500 italic">Not set</span>
+                      )}
                     </div>
                   )}
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Contract Date</label>
+                  <label
+                    htmlFor="contract-date"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Contract Date
+                  </label>
                   {isEditingContingencies ? (
                     <input
+                      id="contract-date"
                       type="date"
                       value={contractDetails.contractDate}
-                      onChange={(e) => setContractDetails({...contractDetails, contractDate: e.target.value})}
+                      onChange={e =>
+                        setContractDetails({
+                          ...contractDetails,
+                          contractDate: e.target.value,
+                        })
+                      }
                       className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#3B7097]"
                     />
                   ) : (
                     <div className="text-sm text-gray-800 font-medium">
-                      {contractDetails.contractDate ? formatDate(contractDetails.contractDate) : <span className="text-gray-500 italic">Not set</span>}
+                      {contractDetails.contractDate ? (
+                        formatDate(contractDetails.contractDate)
+                      ) : (
+                        <span className="text-gray-500 italic">Not set</span>
+                      )}
                     </div>
                   )}
                 </div>
               </div>
             </div>
-            
+
             {/* Contingencies Section */}
             <div className="space-y-3">
               <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <AlertCircle className="size-5 text-yellow-600" />
                   <div>
-                    <div className="font-medium text-gray-800">Inspection Contingency</div>
+                    <div className="font-medium text-gray-800">
+                      Inspection Contingency
+                    </div>
                     {isEditingContingencies ? (
                       <input
                         type="date"
                         value={contingencyDates.inspection}
-                        onChange={(e) => setContingencyDates({...contingencyDates, inspection: e.target.value})}
+                        onChange={e =>
+                          setContingencyDates({
+                            ...contingencyDates,
+                            inspection: e.target.value,
+                          })
+                        }
                         className="text-sm border rounded px-2 py-1"
                       />
                     ) : (
-                      <div className="text-sm text-gray-600">Due: {formatDate(contingencyDates.inspection)}</div>
+                      <div className="text-sm text-gray-600">
+                        Due: {formatDate(contingencyDates.inspection)}
+                      </div>
                     )}
                   </div>
                 </div>
-                <span className="text-sm font-medium text-yellow-600">Pending</span>
+                <span className="text-sm font-medium text-yellow-600">
+                  Pending
+                </span>
               </div>
-              
+
               <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <Clock className="size-5 text-gray-600" />
                   <div>
-                    <div className="font-medium text-gray-800">Appraisal Contingency</div>
+                    <div className="font-medium text-gray-800">
+                      Appraisal Contingency
+                    </div>
                     {isEditingContingencies ? (
                       <input
                         type="date"
                         value={contingencyDates.appraisal}
-                        onChange={(e) => setContingencyDates({...contingencyDates, appraisal: e.target.value})}
+                        onChange={e =>
+                          setContingencyDates({
+                            ...contingencyDates,
+                            appraisal: e.target.value,
+                          })
+                        }
                         className="text-sm border rounded px-2 py-1"
                       />
                     ) : (
-                      <div className="text-sm text-gray-600">Due: {formatDate(contingencyDates.appraisal)}</div>
+                      <div className="text-sm text-gray-600">
+                        Due: {formatDate(contingencyDates.appraisal)}
+                      </div>
                     )}
                   </div>
                 </div>
-                <span className="text-sm font-medium text-gray-600">Pending</span>
+                <span className="text-sm font-medium text-gray-600">
+                  Pending
+                </span>
               </div>
-              
+
               <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                 <div className="flex items-center space-x-3">
                   <CheckCircle className="size-5 text-green-600" />
                   <div>
-                    <div className="font-medium text-gray-800">Finance Contingency</div>
+                    <div className="font-medium text-gray-800">
+                      Finance Contingency
+                    </div>
                     {isEditingContingencies ? (
                       <input
                         type="date"
                         value={contingencyDates.finance}
-                        onChange={(e) => setContingencyDates({...contingencyDates, finance: e.target.value})}
+                        onChange={e =>
+                          setContingencyDates({
+                            ...contingencyDates,
+                            finance: e.target.value,
+                          })
+                        }
                         className="text-sm border rounded px-2 py-1"
                       />
                     ) : (
-                      <div className="text-sm text-gray-600">Due: {formatDate(contingencyDates.finance)}</div>
+                      <div className="text-sm text-gray-600">
+                        Due: {formatDate(contingencyDates.finance)}
+                      </div>
                     )}
                   </div>
                 </div>
-                <span className="text-sm font-medium text-green-600">Complete</span>
+                <span className="text-sm font-medium text-green-600">
+                  Complete
+                </span>
               </div>
-              
+
               {/* Additional details field */}
               {isEditingContingencies && (
                 <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor="additional-details"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
                     Additional Details
                   </label>
                   <textarea
+                    id="additional-details"
                     value={contingencyDetails}
-                    onChange={(e) => setContingencyDetails(e.target.value)}
+                    onChange={e => setContingencyDetails(e.target.value)}
                     rows={3}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"
                     placeholder="Enter any additional contingency details or notes..."
                   />
                 </div>
               )}
-              
+
               {contingencyDetails && !isEditingContingencies && (
                 <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                  <div className="text-sm font-medium text-gray-800 mb-1">Additional Details:</div>
-                  <div className="text-sm text-gray-600">{contingencyDetails}</div>
+                  <div className="text-sm font-medium text-gray-800 mb-1">
+                    Additional Details:
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {contingencyDetails}
+                  </div>
                 </div>
               )}
             </div>
@@ -1164,7 +1243,9 @@ export function ClientModal({
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <div className="flex items-center">
                   <AlertCircle className="size-5 text-red-600 mr-2" />
-                  <span className="text-red-800 font-medium">Error loading form data</span>
+                  <span className="text-red-800 font-medium">
+                    Error loading form data
+                  </span>
                 </div>
                 <p className="text-red-700 text-sm mt-1">{formError}</p>
               </div>
@@ -1172,7 +1253,9 @@ export function ClientModal({
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <div className="flex items-center">
                   <AlertCircle className="size-5 text-yellow-600 mr-2" />
-                  <span className="text-yellow-800 font-medium">No form data available</span>
+                  <span className="text-yellow-800 font-medium">
+                    No form data available
+                  </span>
                 </div>
                 <p className="text-yellow-700 text-sm mt-1">
                   This client hasn't completed the buyer questionnaire yet.
@@ -1184,11 +1267,14 @@ export function ClientModal({
                 <div className="bg-white border border-gray-200 rounded-lg p-6">
                   <div className="flex items-center mb-4">
                     <FileText className="size-5 text-blue-600 mr-2" />
-                    <h3 className="font-semibold text-gray-800">Completed Form Responses</h3>
+                    <h3 className="font-semibold text-gray-800">
+                      Completed Form Responses
+                    </h3>
                   </div>
                   {submissionDate && (
                     <p className="text-sm text-gray-500 mb-4">
-                      Submitted on {new Date(submissionDate).toLocaleDateString()}
+                      Submitted on{' '}
+                      {new Date(submissionDate).toLocaleDateString()}
                     </p>
                   )}
                   <div className="space-y-6">
@@ -1201,14 +1287,30 @@ export function ClientModal({
                         {Object.entries(formData)
                           .filter(([key]) => ['2', '3', '4'].includes(key))
                           .map(([key, value]) => {
-                            if (!value || typeof value !== 'object' || !value.answer) return null;
-                            const displayLabel = getFieldLabel(key, 'buyer', formQuestions);
+                            if (
+                              !value ||
+                              typeof value !== 'object' ||
+                              !value.answer
+                            )
+                              return null
+                            const displayLabel = getFieldLabel(
+                              key,
+                              'buyer',
+                              formQuestions
+                            )
                             return (
-                              <div key={key} className="flex justify-between items-start py-2">
-                                <dt className="text-sm font-medium text-gray-600 w-1/2">{displayLabel}:</dt>
-                                <dd className="text-sm text-gray-900 w-1/2 text-right font-medium">{value.answer}</dd>
+                              <div
+                                key={key}
+                                className="flex justify-between items-start py-2"
+                              >
+                                <dt className="text-sm font-medium text-gray-600 w-1/2">
+                                  {displayLabel}:
+                                </dt>
+                                <dd className="text-sm text-gray-900 w-1/2 text-right font-medium">
+                                  {value.answer}
+                                </dd>
                               </div>
-                            );
+                            )
                           })}
                       </div>
                     </div>
@@ -1222,14 +1324,30 @@ export function ClientModal({
                         {Object.entries(formData)
                           .filter(([key]) => !['2', '3', '4'].includes(key))
                           .map(([key, value]) => {
-                            if (!value || typeof value !== 'object' || !value.answer) return null;
-                            const displayLabel = getFieldLabel(key, 'buyer', formQuestions);
+                            if (
+                              !value ||
+                              typeof value !== 'object' ||
+                              !value.answer
+                            )
+                              return null
+                            const displayLabel = getFieldLabel(
+                              key,
+                              'buyer',
+                              formQuestions
+                            )
                             return (
-                              <div key={key} className="flex justify-between items-start py-2">
-                                <dt className="text-sm font-medium text-gray-600 w-1/2">{displayLabel}:</dt>
-                                <dd className="text-sm text-gray-900 w-1/2 text-right font-medium">{value.answer}</dd>
+                              <div
+                                key={key}
+                                className="flex justify-between items-start py-2"
+                              >
+                                <dt className="text-sm font-medium text-gray-600 w-1/2">
+                                  {displayLabel}:
+                                </dt>
+                                <dd className="text-sm text-gray-900 w-1/2 text-right font-medium">
+                                  {value.answer}
+                                </dd>
                               </div>
-                            );
+                            )
                           })}
                       </div>
                     </div>
@@ -1241,11 +1359,15 @@ export function ClientModal({
                   <div className="bg-white border border-gray-200 rounded-lg p-6">
                     <div className="flex items-center mb-4">
                       <TrendingUp className="size-5 text-green-600 mr-2" />
-                      <h3 className="font-semibold text-gray-800">AI Analysis Summary</h3>
+                      <h3 className="font-semibold text-gray-800">
+                        AI Analysis Summary
+                      </h3>
                     </div>
                     <div className="prose max-w-none">
                       <div className="bg-gray-50 rounded-lg p-4">
-                        <p className="text-gray-800 whitespace-pre-wrap">{aiSummary}</p>
+                        <p className="text-gray-800 whitespace-pre-wrap">
+                          {aiSummary}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -1256,353 +1378,6 @@ export function ClientModal({
         )
 
       case 'documents':
-        return (
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-medium text-gray-800 mb-3">
-                Transaction Contingencies
-              </h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Track and manage all major contingencies for this transaction.
-              </p>
-              <h4 className="font-medium text-gray-800 mb-2">
-                Closed Transaction
-              </h4>
-              <div className="space-y-2 text-sm">
-                <div>
-                  <strong>Property:</strong> {client.contractProperty}
-                </div>
-                <div>
-                  <strong>Sale Price:</strong> {client.soldPrice}
-                </div>
-                <div>
-                  <strong>Closing Date:</strong>{' '}
-                  {formatDate(client.closingDate)}
-                </div>
-                <div>
-                  <strong>Status:</strong> {client.subStatus.replace('_', ' ')}
-                </div>
-              </div>
-            </div>
-            <div className="bg-[#A9D09E]/10 p-4 rounded-lg border border-[#A9D09E]/30">
-              <h4 className="font-medium text-gray-800 mb-2">
-                Post-Closing Tasks
-              </h4>
-              <p className="text-sm text-gray-700">
-                {client.subStatus === 'post_closing_checklist' &&
-                  'Complete post-closing checklist and schedule follow-up'}
-                {client.subStatus === 'nurture_campaign_active' &&
-                  'Client in nurture campaign, potential referral source'}
-              </p>
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <input type="checkbox" id="inspection" className="rounded" />
-                  <label htmlFor="inspection" className="text-sm font-medium">
-                    Inspection Contingency
-                  </label>
-                </div>
-                <span className="text-xs text-gray-500">
-                  Due: {formatDate(client.inspectionDate)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <input type="checkbox" id="appraisal" className="rounded" />
-                  <label htmlFor="appraisal" className="text-sm font-medium">
-                    Appraisal Contingency
-                  </label>
-                </div>
-                <span className="text-xs text-gray-500">
-                  Due: {formatDate(client.appraisalDate)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <input type="checkbox" id="loan" className="rounded" />
-                  <label htmlFor="loan" className="text-sm font-medium">
-                    Loan Contingency
-                  </label>
-                </div>
-                <span className="text-xs text-gray-500">
-                  Due: {formatDate(client.closingDate)}
-                </span>
-              </div>
-            </div>
-          </div>
-        )
-
-      case 'content':
-        return (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="font-medium text-gray-800">Document Repository</h3>
-              <Button size="sm" variant="outline">
-                <Plus className="size-4 mr-2" />
-                Upload Document
-              </Button>
-            </div>
-            <div className="space-y-3">
-              {/* Sample document data */}
-              <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <FileText className="size-4 text-gray-500" />
-                  <div>
-                    <div className="text-sm font-medium">
-                      Pre-approval Letter - ABC Bank.pdf
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      Uploaded 2 days ago
-                    </div>
-      case 'form_details':
-        return (
-          <div className="space-y-6">
-            {formLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="size-6 animate-spin text-blue-600 mr-2" />
-                <span className="text-gray-600">Loading form data...</span>
-              </div>
-            ) : formError ? (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <div className="flex items-center">
-                  <AlertCircle className="size-5 text-red-600 mr-2" />
-                  <span className="text-red-800 font-medium">Error loading form data</span>
-                </div>
-                <p className="text-red-700 text-sm mt-1">{formError}</p>
-              </div>
-            ) : Object.keys(formData).length === 0 ? (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <div className="flex items-center">
-                  <AlertCircle className="size-5 text-yellow-600 mr-2" />
-                  <span className="text-yellow-800 font-medium">No form data available</span>
-                </div>
-                <p className="text-yellow-700 text-sm mt-1">
-                  This client hasn't completed the buyer questionnaire yet.
-                </p>
-              </div>
-            ) : (
-              <>
-                {/* Form Data Section */}
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
-                  <div className="flex items-center mb-4">
-                    <FileText className="size-5 text-blue-600 mr-2" />
-                    <h3 className="font-semibold text-gray-800">Completed Form Responses</h3>
-                  </div>
-                  {submissionDate && (
-                    <p className="text-sm text-gray-500 mb-4">
-                      Submitted on {new Date(submissionDate).toLocaleDateString()}
-                    </p>
-                  )}
-                  <div className="space-y-6">
-                    {/* Contact Information Section */}
-                    <div>
-                      <h4 className="text-sm font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-200">
-                        Contact Information
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {Object.entries(formData)
-                          .filter(([key]) => ['2', '3', '4'].includes(key))
-                          .map(([key, value]) => {
-                            if (!value || typeof value !== 'object' || !value.answer) return null;
-                            const displayLabel = getFieldLabel(key, 'buyer', formQuestions);
-                            return (
-                              <div key={key} className="flex justify-between items-start py-2">
-                                <dt className="text-sm font-medium text-gray-600 w-1/2">{displayLabel}:</dt>
-                                <dd className="text-sm text-gray-900 w-1/2 text-right font-medium">{value.answer}</dd>
-                              </div>
-                            );
-                          })}
-                      </div>
-                    </div>
-
-                    {/* Financial & Property Preferences */}
-                    <div>
-                      <h4 className="text-sm font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-200">
-                        Property & Financial Preferences
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {Object.entries(formData)
-                          .filter(([key]) => !['2', '3', '4'].includes(key))
-                          .map(([key, value]) => {
-                            if (!value || typeof value !== 'object' || !value.answer) return null;
-                            const displayLabel = getFieldLabel(key, 'buyer', formQuestions);
-                            return (
-                              <div key={key} className="flex justify-between items-start py-2">
-                                <dt className="text-sm font-medium text-gray-600 w-1/2">{displayLabel}:</dt>
-                                <dd className="text-sm text-gray-900 w-1/2 text-right font-medium">{value.answer}</dd>
-                              </div>
-                            );
-                          })}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* AI Summary Section */}
-                {aiSummary && (
-                  <div className="bg-white border border-gray-200 rounded-lg p-6">
-                    <div className="flex items-center mb-4">
-                      <TrendingUp className="size-5 text-green-600 mr-2" />
-                      <h3 className="font-semibold text-gray-800">AI Analysis Summary</h3>
-                    </div>
-                    <div className="prose max-w-none">
-                      <div className="bg-gray-50 rounded-lg p-4">
-                        <p className="text-gray-800 whitespace-pre-wrap">{aiSummary}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )
-
-
-      case 'documents':
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-800">Documents and Content</h3>
-              <Button className="bg-[#3B7097] hover:bg-[#3B7097]/90">
-                <Upload className="size-4 mr-2" />
-                Upload Document
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {documents.map((doc) => (
-                <div key={doc.id} className="bg-white border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-medium text-gray-900 text-sm">{doc.title}</h4>
-                    <span className="text-xs text-gray-500">{doc.type}</span>
-                  </div>
-                  <p className="text-xs text-gray-600 mb-3">{doc.description}</p>
-                  <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-                    <span>{doc.size}</span>
-                    <span>{formatDate(doc.uploadDate)}</span>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      handleViewDocument({
-                        id: 1,
-                        title: 'Pre-approval Letter - ABC Bank.pdf',
-                        type: 'pdf',
-                        uploadedDate: '2 days ago',
-                        content:
-                          'This is a sample pre-approval letter content. In a real application, this would display the actual document content or embed a PDF viewer.',
-                      })
-                    }
-                  >
-                    <Eye className="size-3 mr-1" />
-                    View
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      handleDownloadDocument({
-                        id: 1,
-                        title: 'Pre-approval Letter - ABC Bank.pdf',
-                      })
-                    }
-                  >
-                    <Download className="size-3 mr-1" />
-                    Download
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      handleRenameDocument({
-                        id: 1,
-                        title: 'Pre-approval Letter - ABC Bank.pdf',
-                      })
-                    }
-                  >
-                    <Edit className="size-3 mr-1" />
-                    Rename
-                  </Button>
-                </div>
-              </div>
-
-              {/* Additional sample document */}
-              <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <FileText className="size-4 text-gray-500" />
-                  <div>
-                    <div className="text-sm font-medium">
-                      Property Wish List - Notes.docx
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      Uploaded 1 week ago
-                    </div>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      handleViewDocument({
-                        id: 2,
-                        title: 'Property Wish List - Notes.docx',
-                        type: 'docx',
-                        uploadedDate: '1 week ago',
-                        content:
-                          "Client's property wish list and preferences:\n\n• 3-4 bedrooms\n• 2+ bathrooms\n• Updated kitchen\n• Large backyard\n• Good school district\n• Near public transportation\n• Parking space\n• Modern appliances included",
-                      })
-                    }
-                  >
-                    <Eye className="size-3 mr-1" />
-                    View
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      handleDownloadDocument({
-                        id: 2,
-                        title: 'Property Wish List - Notes.docx',
-                      })
-                    }
-                  >
-                    <Download className="size-3 mr-1" />
-                    Download
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      handleRenameDocument({
-                        id: 2,
-                        title: 'Property Wish List - Notes.docx',
-                      })
-                    }
-                  >
-                    <Edit className="size-3 mr-1" />
-                    Rename
-                  </Button>
-                </div>
-              </div>
-
-              <div className="text-sm text-gray-500 text-center py-4">
-                No additional documents found.
-              </div>
-            </div>
-          </div>
-        )
-
-      case 'email_history':
-        return (
-          <EmailHistory clientEmail={client.email} clientName={client.name} />
-        )
-
-      case 'calendar':
         return (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -1642,7 +1417,7 @@ export function ClientModal({
 
             {loadingDocuments ? (
               <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3" />
                 <span className="ml-2 text-gray-600">Loading documents...</span>
               </div>
             ) : documents.length > 0 ? (
@@ -1700,112 +1475,68 @@ export function ClientModal({
           </div>
         )
 
+      case 'calendar':
+        return (
+          <div className="space-y-6">
+            <div>
+              <h3 className="font-medium text-gray-800 mb-3">
+                Client Timeline
+              </h3>
+            </div>
+
+            {/* Coming Events */}
+            <div>
+              <h4 className="font-medium text-gray-700 mb-3">Coming Events</h4>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <Calendar className="size-4 text-blue-600" />
+                  <div>
+                    <div className="text-sm font-medium">Property Showing</div>
+                    <div className="text-xs text-gray-600">
+                      Tomorrow, 2:00 PM - 456 Oak Avenue
+                    </div>
+                  </div>
+                </div>
+                <div className="text-sm text-gray-500 text-center py-2">
+                  No additional upcoming events.
+                </div>
+              </div>
+            </div>
+
+            {/* Past Events */}
+            <div>
+              <h4 className="font-medium text-gray-700 mb-3">Past Events</h4>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <Calendar className="size-4 text-gray-400" />
+                  <div>
+                    <div className="text-sm font-medium">
+                      Initial Consultation
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      March 10, 2024, 10:00 AM
+                    </div>
+                  </div>
+                </div>
+                <div className="text-sm text-gray-500 text-center py-2">
+                  No additional past events.
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+
       case 'email_history':
         return (
-          <EmailHistory 
-            clientEmail={client.email} 
+          <EmailHistory
+            clientEmail={client.email}
             clientName={client.name}
             className="bg-white"
           />
         )
 
       default:
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-800">
-                Documents and Content
-              </h3>
-              <div className="flex space-x-2">
-                <Button
-                  onClick={loadClientDocuments}
-                  variant="outline"
-                  size="sm"
-                  disabled={loadingDocuments}
-                >
-                  <RefreshCw
-                    className={`size-4 mr-2 ${loadingDocuments ? 'animate-spin' : ''}`}
-                  />
-                  Refresh
-                </Button>
-                {documents.length > 0 && (
-                  <Button
-                    onClick={handleDeleteAllDocuments}
-                    variant="outline"
-                    size="sm"
-                    disabled={deletingAllDocuments}
-                    className="text-red-600 border-red-300 hover:bg-red-50"
-                  >
-                    <Trash2 className="size-4 mr-2" />
-                    {deletingAllDocuments ? 'Deleting...' : 'Delete All'}
-                  </Button>
-                )}
-                <Button className="bg-[#3B7097] hover:bg-[#3B7097]/90">
-                  <Upload className="size-4 mr-2" />
-                  Upload Document
-                </Button>
-              </div>
-            </div>
-
-            {loadingDocuments ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-2 text-gray-600">Loading documents...</span>
-              </div>
-            ) : documents.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {documents.map(doc => (
-                  <div
-                    key={doc.id}
-                    className="bg-white border border-gray-200 rounded-lg p-4"
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-medium text-gray-900 text-sm">
-                        {doc.title}
-                      </h4>
-                      <span className="text-xs text-gray-500">{doc.type}</span>
-                    </div>
-                    <p className="text-xs text-gray-600 mb-3">
-                      {doc.description || 'No description available'}
-                    </p>
-                    <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-                      <span>{doc.metadata?.wordCount || 0} words</span>
-                      <span>{formatDate(doc.createdAt)}</span>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button
-                        onClick={() => handleViewDocument(doc)}
-                        size="sm"
-                        variant="outline"
-                        className="flex-1"
-                      >
-                        <Eye className="size-3 mr-1" />
-                        View
-                      </Button>
-                      <Button
-                        onClick={() => handleDownloadDocument(doc)}
-                        size="sm"
-                        variant="outline"
-                      >
-                        <Download className="size-3" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <FileText className="size-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">
-                  No documents found for this client
-                </p>
-                <p className="text-sm text-gray-400 mt-2">
-                  Generate documents or upload files to get started
-                </p>
-              </div>
-            )}
-          </div>
-        )
+        return <div>Content not found</div>
     }
   }
 
@@ -1827,166 +1558,14 @@ export function ClientModal({
                   <X className="size-6" />
                 </button>
               </div>
-              <div className="flex items-center">
-                <Mail className="size-4 text-gray-400 mr-2" />
-                <span className="text-sm">{client.email}</span>
-              </div>
-              <div className="flex items-center">
-                <DollarSign className="size-4 text-gray-400 mr-2" />
-                <span className="text-sm">{client.budget}</span>
-              </div>
-              <div className="flex items-center">
-                <MapPin className="size-4 text-gray-400 mr-2" />
-                <span className="text-sm">{client.location}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Tabs */}
-          <div className="border-b border-gray-200">
-            <nav className="flex space-x-8 px-6">
-              {getVisibleTabs().map(tab => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 py-4 px-1 text-sm font-medium border-b-2 ${
-                    activeTab === tab.id
-                      ? 'border-[#3B7097] text-[#3B7097]'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  {tab.icon && <tab.icon className="size-4" />}
-                  <span>{tab.label}</span>
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          {/* Content */}
-          <div className="p-6">{renderTabContent()}</div>
-
-          {/* Actions */}
-          <div className="p-6 border-t border-gray-200 bg-gray-50">
-            <div className="flex justify-between items-start">
-              {/* Stage-specific actions */}
-              <div className="flex-1">{getStageActions()}</div>
-
-              {/* Archive/Progress buttons or Unarchive button */}
-              <div className="flex gap-2 ml-4">
-                {isArchiveMode ? (
-                  // Archive mode: Show only Unarchive button
-                  <Button
-                    onClick={handleUnarchive}
-                    className="bg-[#A9D09E] hover:bg-[#A9D09E]/90 text-white"
-                  >
-                    <RotateCcw className="size-4 mr-2" />
-                    Unarchive
-                  </Button>
-                ) : (
-                  // Normal mode: Show Archive and Progress buttons
-                  <>
-                    {shouldShowProgressButton(client.stage) && (
-                      <Button
-                        onClick={handleProgress}
-                        className="bg-[#3B7097] hover:bg-[#3B7097]/90 text-white"
-                      >
-                        <ArrowRight className="size-4 mr-2" />
-                        {getProgressButtonText(client.stage)}
-                      </Button>
-                    )}
-
-                    <Button
-                      onClick={handleArchive}
-                      variant="outline"
-                      className="border-[#c05e51] text-[#c05e51] hover:bg-[#c05e51]/10"
-                    >
-                      <Archive className="size-4 mr-2" />
-                      Archive
-                    </Button>
-                  </>
-                )}
+              <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-700">
+                {selectedDocument.content}
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Document Generator Modal */}
-      {showDocumentGenerator && currentUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60">
-          <div className="bg-white rounded-lg max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">
-                  Generate Documents for {client.name}
-                </h2>
-                <button
-                  onClick={handleCancelDocumentGeneration}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <X className="size-6" />
-                </button>
-              </div>
-              <DocumentGenerator
-                agentProfile={createAgentProfileAdapter()}
-                clientProfile={createClientProfile()}
-                onDocumentGenerated={handleDocumentGenerated}
-                onCancel={handleCancelDocumentGeneration}
-              />
-            </div>
-            
-            {/* Coming Events */}
-            <div>
-              <h4 className="font-medium text-gray-700 mb-3">Coming Events</h4>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <Calendar className="size-4 text-blue-600" />
-                  <div>
-                    <div className="text-sm font-medium">Property Showing</div>
-                    <div className="text-xs text-gray-600">Tomorrow, 2:00 PM - 456 Oak Avenue</div>
-                  </div>
-                </div>
-                <div className="text-sm text-gray-500 text-center py-2">
-                  No additional upcoming events.
-                </div>
-              </div>
-            </div>
-
-            {/* Past Events */}
-            <div>
-              <h4 className="font-medium text-gray-700 mb-3">Past Events</h4>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                  <Calendar className="size-4 text-gray-400" />
-                  <div>
-                    <div className="text-sm font-medium">Initial Consultation</div>
-                    <div className="text-xs text-gray-600">March 10, 2024, 10:00 AM</div>
-                  </div>
-                </div>
-                <div className="text-sm text-gray-500 text-center py-2">
-                  No additional past events.
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-
-      case 'email_history':
-        return (
-          <EmailHistory 
-            clientEmail={client.email} 
-            clientName={client.name}
-            className="bg-white"
-          />
-        )
-
-      default:
-        return <div>Content not found</div>
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       {showDocumentGenerator && currentUser ? (
         <div className="bg-white rounded-lg max-w-6xl w-full mx-4 max-h-[90vh] overflow-y-auto">
           <div className="p-6">
@@ -2054,7 +1633,7 @@ export function ClientModal({
           {/* Tabs */}
           <div className="border-b border-gray-200">
             <nav className="flex space-x-8 px-6">
-              {getVisibleTabs().map((tab) => (
+              {getVisibleTabs().map(tab => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
@@ -2072,16 +1651,14 @@ export function ClientModal({
           </div>
 
           {/* Content */}
-          <div className="p-6">
-            {renderTabContent()}
-          </div>
+          <div className="p-6">{renderTabContent()}</div>
 
           {/* Footer Actions */}
           <div className="border-t border-gray-200 p-6">
             <div className="flex flex-wrap gap-2">
               {/* Stage-specific actions */}
               {getStageActions()}
-              
+
               {/* Edit Details Button - Always present */}
               <Button
                 onClick={() => setIsEditingDetails(true)}
@@ -2111,28 +1688,6 @@ export function ClientModal({
                     <Archive className="size-4 mr-2" />
                     Archive
                   </Button>
-                  
-                  {/* Progress Button */}
-                  {shouldShowProgressButton(client.stage) && (
-                    <Button
-                      onClick={handleProgress}
-                      className="bg-[#A9D09E] hover:bg-[#A9D09E]/90"
-                    >
-                      <ArrowRight className="size-4 mr-2" />
-                      {getProgressButtonText(client.stage)}
-                    </Button>
-                  )}
-
-                  {/* Return to Previous Stage Button */}
-                  {getPreviousStageText(client.stage) && (
-                    <Button
-                      onClick={() => {}} // Implement previous stage logic
-                      variant="outline"
-                    >
-                      <RotateCcw className="size-4 mr-2" />
-                      {getPreviousStageText(client.stage)}
-                    </Button>
-                  )}
                 </>
               )}
             </div>

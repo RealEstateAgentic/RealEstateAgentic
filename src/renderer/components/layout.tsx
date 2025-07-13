@@ -3,8 +3,8 @@
  * Includes navigation bar and wraps page content
  */
 
-import type { ReactNode } from 'react'
-import { LogOut } from 'lucide-react'
+import { ReactNode, useState } from 'react'
+import { User, ChevronDown, LogOut, TrendingUp, Target } from 'lucide-react'
 import { Button } from './ui/button'
 import { Logo } from './ui/logo'
 import type { AgentProfile } from '../../shared/types'
@@ -34,6 +34,17 @@ function Navigation({
   isAuthenticated?: boolean
   onLogout?: () => void
 }) {
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+
+  const handleUserMenuToggle = () => {
+    setIsUserMenuOpen(!isUserMenuOpen)
+  }
+
+  const handleUserMenuItemClick = (action: () => void) => {
+    action()
+    setIsUserMenuOpen(false)
+  }
+
   const navItems = [
     { path: '/', label: 'Home' },
     { path: '/buyers-portal', label: 'Buyers Portal' },
@@ -68,16 +79,59 @@ function Navigation({
         <div className="flex items-center space-x-4">
           {/* User Profile */}
           {isAuthenticated && currentUser ? (
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">
-                {currentUser.displayName || currentUser.email}
-              </span>
-              <span className="text-xs text-gray-500 capitalize">
-                ({userType})
-              </span>
-              <Button variant="ghost" size="icon" onClick={onLogout}>
-                <LogOut className="size-4" />
+            <div className="relative">
+              <Button
+                variant="ghost"
+                onClick={handleUserMenuToggle}
+                className="flex items-center space-x-2 text-sm text-gray-600 hover:text-gray-900"
+              >
+                <User className="size-4" />
+                <span>{currentUser.displayName || currentUser.email}</span>
+                <ChevronDown className="size-3" />
               </Button>
+
+              {isUserMenuOpen && (
+                <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-200 rounded-md shadow-lg">
+                  <div className="px-4 py-2 border-b border-gray-200">
+                    <p className="text-sm font-medium text-gray-900">
+                      {currentUser.displayName || currentUser.email}
+                    </p>
+                    <p className="text-xs text-gray-500">{currentUser.email}</p>
+                  </div>
+                  <div className="py-1">
+                    <button
+                      onClick={() =>
+                        handleUserMenuItemClick(() => navigate('/analytics'))
+                      }
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2"
+                    >
+                      <TrendingUp className="size-4" />
+                      <span>Analytics</span>
+                    </button>
+                    <button
+                      onClick={() =>
+                        handleUserMenuItemClick(() =>
+                          navigate('/strategy-recommendations')
+                        )
+                      }
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2"
+                    >
+                      <Target className="size-4" />
+                      <span>Strategy Recommendations</span>
+                    </button>
+                    <div className="border-t border-gray-200 my-1" />
+                    <button
+                      onClick={() =>
+                        handleUserMenuItemClick(onLogout || (() => {}))
+                      }
+                      className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center space-x-2"
+                    >
+                      <LogOut className="size-4" />
+                      <span>Logout</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="flex items-center space-x-2">
@@ -115,7 +169,7 @@ export function Layout({
         isAuthenticated={isAuthenticated}
         onLogout={onLogout}
       />
-      <main className="h-[calc(100vh-70px)] overflow-hidden">{children}</main>
+      <main className="flex-1">{children}</main>
     </div>
   )
 }

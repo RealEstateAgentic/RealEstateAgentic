@@ -13,6 +13,7 @@ interface KanbanColumnProps {
   stage: string
   clients: any[]
   onClientClick: (client: any) => void
+  navigate?: (path: string) => void
   isLoading?: boolean
   hasError?: string | null
 }
@@ -20,9 +21,10 @@ interface KanbanColumnProps {
 interface DraggableClientCardProps {
   client: any
   onClick: () => void
+  navigate?: (path: string) => void
 }
 
-function DraggableClientCard({ client, onClick }: DraggableClientCardProps) {
+function DraggableClientCard({ client, onClick, navigate }: DraggableClientCardProps) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: client.id.toString(),
@@ -46,7 +48,7 @@ function DraggableClientCard({ client, onClick }: DraggableClientCardProps) {
         <GripVertical className="size-4 text-gray-400" />
       </div>
 
-      <ClientCard client={client} onClick={onClick} isDragging={isDragging} />
+      <ClientCard client={client} onClick={onClick} navigate={navigate} isDragging={isDragging} />
     </div>
   )
 }
@@ -56,6 +58,7 @@ export function KanbanColumn({
   stage,
   clients,
   onClientClick,
+  navigate,
   isLoading,
   hasError,
 }: KanbanColumnProps) {
@@ -125,6 +128,7 @@ export function KanbanColumn({
                 key={client.id}
                 client={client}
                 onClick={() => onClientClick(client)}
+                navigate={navigate}
               />
             ))}
           </div>

@@ -543,25 +543,13 @@ export function ClientModal({
   const getVisibleTabs = () => {
     const baseTabs = [
       { id: 'ai_lead_scoring', label: 'AI Lead Scoring', icon: TrendingUp },
-      { id: 'summary', label: 'Summary', icon: null },
     ]
 
     const stageSpecificTabs = []
 
-    // Add Contingencies tab only for Under Contract stage
-    if (client.stage === 'under_contract') {
-      stageSpecificTabs.push({
-        id: 'contingencies',
-        label: 'Contingencies',
-        icon: Clock,
-      })
-    }
-
     const alwaysVisibleTabs = [
       { id: 'form_details', label: 'Form Details', icon: FileText },
-      { id: 'documents', label: 'Documents and Content', icon: FolderOpen },
       { id: 'email_history', label: 'Email History', icon: History },
-      { id: 'calendar', label: 'Calendar', icon: CalendarDays },
     ]
 
     return [...baseTabs, ...stageSpecificTabs, ...alwaysVisibleTabs]
@@ -579,10 +567,6 @@ export function ClientModal({
             >
               <Send className="size-4 mr-2" />
               {isSendingSurvey ? 'Sending...' : 'Send Survey'}
-            </Button>
-            <Button variant="outline">
-              <Download className="size-4 mr-2" />
-              Download Meeting Materials
             </Button>
           </div>
         )
@@ -613,13 +597,6 @@ export function ClientModal({
             >
               <FileText className="size-4 mr-2" />
               Generate Documents
-            </Button>
-            <Button
-              onClick={() => setIsEditingContingencies(true)}
-              className="bg-[#3B7097] hover:bg-[#3B7097]/90"
-            >
-              <Edit className="size-4 mr-2" />
-              Edit Contingencies
             </Button>
           </div>
         )

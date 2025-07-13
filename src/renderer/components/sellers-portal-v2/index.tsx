@@ -4,16 +4,8 @@
  */
 
 import { useState, useEffect } from 'react'
-import {
-  DndContext,
-  type DragEndEvent,
-  DragOverlay,
-  type DragStartEvent,
-  closestCenter,
-} from '@dnd-kit/core'
 import { KanbanColumn } from './kanban-column'
 import { ClientModal } from './client-modal'
-import { ClientCard } from './client-card'
 import { ClientCommunicationFeed } from './client-communication-feed'
 import { Button } from '../ui/button'
 import { Archive, Plus, X, Upload } from 'lucide-react'
@@ -130,18 +122,12 @@ interface SellersPortalV2Props {
  */
 function getNextStage(currentStage: string): string | null {
   switch (currentStage) {
-    case 'new_lead':
-      return 'pre_listing'
-    case 'pre_listing':
-      return 'active_listing'
-    case 'active_listing':
-      return 'under_contract'
-    case 'under_contract':
-      return 'closed'
-    case 'closed':
-      return null
-    default:
-      return null
+    case 'new_lead': return 'pre_listing'
+    case 'pre_listing': return 'active_listing'
+    case 'active_listing': return 'under_contract'
+    case 'under_contract': return 'closed'
+    case 'closed': return null
+    default: return null
   }
 }
 
@@ -150,26 +136,16 @@ function getNextStage(currentStage: string): string | null {
  */
 function getDefaultSubStatus(stage: string): string {
   switch (stage) {
-    case 'new_lead':
-      return 'to_initiate_contact'
-    case 'pre_listing':
-      return 'preparing_cma'
-    case 'active_listing':
-      return 'accepting_showings'
-    case 'under_contract':
-      return 'awaiting_inspection'
-    case 'closed':
-      return 'post_closing_checklist'
-    default:
-      return 'unknown'
+    case 'new_lead': return 'to_initiate_contact'
+    case 'pre_listing': return 'preparing_cma'
+    case 'active_listing': return 'accepting_showings'
+    case 'under_contract': return 'awaiting_inspection'
+    case 'closed': return 'post_closing_checklist'
+    default: return 'unknown'
   }
 }
 
-export function SellersPortalV2({
-  navigate,
-  currentUser,
-  userType,
-}: SellersPortalV2Props) {
+export function SellersPortalV2({ navigate, currentUser, userType }: SellersPortalV2Props) {
   const [selectedClient, setSelectedClient] = useState<any>(null)
   const [sellerClients, setSellerClients] = useState<any[]>([])
   const [archivedClients, setArchivedClients] = useState<any[]>([])
@@ -177,7 +153,6 @@ export function SellersPortalV2({
   const [isCreating, setIsCreating] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState<string | null>(null)
-  const [activeId, setActiveId] = useState<string | null>(null)
   const [newLeadForm, setNewLeadForm] = useState({
     name: '',
     email: '',
@@ -186,7 +161,7 @@ export function SellersPortalV2({
     leadSource: '',
     priority: 'Medium',
     notes: '',
-    documents: [] as File[],
+    documents: [] as File[]
   })
 
   // Set up real-time listener for seller clients
@@ -199,13 +174,13 @@ export function SellersPortalV2({
     console.log('Setting up real-time listener for sellers')
     const unsubscribe = firebaseCollections.getSellersRealTime(
       currentUser.uid,
-      sellers => {
+      (sellers) => {
         console.log('Received real-time sellers update:', sellers.length)
         setSellerClients(sellers)
         setIsLoading(false)
         setHasError(null)
       },
-      error => {
+      (error) => {
         console.error('Real-time sellers error:', error)
         setHasError('Failed to load sellers—please refresh')
         setIsLoading(false)
@@ -225,18 +200,14 @@ export function SellersPortalV2({
     const tab = params.get('tab')
     const documentId = params.get('documentId')
     const action = params.get('action')
-
+    
     if (clientId) {
-      const client = sellerClients.find(c => c.id === Number.parseInt(clientId))
+      const client = sellerClients.find(c => c.id === parseInt(clientId))
       if (client) {
-        setSelectedClient({
-          ...client,
-          initialTab: tab,
-          initialDocumentId: documentId,
-        })
+        setSelectedClient({ ...client, initialTab: tab, initialDocumentId: documentId })
       }
     }
-
+    
     // Handle new lead action from dashboard
     if (action === 'newLead') {
       setShowNewLeadModal(true)
@@ -298,7 +269,7 @@ export function SellersPortalV2({
       if (nextStage) {
         await firebaseCollections.updateSeller(client.id, {
           stage: nextStage,
-          subStatus: getDefaultSubStatus(nextStage),
+          subStatus: getDefaultSubStatus(nextStage)
         })
       }
     } catch (error) {
@@ -310,18 +281,12 @@ export function SellersPortalV2({
 
   const getDefaultSubStatus = (stage: string) => {
     switch (stage) {
-      case 'new_lead':
-        return 'to_initiate_contact'
-      case 'pre_listing':
-        return 'preparing_cma'
-      case 'active_listing':
-        return 'active'
-      case 'under_contract':
-        return 'pending_inspection'
-      case 'closed':
-        return 'completed'
-      default:
-        return 'unknown'
+      case 'new_lead': return 'to_initiate_contact'
+      case 'pre_listing': return 'preparing_cma'
+      case 'active_listing': return 'active'
+      case 'under_contract': return 'pending_inspection'
+      case 'closed': return 'completed'
+      default: return 'unknown'
     }
   }
 
@@ -335,7 +300,7 @@ export function SellersPortalV2({
       await firebaseCollections.updateSeller(client.id, {
         isArchived: false,
         archivedDate: null,
-        archivedFromStage: null,
+        archivedFromStage: null
       })
     } catch (error) {
       console.error('Error unarchiving client:', error)
@@ -354,13 +319,13 @@ export function SellersPortalV2({
       leadSource: '',
       priority: 'Medium',
       notes: '',
-      documents: [],
+      documents: []
     })
   }
 
   const handleSubmitNewLead = async (e: React.FormEvent) => {
     e.preventDefault()
-
+    
     if (!newLeadForm.name || !newLeadForm.email || !newLeadForm.phone) {
       setHasError('Please fill in all required fields')
       return
@@ -391,12 +356,12 @@ export function SellersPortalV2({
         isArchived: false,
         archivedDate: null,
         archivedFromStage: null,
-        uploadedDocuments: [],
+        uploadedDocuments: []
       }
 
       // Create seller first
       const newSeller = await firebaseCollections.createSeller(sellerData)
-
+      
       // Upload documents if any
       if (newLeadForm.documents.length > 0) {
         const uploadResults = await uploadClientDocuments(
@@ -404,21 +369,21 @@ export function SellersPortalV2({
           'seller',
           newLeadForm.documents
         )
-
+        
         // Update seller with document metadata
         const documentMetadata = uploadResults.map(result => ({
           name: result.fileName,
           url: result.url,
           type: result.contentType,
           size: result.size,
-          uploadDate: result.uploadedAt.toISOString(),
+          uploadDate: result.uploadedAt.toISOString()
         }))
-
+        
         await firebaseCollections.updateSeller(newSeller.id, {
-          uploadedDocuments: documentMetadata,
+          uploadedDocuments: documentMetadata
         })
       }
-
+      
       handleCloseNewLeadModal()
     } catch (error) {
       console.error('Error creating seller:', error)
@@ -433,62 +398,10 @@ export function SellersPortalV2({
     if (files) {
       setNewLeadForm(prev => ({
         ...prev,
-        documents: [...prev.documents, ...Array.from(files)],
+        documents: [...prev.documents, ...Array.from(files)]
       }))
     }
   }
-
-  const handleDragStart = (event: DragStartEvent) => {
-    const { active } = event
-    setActiveId(active.id as string)
-  }
-
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event
-
-    if (!over) {
-      setActiveId(null)
-      return
-    }
-
-    const activeClientId = active.id as string
-    const newStage = over.id as string
-
-    // Find the client being dragged
-    const client = sellerClients.find(c => c.id.toString() === activeClientId)
-
-    if (!client || client.stage === newStage) {
-      setActiveId(null)
-      return
-    }
-
-    // Update the client stage
-    if (!currentUser?.uid) {
-      setHasError('User not authenticated')
-      setActiveId(null)
-      return
-    }
-
-    try {
-      await firebaseCollections.updateSeller(client.id, {
-        stage: newStage,
-        subStatus: getDefaultSubStatus(newStage),
-      })
-    } catch (error) {
-      console.error('Error updating client stage:', error)
-      setHasError('Failed to update client stage. Please try again.')
-    }
-
-    setActiveId(null)
-  }
-
-  const handleDragCancel = () => {
-    setActiveId(null)
-  }
-
-  const activeClient = activeId
-    ? sellerClients.find(c => c.id.toString() === activeId)
-    : null
 
   return (
     <div className="h-full bg-gray-50">
@@ -497,15 +410,12 @@ export function SellersPortalV2({
         <div className="flex-1 p-6 overflow-auto">
           <div className="mb-6 flex justify-between items-start">
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">
-                Sellers Portal
-              </h1>
+              <h1 className="text-2xl font-bold text-gray-800">Sellers Portal</h1>
               <p className="text-gray-600">
-                Manage all seller clients through their journey from lead to
-                closing
+                Manage all seller clients through their journey from lead to closing
               </p>
             </div>
-
+            
             {/* Action Buttons - Top Right */}
             <div className="flex space-x-4">
               <Button
@@ -527,36 +437,20 @@ export function SellersPortalV2({
           </div>
 
           {/* Kanban Board - Full Width with Vertical Scrolling */}
-          <DndContext
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDragCancel={handleDragCancel}
-          >
-            <div className="flex gap-4 w-full">
-              {kanbanStages.map(stage => (
-                <KanbanColumn
-                  key={stage.id}
-                  title={stage.title}
-                  stage={stage.stage}
-                  clients={sellerClients}
-                  onClientClick={handleClientClick}
-                  isLoading={isLoading}
-                  hasError={hasError}
-                />
-              ))}
-            </div>
-
-            <DragOverlay>
-              {activeClient && (
-                <ClientCard
-                  client={activeClient}
-                  onClick={() => {}}
-                  isDragging={true}
-                />
-              )}
-            </DragOverlay>
-          </DndContext>
+          <div className="flex gap-6 min-w-max">
+            {kanbanStages.map(stage => (
+              <KanbanColumn
+                key={stage.id}
+                title={stage.title}
+                stage={stage.stage}
+                clients={sellerClients}
+                onClientClick={handleClientClick}
+                navigate={navigate}
+                isLoading={isLoading}
+                hasError={hasError}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
@@ -592,7 +486,7 @@ export function SellersPortalV2({
                   {hasError}
                 </div>
               )}
-
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Name *
@@ -600,9 +494,7 @@ export function SellersPortalV2({
                 <input
                   type="text"
                   value={newLeadForm.name}
-                  onChange={e =>
-                    setNewLeadForm(prev => ({ ...prev, name: e.target.value }))
-                  }
+                  onChange={(e) => setNewLeadForm(prev => ({ ...prev, name: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
@@ -615,9 +507,7 @@ export function SellersPortalV2({
                 <input
                   type="email"
                   value={newLeadForm.email}
-                  onChange={e =>
-                    setNewLeadForm(prev => ({ ...prev, email: e.target.value }))
-                  }
+                  onChange={(e) => setNewLeadForm(prev => ({ ...prev, email: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
@@ -630,9 +520,7 @@ export function SellersPortalV2({
                 <input
                   type="tel"
                   value={newLeadForm.phone}
-                  onChange={e =>
-                    setNewLeadForm(prev => ({ ...prev, phone: e.target.value }))
-                  }
+                  onChange={(e) => setNewLeadForm(prev => ({ ...prev, phone: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
                 />
@@ -645,12 +533,7 @@ export function SellersPortalV2({
                 <input
                   type="text"
                   value={newLeadForm.propertyAddress}
-                  onChange={e =>
-                    setNewLeadForm(prev => ({
-                      ...prev,
-                      propertyAddress: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => setNewLeadForm(prev => ({ ...prev, propertyAddress: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter property address"
                 />
@@ -662,12 +545,7 @@ export function SellersPortalV2({
                 </label>
                 <select
                   value={newLeadForm.leadSource}
-                  onChange={e =>
-                    setNewLeadForm(prev => ({
-                      ...prev,
-                      leadSource: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => setNewLeadForm(prev => ({ ...prev, leadSource: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">Select source</option>
@@ -686,12 +564,7 @@ export function SellersPortalV2({
                 </label>
                 <select
                   value={newLeadForm.priority}
-                  onChange={e =>
-                    setNewLeadForm(prev => ({
-                      ...prev,
-                      priority: e.target.value,
-                    }))
-                  }
+                  onChange={(e) => setNewLeadForm(prev => ({ ...prev, priority: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="Low">Low</option>
@@ -706,9 +579,7 @@ export function SellersPortalV2({
                 </label>
                 <textarea
                   value={newLeadForm.notes}
-                  onChange={e =>
-                    setNewLeadForm(prev => ({ ...prev, notes: e.target.value }))
-                  }
+                  onChange={(e) => setNewLeadForm(prev => ({ ...prev, notes: e.target.value }))}
                   rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Additional notes about this lead..."
@@ -741,7 +612,10 @@ export function SellersPortalV2({
                 >
                   Cancel
                 </Button>
-                <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                <Button
+                  type="submit"
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
                   {isCreating ? 'Creating...' : 'Add Lead'}
                 </Button>
               </div>
@@ -751,4 +625,4 @@ export function SellersPortalV2({
       )}
     </div>
   )
-}
+} 

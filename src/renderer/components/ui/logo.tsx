@@ -35,9 +35,9 @@ export const Logo: React.FC<LogoProps> = ({ className = '', onClick }) => {
       <img
         src={isDark ? '/aigenticProDark.svg' : '/aigenticProLight.svg'}
         alt="AIgent Pro"
-        className="h-8 w-auto"
+        className="h-16 w-auto"
       />
-      <span className="ml-3 text-lg font-semibold text-gray-800 dark:text-gray-200 hidden sm:block hover:text-[#3B7097] dark:hover:text-[#75BDE0] transition-colors">
+      <span className="ml-3 text-2xl font-semibold text-gray-800 dark:text-gray-200 hidden sm:block hover:text-[#3B7097] dark:hover:text-[#75BDE0] transition-colors">
         AIgent Pro
       </span>
     </button>

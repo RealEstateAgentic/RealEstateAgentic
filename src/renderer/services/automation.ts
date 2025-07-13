@@ -86,7 +86,8 @@ export async function startBuyerWorkflowWithGmail({ agentId, buyerEmail, buyerNa
       console.log('✅ Email sent via Gmail API');
     } catch (emailError) {
       console.error('❌ Gmail API failed:', emailError);
-      throw new Error(`Failed to send email via Gmail: ${emailError.message}`);
+      const errorMessage = emailError instanceof Error ? emailError.message : 'Unknown error';
+      throw new Error(`Failed to send email via Gmail: ${errorMessage}`);
     }
 
     console.log('✅ Buyer workflow completed successfully!');
@@ -175,6 +176,87 @@ export async function startBuyerWorkflow({ agentId, buyerEmail, buyerName, buyer
   } catch (error) {
     console.error('❌ Buyer workflow error:', error);
     throw new Error(`Failed to start buyer workflow: ${error.message}`);
+  }
+}
+
+// Seller workflow handler with Gmail API
+export async function startSellerWorkflowWithGmail({ agentId, sellerEmail, sellerName, sellerPhone, propertyAddress, senderEmail }: {
+  agentId: string;
+  sellerEmail: string;
+  sellerName: string;
+  sellerPhone?: string;
+  propertyAddress?: string;
+  senderEmail?: string;
+}) {
+  try {
+    console.log('🚀 Starting seller workflow with Gmail API for:', sellerName);
+    
+    if (!agentId || !sellerEmail || !sellerName) {
+      throw new Error('Missing required fields');
+    }
+
+    // Step 1: Create seller record in Firebase
+    console.log('📝 Step 1: Creating seller record...');
+    const seller = await firebaseCollections.createSeller({
+      agentId,
+      name: sellerName,
+      email: sellerEmail,
+      phone: sellerPhone,
+      propertyAddress,
+      formData: {},
+      status: 'survey_sent'
+    });
+
+    // Step 2: Send email via Gmail API
+    console.log('📝 Step 2: Sending email via Gmail API...');
+    
+    // Create email HTML content
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Hi ${sellerName},</h2>
+        <p>Thank you for speaking with us about your property listing goals. To provide you with the best service, please complete the seller information form below:</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${SELLER_FORM_URL}" style="background-color: #007bff; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">Complete Your Form</a>
+        </div>
+        
+        <p>This form will help us understand your property details, timeline, and goals so we can create the most effective listing strategy for you.</p>
+        
+        <p>Best regards,<br>${senderEmail || 'Your Real Estate Agent'}</p>
+        
+        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+        <p style="font-size: 12px; color: #666;">If you have any questions, please don't hesitate to reach out. We're here to help you through every step of the selling process.</p>
+      </div>
+    `;
+
+    // Send email via Gmail API
+    try {
+      await gmailAuth.sendEmail(
+        sellerEmail,
+        'Complete Your Seller Information Form',
+        emailHtml
+      );
+      console.log('✅ Email sent via Gmail API');
+    } catch (emailError) {
+      console.error('❌ Gmail API failed:', emailError);
+      const errorMessage = emailError instanceof Error ? emailError.message : 'Unknown error';
+      throw new Error(`Failed to send email via Gmail: ${errorMessage}`);
+    }
+
+    console.log('✅ Seller workflow with Gmail completed successfully!');
+    console.log('📧 Email sent to:', sellerEmail);
+    console.log('📋 Form URL:', SELLER_FORM_URL);
+
+    return {
+      success: true,
+      sellerId: seller.id,
+      formUrl: SELLER_FORM_URL,
+      message: 'Seller survey sent successfully via Gmail'
+    };
+
+  } catch (error) {
+    console.error('❌ Seller workflow with Gmail error:', error);
+    throw new Error(`Failed to start seller workflow with Gmail: ${error.message}`);
   }
 }
 

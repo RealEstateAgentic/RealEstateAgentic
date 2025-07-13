@@ -25,19 +25,17 @@ export function MarketingLanding({ navigate }: MarketingLandingProps) {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-br from-blue-50 to-indigo-100">
+      <section className="py-20 bg-gradient-to-br from-blue-50 to-sky-100">
         <div className="max-w-7xl mx-auto px-6 text-center">
           <div className="flex justify-center mb-6">
             <Logo className="scale-150" onClick={() => navigate('/')} />
           </div>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            The AI-powered platform that transforms how real estate agents
-            manage clients, generate offers, and close deals. Streamline your
-            workflow with intelligent automation.
+            An AI-powered open source desktop application that streamlines the real estate agent workflow with intelligent automation for client onboarding, inspection report analysis, and document generation.
           </p>
           <Button
             onClick={() => navigate('/auth/agent')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all"
+            className="bg-[#3B7097] hover:bg-[#2e5a7a] text-white px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all"
           >
             Login or Register
             <ArrowRight className="ml-2 w-5 h-5" />
@@ -59,7 +57,7 @@ export function MarketingLanding({ navigate }: MarketingLandingProps) {
                 <FileText className="w-8 h-8 text-blue-600" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                Inspection Report Repair Estimator Generator
+                Inspection Report Repair Estimator
               </h3>
               <p className="text-gray-600 mb-4">
                 Instantly generate detailed repair estimates from inspection
@@ -76,13 +74,13 @@ export function MarketingLanding({ navigate }: MarketingLandingProps) {
               </div>
             </div>
 
-            {/* Offer Generation Tool */}
+            {/* Documentation Generator */}
             <div className="bg-gray-50 rounded-lg p-8 border border-gray-200 hover:shadow-lg transition-shadow">
               <div className="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center mb-6">
                 <DollarSign className="w-8 h-8 text-green-600" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                Offer Generation Tool
+                Documentation Generator
               </h3>
               <p className="text-gray-600 mb-4">
                 Create compelling offers with AI-powered market analysis and
@@ -101,8 +99,8 @@ export function MarketingLanding({ navigate }: MarketingLandingProps) {
 
             {/* Seamless Onboarding */}
             <div className="bg-gray-50 rounded-lg p-8 border border-gray-200 hover:shadow-lg transition-shadow">
-              <div className="w-16 h-16 bg-purple-100 rounded-lg flex items-center justify-center mb-6">
-                <Users className="w-8 h-8 text-purple-600" />
+              <div className="w-16 h-16 bg-[#F6E2BC] rounded-lg flex items-center justify-center mb-6">
+                <Users className="w-8 h-8 text-[#c4a76b]" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-4">
                 Seamless Onboarding Automation Process
@@ -229,8 +227,8 @@ export function MarketingLanding({ navigate }: MarketingLandingProps) {
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <TrendingUp className="w-8 h-8 text-purple-600" />
+              <div className="w-16 h-16 bg-[#F6E2BC] rounded-full flex items-center justify-center mx-auto mb-6">
+                <TrendingUp className="w-8 h-8 text-[#c4a76b]" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-4">
                 Grow Your Business
@@ -245,7 +243,7 @@ export function MarketingLanding({ navigate }: MarketingLandingProps) {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-blue-600">
+      <section className="py-20 bg-[#3B7097]">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <h2 className="text-3xl font-bold text-white mb-6">
             Ready to Transform Your Real Estate Business?
@@ -256,7 +254,7 @@ export function MarketingLanding({ navigate }: MarketingLandingProps) {
           </p>
           <Button
             onClick={() => navigate('/auth/agent')}
-            className="bg-white hover:bg-gray-100 text-blue-600 px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all"
+            className="bg-white hover:bg-gray-100 text-[#3B7097] px-8 py-4 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all"
           >
             Login or Register
             <ArrowRight className="ml-2 w-5 h-5" />

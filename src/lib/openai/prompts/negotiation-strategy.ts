@@ -224,6 +224,10 @@ Create a strategy that includes:
 6. Anticipated responses and counter-strategies
 7. Risk mitigation and fallback positions
 
+**Role-Specific Considerations:**
+- If representing a BUYER: Focus on securing the best price, favorable terms, protective contingencies, and minimizing financial risk while positioning competitively
+- If representing a SELLER: Focus on maximizing sale price, minimizing concessions, reducing contingencies, and expediting the closing process
+
 Consider market conditions, competition level, and client motivations.`,
 
   COUNTER_OFFER: `Develop a strategic response to a counter-offer that advances the client's position while maintaining momentum toward closing.
@@ -240,6 +244,10 @@ Create a response strategy that includes:
 5. Pressure tactics and leverage utilization
 6. Timeline management and urgency creation
 7. Scenarios for different opponent responses
+
+**Role-Specific Considerations:**
+- If representing a BUYER: Analyze seller's motivations, assess price/terms flexibility, protect buyer's interests while showing serious intent, evaluate value proposition
+- If representing a SELLER: Evaluate buyer's qualifications and motivation, maintain pricing power, minimize concessions, assess market timing for decisions
 
 Focus on advancing toward a successful close.`,
 

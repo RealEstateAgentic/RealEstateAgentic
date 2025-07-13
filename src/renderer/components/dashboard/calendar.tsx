@@ -37,8 +37,8 @@ export function Calendar() {
     if (authenticated) {
       await loadCalendarEvents()
     } else {
-      // Use dummy data as fallback when not connected
-      setEvents(dummyData.calendarEvents)
+      // No fallback data - require Google Calendar connection
+      setEvents([])
     }
   }
 
@@ -75,8 +75,8 @@ export function Calendar() {
     } catch (err) {
       console.error('Failed to load calendar events:', err)
       setError('Failed to load calendar events')
-      // Fallback to dummy data on error
-      setEvents(dummyData.calendarEvents)
+      // No fallback data on error - keep events empty
+      setEvents([])
     } finally {
       setIsLoading(false)
     }
@@ -106,7 +106,7 @@ export function Calendar() {
   const handleDisconnectCalendar = () => {
     gmailAuth.logout()
     setIsConnected(false)
-    setEvents(dummyData.calendarEvents) // Fallback to dummy data
+    setEvents([]) // Clear events when disconnected
   }
   
   // Generate 7 days starting from today
@@ -341,29 +341,9 @@ export function Calendar() {
           await loadCalendarEvents()
         }, 1000)
       } else {
-        // Fallback: create in dummy data
-        const formatTime = (timeStr: string) => {
-          const [hours, minutes] = timeStr.split(':')
-          const hour = parseInt(hours)
-          const ampm = hour >= 12 ? 'PM' : 'AM'
-          const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
-          return `${displayHour}:${minutes} ${ampm}`
-        }
-
-        const newEvent = {
-          id: Date.now(),
-          title: formData.title,
-          date: formData.date,
-          time: formatTime(formData.time),
-          type: formData.eventType,
-          location: formData.description || 'TBD',
-          clientType: formData.clientType || '',
-          clientId: formData.clientId || '',
-          priority: formData.priority
-        }
-
-        setEvents([...events, newEvent])
-        dummyData.calendarEvents.push(newEvent)
+        // Require Google Calendar connection
+        alert('Please connect your Google Calendar to create events')
+        return
       }
       
       closeCreateModal()
@@ -410,35 +390,9 @@ export function Calendar() {
           await loadCalendarEvents()
         }, 1000)
       } else {
-        // Fallback: update in dummy data
-        const formatTime = (timeStr: string) => {
-          const [hours, minutes] = timeStr.split(':')
-          const hour = parseInt(hours)
-          const ampm = hour >= 12 ? 'PM' : 'AM'
-          const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
-          return `${displayHour}:${minutes} ${ampm}`
-        }
-
-        const updatedEvent = {
-          ...selectedEvent,
-          title: formData.title,
-          date: formData.date,
-          time: formatTime(formData.time),
-          type: formData.eventType,
-          location: formData.description || 'TBD',
-          clientType: formData.clientType || '',
-          clientId: formData.clientId || '',
-          priority: formData.priority
-        }
-
-        setEvents(events.map(event => 
-          event.id === selectedEvent.id ? updatedEvent : event
-        ))
-        
-        const index = dummyData.calendarEvents.findIndex(e => e.id === selectedEvent.id)
-        if (index !== -1) {
-          dummyData.calendarEvents[index] = updatedEvent
-        }
+        // Require Google Calendar connection
+        alert('Please connect your Google Calendar to edit events')
+        return
       }
       
       closeEditModal()

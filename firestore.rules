@@ -5,5 +5,30 @@ service cloud.firestore {
     match /{document=**} {
       allow read, write: if true;
     }
+    
+    // Analytics Collections Security Rules
+    match /negotiation_records/{recordId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.agentId;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.agentId;
+    }
+    
+    match /analytics_cache/{cacheId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.agentId;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.agentId;
+    }
+    
+    match /agent_analytics/{agentId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == agentId;
+    }
+    
+    match /data_quality_metrics/{agentId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == agentId;
+    }
   }
 }

@@ -2,15 +2,25 @@
 
 🏠 **AI-Powered Real Estate Agent Platform**
 
-A comprehensive desktop application designed to empower real estate agents with AI-driven document generation, offer analysis, and negotiation support.
+A comprehensive desktop application designed to be the "brokerage of the future," empowering real estate agents with AI-driven tools for education, client onboarding, document generation, offer analysis, negotiation support, and more.
 
 ## Features
 
-- **AI Document Generation**: Create cover letters, negotiation strategies, and explanation memos
-- **Offer Analysis**: Comprehensive property and financial analysis
+### Current Features
+- **AI Document Generation**: Create professional cover letters, negotiation strategies, and explanation memos
+- **Comprehensive Buyer Onboarding**: Surveys for financial assessment and needs clarification
+- **Offer Analysis**: Comprehensive property and financial analysis tools
 - **Client Management**: Track buyers and sellers through the sales process
-- **Repair Estimation**: Generate detailed repair reports and cost estimates
+- **Repair Estimation**: Generate detailed repair reports and cost estimates for agent-client consultations
 - **Market Analytics**: AI-powered market analysis and insights
+- **Firebase Integration**: Secure authentication, database, and storage for agent data
+
+### Planned Features
+- **AI-Powered Agent Education**: Gamified learning with simulated negotiations
+- **Simplified Financing Explanations**: Tools to educate buyers on options
+- **Enhanced Inspection Reports**: AI-analyzed reports with repair estimates
+- **Automated Document Review**: Streamline paperwork and compliance
+- **Post-Closing Homeowner Guides**: Comprehensive guides for new homeowners
 
 ## Quick Start
 
@@ -163,4 +173,9 @@ src/
 
 ## Contributing
 
-Please read our [contributing guide](CONTRIBUTING.md) to learn how you can help out. 
+Please read our [contributing guide](CONTRIBUTING.md) to learn how you can help out.
+
+## Resources
+- [Brain Lift Workflow](https://workflowy.com/#/6beca50d2bf6) - Project planning and task management outline
+- [Documentation](./docs/) - Detailed guides and diagrams
+- [Memory Bank](./memory-bank/) - Core project context and progress tracking 

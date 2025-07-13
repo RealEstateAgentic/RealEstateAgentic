@@ -1,14 +1,19 @@
-import { useState } from 'react'
-import { X, MapPin, Clock, Calendar as CalendarIcon, Tag, Plus, AlertCircle, CheckCircle, Edit } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { X, MapPin, Clock, Calendar as CalendarIcon, Tag, Plus, AlertCircle, CheckCircle, Edit, Wifi, WifiOff, Trash2 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { dummyData } from '../../data/dummy-data'
+import { googleCalendar } from '../../services/google-calendar'
+import { gmailAuth } from '../../services/gmail-auth'
 
 export function Calendar() {
-  const [events, setEvents] = useState(dummyData.calendarEvents)
+  const [events, setEvents] = useState<any[]>([])
   const [selectedEvent, setSelectedEvent] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isConnected, setIsConnected] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     title: '',
     date: '',
@@ -19,6 +24,90 @@ export function Calendar() {
     priority: 'low',
     eventType: 'custom'
   })
+
+  // Check authentication status and load events on mount
+  useEffect(() => {
+    checkAuthAndLoadEvents()
+  }, [])
+
+  const checkAuthAndLoadEvents = async () => {
+    const authenticated = gmailAuth.isAuthenticated()
+    setIsConnected(authenticated)
+    
+    if (authenticated) {
+      await loadCalendarEvents()
+    } else {
+      // No fallback data - require Google Calendar connection
+      setEvents([])
+    }
+  }
+
+  const loadCalendarEvents = async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      // Match the exact date range shown in our calendar display
+      const today = new Date()
+      const firstDay = new Date(today)
+      firstDay.setHours(0, 0, 0, 0)
+      
+      const lastDay = new Date(today)
+      lastDay.setDate(today.getDate() + 6) // 7 days total (0-6)
+      lastDay.setHours(23, 59, 59, 999)
+      
+      console.log('📅 Fetching events from:', firstDay.toISOString(), 'to:', lastDay.toISOString())
+      
+      const googleEvents = await googleCalendar.getEvents(
+        firstDay.toISOString(),
+        lastDay.toISOString()
+      )
+      
+      console.log('📅 Google Calendar events received:', googleEvents.length, googleEvents)
+      
+      const formattedEvents = googleEvents.map(event => 
+        googleCalendar.formatEventForDisplay(event)
+      )
+      
+      console.log('📅 Formatted events:', formattedEvents)
+      
+      setEvents(formattedEvents)
+    } catch (err) {
+      console.error('Failed to load calendar events:', err)
+      setError('Failed to load calendar events')
+      // No fallback data on error - keep events empty
+      setEvents([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleConnectCalendar = async () => {
+    try {
+      setIsLoading(true)
+      setError(null)
+      
+      const result = await gmailAuth.authenticate()
+      
+      if (result.success) {
+        setIsConnected(true)
+        await loadCalendarEvents()
+      } else {
+        setError(result.error || 'Failed to connect to Google Calendar')
+      }
+    } catch (err) {
+      console.error('Calendar connection failed:', err)
+      setError('Failed to connect to Google Calendar')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleDisconnectCalendar = () => {
+    gmailAuth.logout()
+    setIsConnected(false)
+    setEvents([]) // Clear events when disconnected
+  }
   
   // Generate 7 days starting from today
   const today = new Date()
@@ -92,10 +181,33 @@ export function Calendar() {
 
   const handleEditEvent = (event: any) => {
     setSelectedEvent(event)
+    
+    // Convert 12-hour time format to 24-hour format for HTML time input
+    const convertTo24Hour = (time12h: string): string => {
+      if (!time12h || time12h === 'All Day') return '09:00'
+      
+      const [time, modifier] = time12h.split(' ')
+      if (!time || !modifier) return '09:00'
+      
+      let [hours, minutes] = time.split(':')
+      if (!hours || !minutes) return '09:00'
+      
+      let hour = parseInt(hours)
+      if (isNaN(hour)) return '09:00'
+      
+      if (modifier.toUpperCase() === 'PM' && hour !== 12) {
+        hour += 12
+      } else if (modifier.toUpperCase() === 'AM' && hour === 12) {
+        hour = 0
+      }
+      
+      return `${hour.toString().padStart(2, '0')}:${minutes}`
+    }
+    
     setFormData({
       title: event.title,
       date: event.date,
-      time: event.time.replace(/[APM\s]/g, ''), // Convert to 24-hour format
+      time: convertTo24Hour(event.time),
       description: event.location || '',
       clientType: event.clientType || '',
       clientId: event.clientId || '',
@@ -108,6 +220,43 @@ export function Calendar() {
   const closeModal = () => {
     setIsModalOpen(false)
     setSelectedEvent(null)
+  }
+
+  const handleDeleteEvent = async (event: any) => {
+    if (!confirm('Are you sure you want to delete this event?')) {
+      return
+    }
+
+    try {
+      setIsLoading(true)
+      
+      if (isConnected && event.googleEventId) {
+        // Delete from Google Calendar
+        await googleCalendar.deleteEvent(event.googleEventId)
+        
+        // Wait a moment for Google Calendar to process the deletion, then reload
+        setTimeout(async () => {
+          await loadCalendarEvents()
+        }, 1000)
+      } else {
+        // Delete from local dummy data
+        const updatedEvents = events.filter(e => e.id !== event.id)
+        setEvents(updatedEvents)
+        
+        // Also remove from dummy data for persistence
+        const dummyIndex = dummyData.calendarEvents.findIndex(e => e.id === event.id)
+        if (dummyIndex !== -1) {
+          dummyData.calendarEvents.splice(dummyIndex, 1)
+        }
+      }
+      
+      closeModal()
+    } catch (err) {
+      console.error('Failed to delete event:', err)
+      setError('Failed to delete event')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const closeEditModal = () => {
@@ -150,80 +299,109 @@ export function Calendar() {
     }))
   }
 
-  const handleSaveEvent = () => {
+  const handleSaveEvent = async () => {
     if (!formData.title || !formData.date || !formData.time) {
       alert('Please fill in all required fields')
       return
     }
 
-    // Convert 24-hour time to 12-hour format for display
-    const formatTime = (timeStr: string) => {
-      const [hours, minutes] = timeStr.split(':')
-      const hour = parseInt(hours)
-      const ampm = hour >= 12 ? 'PM' : 'AM'
-      const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
-      return `${displayHour}:${minutes} ${ampm}`
+    try {
+      setIsLoading(true)
+      
+      if (isConnected) {
+        // Create event in Google Calendar
+        // Create DateTime string in local timezone format without UTC conversion
+        const [year, month, day] = formData.date.split('-')
+        const [hours, minutes] = formData.time.split(':')
+        
+        // Create ISO string manually to avoid timezone conversion
+        const startDateTime = `${year}-${month}-${day}T${hours}:${minutes}:00`
+        const endHour = (parseInt(hours) + 1).toString().padStart(2, '0')
+        const endDateTime = `${year}-${month}-${day}T${endHour}:${minutes}:00`
+        
+        console.log('📅 Creating event:', {
+          formDate: formData.date,
+          formTime: formData.time,
+          startDateTime,
+          endDateTime
+        })
+        
+        await googleCalendar.createEvent({
+          title: formData.title,
+          description: formData.description,
+          startDateTime,
+          endDateTime,
+          location: formData.description || undefined,
+          clientType: formData.clientType || undefined,
+          clientId: formData.clientId || undefined
+        })
+        
+        // Wait a moment for Google Calendar to process the creation, then reload
+        setTimeout(async () => {
+          await loadCalendarEvents()
+        }, 1000)
+      } else {
+        // Require Google Calendar connection
+        alert('Please connect your Google Calendar to create events')
+        return
+      }
+      
+      closeCreateModal()
+    } catch (err) {
+      console.error('Failed to save event:', err)
+      setError('Failed to save event')
+    } finally {
+      setIsLoading(false)
     }
-
-    const newEvent = {
-      id: Date.now(), // Use timestamp for unique ID
-      title: formData.title,
-      date: formData.date,
-      time: formatTime(formData.time),
-      type: formData.eventType,
-      location: formData.description || 'TBD',
-      clientType: formData.clientType || '',
-      clientId: formData.clientId || '',
-      priority: formData.priority
-    }
-
-    setEvents([...events, newEvent])
-    
-    // Also add to dummy data for persistence across component re-renders
-    dummyData.calendarEvents.push(newEvent)
-    
-    closeCreateModal()
   }
 
-  const handleUpdateEvent = () => {
+  const handleUpdateEvent = async () => {
     if (!formData.title || !formData.date || !formData.time || !selectedEvent) {
       alert('Please fill in all required fields')
       return
     }
 
-    // Convert 24-hour time to 12-hour format for display
-    const formatTime = (timeStr: string) => {
-      const [hours, minutes] = timeStr.split(':')
-      const hour = parseInt(hours)
-      const ampm = hour >= 12 ? 'PM' : 'AM'
-      const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
-      return `${displayHour}:${minutes} ${ampm}`
+    try {
+      setIsLoading(true)
+      
+      if (isConnected && selectedEvent.googleEventId) {
+        // Update event in Google Calendar
+        // Create DateTime string in local timezone format without UTC conversion
+        const [year, month, day] = formData.date.split('-')
+        const [hours, minutes] = formData.time.split(':')
+        
+        // Create ISO string manually to avoid timezone conversion
+        const startDateTime = `${year}-${month}-${day}T${hours}:${minutes}:00`
+        const endHour = (parseInt(hours) + 1).toString().padStart(2, '0')
+        const endDateTime = `${year}-${month}-${day}T${endHour}:${minutes}:00`
+        
+        await googleCalendar.updateEvent(selectedEvent.googleEventId, {
+          title: formData.title,
+          description: formData.description,
+          startDateTime,
+          endDateTime,
+          location: formData.description || undefined,
+          clientType: formData.clientType || undefined,
+          clientId: formData.clientId || undefined
+        })
+        
+        // Wait a moment for Google Calendar to process the update, then reload
+        setTimeout(async () => {
+          await loadCalendarEvents()
+        }, 1000)
+      } else {
+        // Require Google Calendar connection
+        alert('Please connect your Google Calendar to edit events')
+        return
+      }
+      
+      closeEditModal()
+    } catch (err) {
+      console.error('Failed to update event:', err)
+      setError('Failed to update event')
+    } finally {
+      setIsLoading(false)
     }
-
-    const updatedEvent = {
-      ...selectedEvent,
-      title: formData.title,
-      date: formData.date,
-      time: formatTime(formData.time),
-      type: formData.eventType,
-      location: formData.description || 'TBD',
-      clientType: formData.clientType || '',
-      clientId: formData.clientId || '',
-      priority: formData.priority
-    }
-
-    // Update in local state
-    setEvents(events.map(event => 
-      event.id === selectedEvent.id ? updatedEvent : event
-    ))
-    
-    // Update in dummy data for persistence
-    const index = dummyData.calendarEvents.findIndex(e => e.id === selectedEvent.id)
-    if (index !== -1) {
-      dummyData.calendarEvents[index] = updatedEvent
-    }
-    
-    closeEditModal()
   }
 
   const getClientOptions = () => {
@@ -405,15 +583,54 @@ export function Calendar() {
         {/* Fixed Header */}
         <div className="p-6 border-b border-gray-200 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-gray-800">This Week's Calendar</h3>
-            <Button
-              onClick={handleAddEvent}
-              className="bg-[#3B7097] hover:bg-[#3B7097]/90 text-white text-sm px-4 py-2 h-auto"
-            >
-              <Plus className="size-4 mr-2" />
-              Add Event
-            </Button>
+            <div className="flex items-center space-x-3">
+              <h3 className="text-lg font-semibold text-gray-800">This Week's Calendar</h3>
+              <div className="flex items-center space-x-2">
+                {isConnected ? (
+                  <>
+                    <Wifi className="size-4 text-green-500" />
+                    <span className="text-sm text-green-600">Connected to Google Calendar</span>
+                  </>
+                ) : (
+                  <>
+                    <WifiOff className="size-4 text-gray-400" />
+                    <span className="text-sm text-gray-500">Using demo data</span>
+                  </>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center space-x-2">
+              {!isConnected ? (
+                <Button
+                  onClick={handleConnectCalendar}
+                  disabled={isLoading}
+                  className="bg-[#3B7097] hover:bg-[#3B7097]/90 text-white text-sm px-3 py-1.5 h-auto"
+                >
+                  {isLoading ? 'Connecting...' : 'Connect Calendar'}
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleDisconnectCalendar}
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm px-2 py-1.5 h-auto"
+                >
+                  Disconnect
+                </Button>
+              )}
+              <Button
+                onClick={handleAddEvent}
+                disabled={isLoading}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm px-3 py-1.5 h-auto"
+              >
+                <Plus className="size-4 mr-1" />
+                Add Event
+              </Button>
+            </div>
           </div>
+          {error && (
+            <div className="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded">
+              {error}
+            </div>
+          )}
         </div>
         
         {/* Calendar Content - Full Height */}
@@ -429,7 +646,9 @@ export function Calendar() {
                   </div>
                 </div>
                 <div className="flex-1 p-3 space-y-2 overflow-y-auto min-h-0 bg-gray-50/50 rounded-b-lg">
-                  {getEventsForDate(day).length === 0 ? (
+                  {isLoading ? (
+                    <div className="text-xs text-gray-400 italic py-4">Loading...</div>
+                  ) : getEventsForDate(day).length === 0 ? (
                     <div className="text-xs text-gray-400 italic py-8 text-center">No events</div>
                   ) : (
                     getEventsForDate(day).map((event) => (
@@ -468,12 +687,21 @@ export function Calendar() {
                 <button
                   onClick={() => handleEditEvent(selectedEvent)}
                   className="text-gray-500 hover:text-gray-700"
+                  title="Edit Event"
                 >
                   <Edit className="size-5" />
                 </button>
                 <button
+                  onClick={() => handleDeleteEvent(selectedEvent)}
+                  className="text-red-500 hover:text-red-700"
+                  title="Delete Event"
+                >
+                  <Trash2 className="size-5" />
+                </button>
+                <button
                   onClick={closeModal}
                   className="text-gray-500 hover:text-gray-700"
+                  title="Close"
                 >
                   <X className="size-6" />
                 </button>

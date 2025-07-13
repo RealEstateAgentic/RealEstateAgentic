@@ -20,6 +20,7 @@ import {
   Mail,
   ArrowRight,
   Plus,
+  Target,
 } from 'lucide-react'
 import type { AgentProfile } from '../../shared/types'
 
@@ -463,15 +464,37 @@ export function AgentDashboardScreen({
               <Button
                 variant="outline"
                 className="flex flex-col items-center p-4 h-auto"
-                onClick={() => {
-                  alert(
-                    'Opening market analysis dashboard. This would display AI-generated market insights, trends, and comparative market analysis for your area.'
-                  )
-                  // TODO: Navigate to market analysis interface
-                }}
+                onClick={() => navigate('/analytics')}
               >
                 <TrendingUp className="w-6 h-6 mb-2 text-orange-600" />
-                <span className="text-sm">Market Analysis</span>
+                <span className="text-sm">Analytics</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Strategy Recommendations Section */}
+        <div className="mt-6">
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              AI-Powered Insights
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Button
+                variant="outline"
+                className="flex flex-col items-center p-4 h-auto"
+                onClick={() => navigate('/strategy-recommendations')}
+              >
+                <Target className="w-6 h-6 mb-2 text-indigo-600" />
+                <span className="text-sm">Strategy Recommendations</span>
+              </Button>
+              <Button
+                variant="outline"
+                className="flex flex-col items-center p-4 h-auto"
+                onClick={() => navigate('/analytics')}
+              >
+                <TrendingUp className="w-6 h-6 mb-2 text-orange-600" />
+                <span className="text-sm">Pipeline Analytics</span>
               </Button>
             </div>
           </div>

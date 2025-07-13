@@ -6,8 +6,8 @@ import { getFormUrls } from './jotform-api';
 import { gmailAuth } from './gmail-auth';
 
 // Dynamic JotForm URLs (fetched from API)
-let BUYER_FORM_URL = 'https://form.jotform.com/243446517804154';
-let SELLER_FORM_URL = 'https://form.jotform.com/243446518905158';
+let BUYER_FORM_URL = 'https://form.jotform.com/251891100796157';
+let SELLER_FORM_URL = 'https://form.jotform.com/251890971882168';
 
 // Initialize form URLs from API
 async function initializeFormUrls() {
@@ -27,9 +27,9 @@ initializeFormUrls();
 // Import and start JotForm polling service
 import { jotformPolling } from './jotform-polling';
 
-// TEMPORARILY DISABLED: JotForm polling to avoid API rate limits (1000 calls/day)
 // Start polling for form submissions
-// jotformPolling.startPolling();
+// Note: Polling checks for new submissions every 30 seconds
+jotformPolling.startPolling();
 
 // Buyer workflow handler with Gmail API
 export async function startBuyerWorkflowWithGmail({ agentId, buyerEmail, buyerName, buyerPhone, senderEmail }: {

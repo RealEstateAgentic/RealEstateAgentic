@@ -63,15 +63,15 @@ export async function getFormUrls(): Promise<{ buyerUrl: string, sellerUrl: stri
     const { buyerForm, sellerForm } = await getBuyerAndSellerForms();
     
     return {
-      buyerUrl: buyerForm ? `https://form.jotform.com/${buyerForm.id}` : 'https://form.jotform.com/243446517804154',
-      sellerUrl: sellerForm ? `https://form.jotform.com/${sellerForm.id}` : 'https://form.jotform.com/243446518905158'
+      buyerUrl: buyerForm ? `https://form.jotform.com/${buyerForm.id}` : 'https://form.jotform.com/251891100796157',
+      sellerUrl: sellerForm ? `https://form.jotform.com/${sellerForm.id}` : 'https://form.jotform.com/251890971882168'
     };
   } catch (error) {
     console.error('Failed to get form URLs:', error);
     // Fallback to default URLs
     return {
-      buyerUrl: 'https://form.jotform.com/243446517804154',
-      sellerUrl: 'https://form.jotform.com/243446518905158'
+      buyerUrl: 'https://form.jotform.com/251891100796157',
+      sellerUrl: 'https://form.jotform.com/251890971882168'
     };
   }
 }

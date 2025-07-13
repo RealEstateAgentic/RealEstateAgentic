@@ -225,7 +225,7 @@ class JotFormPollingService {
         // Update existing buyer with form data and AI analysis
         await firebaseCollections.updateBuyer(existingBuyer.id, {
           formData: submission.answers,
-          aiSummary: aiSummary,
+          qualificationSummary: aiSummary,
           status: 'form_completed',
           completedAt: new Date().toISOString()
         });
@@ -245,7 +245,7 @@ class JotFormPollingService {
           email: clientInfo.email,
           phone: clientInfo.phone,
           formData: submission.answers,
-          aiSummary: aiSummary,
+          qualificationSummary: aiSummary,
           status: 'form_completed'
         });
         
@@ -310,7 +310,7 @@ class JotFormPollingService {
         // Update existing seller with form data and AI analysis
         await firebaseCollections.updateSeller(existingSeller.id, {
           formData: submission.answers,
-          aiSummary: aiSummary,
+          qualificationSummary: aiSummary,
           status: 'form_completed',
           completedAt: new Date().toISOString()
         });
@@ -330,7 +330,7 @@ class JotFormPollingService {
           email: clientInfo.email,
           phone: clientInfo.phone,
           formData: submission.answers,
-          aiSummary: aiSummary,
+          qualificationSummary: aiSummary,
           status: 'form_completed'
         });
         
